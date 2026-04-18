@@ -10,9 +10,9 @@ const state = {
 }
 
 const MAX_LINES = 2000
-const SERVER_COLORS = ['#4ade80','#60a5fa','#f59e0b','#f472b6','#a78bfa','#34d399','#fb923c','#e879f9']
-const AVATARS = ['🧑','👨‍💻','🧙','⚔️','🏹','🛡️','🐉','🦄','🌋','🌊','🔥','⭐']
-const IMPORTANT_PROPS = ['server-port','max-players','level-name','gamemode','difficulty','pvp','online-mode','white-list','motd','view-distance','simulation-distance','allow-flight','enable-command-block','level-seed','spawn-protection','level-type','op-permission-level']
+const SERVER_COLORS = ['#4ade80', '#60a5fa', '#f59e0b', '#f472b6', '#a78bfa', '#34d399', '#fb923c', '#e879f9']
+const AVATARS = ['🧑', '👨‍💻', '🧙', '⚔️', '🏹', '🛡️', '🐉', '🦄', '🌋', '🌊', '🔥', '⭐']
+const IMPORTANT_PROPS = ['server-port', 'max-players', 'level-name', 'gamemode', 'difficulty', 'pvp', 'online-mode', 'white-list', 'motd', 'view-distance', 'simulation-distance', 'allow-flight', 'enable-command-block', 'level-seed', 'spawn-protection', 'level-type', 'op-permission-level']
 
 document.addEventListener('DOMContentLoaded', async () => {
   initTitlebar()
@@ -335,10 +335,10 @@ async function refreshServersGrid() {
     const running = !!statusAll[s.id]
     const jarName = s.jarPath ? s.jarPath.split(/[\\/]/).pop() : 'Sin configurar'
     return `
-      <div class="server-card" data-server-id="${s.id}" style="--card-color:${s.color||'#4ade80'}" onclick="openServer('${s.id}')">
+      <div class="server-card" data-server-id="${s.id}" style="--card-color:${s.color || '#4ade80'}" onclick="openServer('${s.id}')">
         <div class="server-card-header">
           <div class="server-card-name">${s.name}</div>
-          <div class="server-card-status"><span class="dot ${running?'on':'off'}"></span><span>${running?'En línea':'Detenido'}</span></div>
+          <div class="server-card-status"><span class="dot ${running ? 'on' : 'off'}"></span><span>${running ? 'En línea' : 'Detenido'}</span></div>
         </div>
         <div class="server-card-jar">${jarName}</div>
         <div class="server-card-footer">
@@ -360,7 +360,7 @@ async function openServer(serverId) {
   const console_ = document.getElementById('console')
   console_.innerHTML = ''
   state.consoleLines = 0
-  ;(state.consoleLogs[serverId] || []).slice(-MAX_LINES).forEach(l => appendLog(l.text, l.type))
+    ; (state.consoleLogs[serverId] || []).slice(-MAX_LINES).forEach(l => appendLog(l.text, l.type))
 
   const status = await window.api.getStatus(serverId)
   updateDetailBar(status.running)
@@ -399,7 +399,7 @@ function initModal() {
 function renderColorOptions(containerId, selectedColor) {
   const container = document.getElementById(containerId)
   container.innerHTML = SERVER_COLORS.map(c =>
-    `<div class="color-opt ${c===(selectedColor||SERVER_COLORS[0])?'selected':''}" style="background:${c}" data-color="${c}" onclick="selectColor(this,'${containerId}')"></div>`
+    `<div class="color-opt ${c === (selectedColor || SERVER_COLORS[0]) ? 'selected' : ''}" style="background:${c}" data-color="${c}" onclick="selectColor(this,'${containerId}')"></div>`
   ).join('')
 }
 
@@ -456,9 +456,9 @@ function updateDetailBar(running, starting = false) {
   const text = document.getElementById('sbar-status-text')
   const start = document.getElementById('detail-btn-start')
   const stop = document.getElementById('detail-btn-stop')
-  if (starting) { dot.className='dot starting'; text.textContent='Iniciando...'; start.disabled=true; stop.disabled=true }
-  else if (running) { dot.className='dot on'; text.textContent='En línea'; start.disabled=true; stop.disabled=false }
-  else { dot.className='dot off'; text.textContent='Detenido'; start.disabled=false; stop.disabled=true }
+  if (starting) { dot.className = 'dot starting'; text.textContent = 'Iniciando...'; start.disabled = true; stop.disabled = true }
+  else if (running) { dot.className = 'dot on'; text.textContent = 'En línea'; start.disabled = true; stop.disabled = false }
+  else { dot.className = 'dot off'; text.textContent = 'Detenido'; start.disabled = false; stop.disabled = true }
 }
 
 document.getElementById('detail-btn-start').onclick = async () => {
@@ -496,8 +496,8 @@ function initConsole() {
   newSend.onclick = doSend
   newInput.onkeydown = (e) => {
     if (e.key === 'Enter') { doSend(); return }
-    if (e.key === 'ArrowUp') { histIdx = Math.min(histIdx+1, history.length-1); newInput.value = history[histIdx]||'' }
-    if (e.key === 'ArrowDown') { histIdx = Math.max(histIdx-1, -1); newInput.value = histIdx<0?'':history[histIdx] }
+    if (e.key === 'ArrowUp') { histIdx = Math.min(histIdx + 1, history.length - 1); newInput.value = history[histIdx] || '' }
+    if (e.key === 'ArrowDown') { histIdx = Math.max(histIdx - 1, -1); newInput.value = histIdx < 0 ? '' : history[histIdx] }
   }
 }
 
@@ -527,7 +527,7 @@ function parsePlayersFromLog(line) {
   const list = line.match(/There are \d+ of a max of \d+ players online: (.+)/)
   if (join) { state.onlinePlayers.add(join[1]); renderPlayers() }
   if (leave) { state.onlinePlayers.delete(leave[1]); renderPlayers() }
-  if (list) { list[1].split(',').map(n=>n.trim()).filter(Boolean).forEach(n=>state.onlinePlayers.add(n)); renderPlayers() }
+  if (list) { list[1].split(',').map(n => n.trim()).filter(Boolean).forEach(n => state.onlinePlayers.add(n)); renderPlayers() }
 }
 
 function renderPlayers() {
@@ -554,11 +554,11 @@ function initLists(server) {
   const wlAdd = document.getElementById('wl-add').cloneNode(true)
   document.getElementById('wl-add').parentNode.replaceChild(wlAdd, document.getElementById('wl-add'))
   document.getElementById('wl-add').onclick = () => addToList('whitelist', serverDir)
-  document.getElementById('wl-input').onkeydown = e => { if (e.key==='Enter') addToList('whitelist', serverDir) }
+  document.getElementById('wl-input').onkeydown = e => { if (e.key === 'Enter') addToList('whitelist', serverDir) }
   const blAdd = document.getElementById('bl-add').cloneNode(true)
   document.getElementById('bl-add').parentNode.replaceChild(blAdd, document.getElementById('bl-add'))
   document.getElementById('bl-add').onclick = () => addToList('banlist', serverDir)
-  document.getElementById('bl-input').onkeydown = e => { if (e.key==='Enter') addToList('banlist', serverDir) }
+  document.getElementById('bl-input').onkeydown = e => { if (e.key === 'Enter') addToList('banlist', serverDir) }
   document.getElementById('whitelist-toggle').onchange = (e) => {
     if (state.currentServerId) window.api.sendCommand(state.currentServerId, e.target.checked ? 'whitelist on' : 'whitelist off')
   }
@@ -574,7 +574,7 @@ async function loadListsTab(server) {
   renderList('banlist-ul', bl.list, 'banlist', serverDir, true)
 }
 
-function renderList(id, list, type, serverDir, showReason=false) {
+function renderList(id, list, type, serverDir, showReason = false) {
   const ul = document.getElementById(id); if (!ul) return
   if (!list.length) { ul.innerHTML = '<li style="color:var(--text2);font-size:12px;padding:8px 0">Sin entradas</li>'; return }
   const escapedDir = serverDir.replace(/\\/g, '\\\\')
@@ -582,7 +582,7 @@ function renderList(id, list, type, serverDir, showReason=false) {
     const name = entry.name || entry
     const reason = entry.reason || ''
     return `<li>
-      <div><div style="font-size:13px">${name}</div>${showReason&&reason?`<div style="font-size:11px;color:var(--text2)">${reason}</div>`:''}</div>
+      <div><div style="font-size:13px">${name}</div>${showReason && reason ? `<div style="font-size:11px;color:var(--text2)">${reason}</div>` : ''}</div>
       <button class="btn-remove" onclick="removeFromList('${type}',${i},'${escapedDir}')">✕</button>
     </li>`
   }).join('')
@@ -594,16 +594,16 @@ async function addToList(type, serverDir) {
   if (!val || !serverDir) return
   if (type === 'whitelist') {
     const { list } = await window.api.readWhitelist(serverDir)
-    if (!list.find(e => (e.name||e) === val)) {
-      list.push({ uuid:'', name:val })
+    if (!list.find(e => (e.name || e) === val)) {
+      list.push({ uuid: '', name: val })
       await window.api.writeWhitelist(serverDir, list)
       if (state.currentServerId) window.api.sendCommand(state.currentServerId, `whitelist add ${val}`)
     }
   } else {
     const reason = document.getElementById('bl-reason').value.trim() || 'Banned by admin'
     const { list } = await window.api.readBanlist(serverDir)
-    if (!list.find(e => (e.name||e) === val)) {
-      list.push({ uuid:'', name:val, reason, created:new Date().toISOString(), source:'Minecraft Manager', expires:'forever' })
+    if (!list.find(e => (e.name || e) === val)) {
+      list.push({ uuid: '', name: val, reason, created: new Date().toISOString(), source: 'Minecraft Manager', expires: 'forever' })
       await window.api.writeBanlist(serverDir, list)
       if (state.currentServerId) window.api.sendCommand(state.currentServerId, `ban ${val} ${reason}`)
     }
@@ -617,13 +617,13 @@ async function addToList(type, serverDir) {
 window.removeFromList = async (type, idx, serverDir) => {
   if (type === 'whitelist') {
     const { list } = await window.api.readWhitelist(serverDir)
-    const name = list[idx]?.name||list[idx]
+    const name = list[idx]?.name || list[idx]
     list.splice(idx, 1)
     await window.api.writeWhitelist(serverDir, list)
     if (state.currentServerId && name) window.api.sendCommand(state.currentServerId, `whitelist remove ${name}`)
   } else {
     const { list } = await window.api.readBanlist(serverDir)
-    const name = list[idx]?.name||list[idx]
+    const name = list[idx]?.name || list[idx]
     list.splice(idx, 1)
     await window.api.writeBanlist(serverDir, list)
     if (state.currentServerId && name) window.api.sendCommand(state.currentServerId, `pardon ${name}`)
@@ -643,7 +643,7 @@ async function loadPropertiesTab(server) {
     const val = res.props[key] ?? ''
     const isBool = val === 'true' || val === 'false'
     const input = isBool
-      ? `<select id="prop-${key}" data-key="${key}"><option value="true" ${val==='true'?'selected':''}>true</option><option value="false" ${val==='false'?'selected':''}>false</option></select>`
+      ? `<select id="prop-${key}" data-key="${key}"><option value="true" ${val === 'true' ? 'selected' : ''}>true</option><option value="false" ${val === 'false' ? 'selected' : ''}>false</option></select>`
       : `<input type="text" id="prop-${key}" data-key="${key}" value="${val}" />`
     return `<div class="prop-item"><label>${key}</label>${input}</div>`
   }).join('')
@@ -669,10 +669,10 @@ async function loadBackupsTab(server, settings) {
     if (!backups.length) { list.innerHTML = '<div class="empty-state">No hay backups todavía</div>'; return }
     list.innerHTML = backups.map(b => `
       <div class="backup-item">
-        <div class="backup-info"><div class="bname">${b.name}</div><div class="bmeta">${new Date(b.date).toLocaleString('es-ES')} · ${(b.size/1024/1024).toFixed(1)} MB</div></div>
+        <div class="backup-info"><div class="bname">${b.name}</div><div class="bmeta">${new Date(b.date).toLocaleString('es-ES')} · ${(b.size / 1024 / 1024).toFixed(1)} MB</div></div>
         <div class="backup-actions">
-          <button class="btn-icon" onclick="window.api.openPath('${b.path.replace(/\\/g,'\\\\')}')">📁</button>
-          <button class="btn-icon danger" onclick="deleteBackup('${b.path.replace(/\\/g,'\\\\')}')">🗑</button>
+          <button class="btn-icon" onclick="window.api.openPath('${b.path.replace(/\\/g, '\\\\')}')">📁</button>
+          <button class="btn-icon danger" onclick="deleteBackup('${b.path.replace(/\\/g, '\\\\')}')">🗑</button>
         </div>
       </div>`).join('')
   }
@@ -718,7 +718,7 @@ function loadConfigTab(server, settings) {
   }
   document.getElementById('btn-save-cfg').onclick = async () => {
     const selectedColor = document.querySelector('#color-options .color-opt.selected')
-    const data = { name: document.getElementById('cfg-name').value.trim()||server.name, jarPath: document.getElementById('cfg-jar').value.trim(), javaPath: document.getElementById('cfg-java').value.trim()||null, minRam: parseInt(document.getElementById('cfg-min-ram').value)||1024, maxRam: parseInt(document.getElementById('cfg-max-ram').value)||4096, extraArgs: document.getElementById('cfg-extra').value.trim(), color: selectedColor?selectedColor.dataset.color:server.color }
+    const data = { name: document.getElementById('cfg-name').value.trim() || server.name, jarPath: document.getElementById('cfg-jar').value.trim(), javaPath: document.getElementById('cfg-java').value.trim() || null, minRam: parseInt(document.getElementById('cfg-min-ram').value) || 1024, maxRam: parseInt(document.getElementById('cfg-max-ram').value) || 4096, extraArgs: document.getElementById('cfg-extra').value.trim(), color: selectedColor ? selectedColor.dataset.color : server.color }
     const res = await window.api.updateServer({ serverId: server.id, data })
     if (res.ok) { document.getElementById('bc-name-text').textContent = data.name; document.getElementById('sbar-dot').style.background = data.color; appendLog('Configuración guardada', 'success'); loadPropertiesTab(res.server) }
   }
@@ -736,3 +736,12 @@ window.qcmd = (cmd) => {
   window.api.sendCommand(state.currentServerId, cmd)
   appendLog(`> ${cmd}`, 'info')
 }
+
+window.api.onUpdateAvailable(() => {
+  appendLog('Hay una actualización disponible, descargando...', 'info')
+})
+
+window.api.onUpdateDownloaded(() => {
+  const ok = confirm('Actualización lista. ¿Instalar y reiniciar ahora?')
+  if (ok) window.api.installUpdate()
+})

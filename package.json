@@ -1,8 +1,8 @@
 {
-  "name": "minecraft-manager",
+  "name": "minecraft-local-server-app",
   "version": "1.0.0",
-  "description": "Minecraft Server Manager - Administra tu servidor local",
-  "author": "Minecraft Manager",
+  "description": "Minecraft Local Server Manager",
+  "author": "Minecraft Local Server Manager",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -16,14 +16,19 @@
   },
   "build": {
     "appId": "com.minecraftmanager.app",
-    "productName": "Minecraft Manager",
+    "productName": "Minecraft Local Server Manager",
     "publish": {
       "provider": "github",
       "releaseType": "release"
     },
     "win": {
       "target": [
-        { "target": "nsis", "arch": ["x64"] }
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
       ],
       "icon": "assets/icon.ico",
       "signingHashAlgorithms": null,
@@ -36,7 +41,7 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Minecraft Manager",
+      "shortcutName": "Minecraft Local Server Manager",
       "installerIcon": "assets/icon.ico",
       "uninstallerIcon": "assets/icon.ico",
       "include": "assets/installer.nsh"
