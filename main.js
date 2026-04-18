@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron')
 const path = require('path')
 const fs = require('fs')
+const os = require('os')
 const { spawn } = require('child_process')
 const Store = require('electron-store')
 const si = require('systeminformation')
@@ -8,30 +9,119 @@ const archiver = require('archiver')
 const schedule = require('node-schedule')
 const bcrypt = require('bcryptjs')
 const crypto = require('crypto')
+const https = require('https')
+const { autoUpdater } = require('electron-updater')
 
 // ─── Stores ────────────────────────────────────────────────────────────────
-const usersStore = new Store({ name: 'users' })
+const usersStore   = new Store({ name: 'users' })
 const serversStore = new Store({ name: 'servers' })
 const settingsStore = new Store({ name: 'settings' })
+const analyticsStore = new Store({ name: 'analytics' })
+const crashStore   = new Store({ name: 'crashes' })
 
 let mainWindow = null
-
-// ─── Active server processes: { [serverId]: { process, dir, autoBackupJob } }
 const activeServers = {}
 let statsInterval = null
+
+// ─── Analytics setup ───────────────────────────────────────────────────────
+// Genera un ID anónimo único por instalación (nunca contiene datos personales)
+function getInstallId() {
+  let id = analyticsStore.get('installId')
+  if (!id) {
+    id = crypto.randomUUID()
+    analyticsStore.set('installId', id)
+    analyticsStore.set('firstSeen', Date.now())
+  }
+  return id
+}
+
+function trackEvent(event, data = {}) {
+  if (!analyticsStore.get('analyticsEnabled', true)) return
+  const payload = {
+    installId: getInstallId(),
+    appVersion: app.getVersion(),
+    platform: process.platform,
+    arch: process.arch,
+    osVersion: os.release(),
+    event,
+    data,
+    timestamp: Date.now()
+  }
+  // Envío anónimo — usa un endpoint propio o un servicio como Plausible/Umami self-hosted
+  // Por defecto apunta a un endpoint configurable, si no hay, guarda localmente
+  const endpoint = settingsStore.get('analyticsEndpoint')
+  if (endpoint) {
+    sendAnalyticsPayload(endpoint, payload)
+  } else {
+    // Guarda los últimos 500 eventos localmente para revisión
+    const events = analyticsStore.get('events') || []
+    events.push(payload)
+    if (events.length > 500) events.splice(0, events.length - 500)
+    analyticsStore.set('events', events)
+  }
+}
+
+function sendAnalyticsPayload(endpoint, payload) {
+  try {
+    const body = JSON.stringify(payload)
+    const url = new URL(endpoint)
+    const options = {
+      hostname: url.hostname, port: url.port || 443,
+      path: url.pathname, method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) }
+    }
+    const req = https.request(options)
+    req.on('error', () => {}) // silencioso
+    req.write(body)
+    req.end()
+  } catch (_) {}
+}
+
+// ─── Crash reporter ────────────────────────────────────────────────────────
+function setupCrashReporter() {
+  process.on('uncaughtException', (err) => {
+    logCrash('uncaughtException', err)
+  })
+  process.on('unhandledRejection', (reason) => {
+    logCrash('unhandledRejection', reason)
+  })
+}
+
+function logCrash(type, err) {
+  const crash = {
+    id: crypto.randomUUID(),
+    type,
+    message: err?.message || String(err),
+    stack: err?.stack || '',
+    appVersion: app.getVersion(),
+    platform: process.platform,
+    osVersion: os.release(),
+    timestamp: Date.now()
+  }
+  const crashes = crashStore.get('crashes') || []
+  crashes.unshift(crash)
+  if (crashes.length > 100) crashes.splice(100)
+  crashStore.set('crashes', crashes)
+  crashStore.set('lastCrash', crash)
+
+  // Notifica al renderer si la ventana existe
+  mainWindow?.webContents.send('crash-logged', crash)
+
+  // Envía si hay endpoint configurado
+  const endpoint = settingsStore.get('crashEndpoint')
+  if (endpoint) sendAnalyticsPayload(endpoint, { type: 'crash', ...crash })
+}
 
 // ─── Window ────────────────────────────────────────────────────────────────
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1280, height: 800,
-    minWidth: 1024, minHeight: 640,
+    width: 1280, height: 800, minWidth: 1024, minHeight: 640,
     title: 'Minecraft Manager',
     icon: path.join(__dirname, 'assets', 'icon.ico'),
     backgroundColor: '#0f0f1a',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
-      contextIsolation: true,
-      nodeIntegration: false
+      contextIsolation: true, nodeIntegration: false
     },
     frame: false
   })
@@ -46,7 +136,62 @@ function createWindow() {
   mainWindow.on('closed', () => { mainWindow = null })
 }
 
-app.whenReady().then(() => { createWindow(); startStatsPolling() })
+// ─── Auto updater ──────────────────────────────────────────────────────────
+function setupAutoUpdater() {
+  if (!app.isPackaged) return // solo en builds compilados
+
+  autoUpdater.autoDownload = true
+  autoUpdater.autoInstallOnAppQuit = true
+
+  autoUpdater.on('checking-for-update', () => {
+    mainWindow?.webContents.send('update-status', { status: 'checking' })
+  })
+  autoUpdater.on('update-available', (info) => {
+    mainWindow?.webContents.send('update-status', { status: 'available', version: info.version })
+    trackEvent('update_available', { version: info.version })
+  })
+  autoUpdater.on('update-not-available', () => {
+    mainWindow?.webContents.send('update-status', { status: 'none' })
+  })
+  autoUpdater.on('download-progress', (progress) => {
+    mainWindow?.webContents.send('update-status', {
+      status: 'downloading',
+      percent: Math.round(progress.percent),
+      transferred: progress.transferred,
+      total: progress.total
+    })
+  })
+  autoUpdater.on('update-downloaded', (info) => {
+    mainWindow?.webContents.send('update-status', { status: 'ready', version: info.version })
+    trackEvent('update_downloaded', { version: info.version })
+  })
+  autoUpdater.on('error', (err) => {
+    mainWindow?.webContents.send('update-status', { status: 'error', message: err.message })
+  })
+
+  // Comprueba al arrancar y luego cada 4 horas
+  setTimeout(() => autoUpdater.checkForUpdates(), 5000)
+  setInterval(() => autoUpdater.checkForUpdates(), 4 * 60 * 60 * 1000)
+}
+
+ipcMain.handle('update:check', () => {
+  if (app.isPackaged) autoUpdater.checkForUpdates()
+  return { ok: true }
+})
+ipcMain.handle('update:install', () => {
+  autoUpdater.quitAndInstall(false, true)
+})
+
+// ─── App lifecycle ─────────────────────────────────────────────────────────
+setupCrashReporter()
+
+app.whenReady().then(() => {
+  createWindow()
+  startStatsPolling()
+  setupAutoUpdater()
+  trackEvent('app_launch', { version: app.getVersion() })
+})
+
 app.on('window-all-closed', () => { stopAllServers(); app.quit() })
 
 // ─── Auth ──────────────────────────────────────────────────────────────────
@@ -60,6 +205,7 @@ ipcMain.handle('auth:register', async (_, { username, password, avatar }) => {
   const id = crypto.randomUUID()
   users[username.toLowerCase()] = { id, username, hash, avatar: avatar || 'default', createdAt: Date.now() }
   saveUsers(users)
+  trackEvent('user_register')
   return { ok: true, user: { id, username, avatar: avatar || 'default' } }
 })
 
@@ -69,12 +215,12 @@ ipcMain.handle('auth:login', async (_, { username, password }) => {
   if (!u) return { ok: false, error: 'Usuario no encontrado' }
   const match = await bcrypt.compare(password, u.hash)
   if (!match) return { ok: false, error: 'Contraseña incorrecta' }
+  trackEvent('user_login')
   return { ok: true, user: { id: u.id, username: u.username, avatar: u.avatar } }
 })
 
 ipcMain.handle('auth:listUsers', () => {
-  const users = getUsers()
-  return Object.values(users).map(u => ({ id: u.id, username: u.username, avatar: u.avatar }))
+  return Object.values(getUsers()).map(u => ({ id: u.id, username: u.username, avatar: u.avatar }))
 })
 
 ipcMain.handle('auth:deleteUser', async (_, { userId, password }) => {
@@ -90,20 +236,19 @@ ipcMain.handle('auth:deleteUser', async (_, { userId, password }) => {
 })
 
 // ─── Servers CRUD ──────────────────────────────────────────────────────────
-function getServers(userId) {
-  const all = serversStore.get('servers') || {}
-  return Object.values(all).filter(s => s.userId === userId)
-}
 function getAllServersMap() { return serversStore.get('servers') || {} }
 function saveServerMap(map) { serversStore.set('servers', map) }
 
-ipcMain.handle('servers:list', (_, userId) => getServers(userId))
+ipcMain.handle('servers:list', (_, userId) => {
+  return Object.values(getAllServersMap()).filter(s => s.userId === userId)
+})
 
 ipcMain.handle('servers:create', (_, { userId, name, jarPath, javaPath, minRam, maxRam, extraArgs, color }) => {
   const map = getAllServersMap()
   const id = crypto.randomUUID()
   map[id] = { id, userId, name, jarPath, javaPath, minRam: minRam || 1024, maxRam: maxRam || 4096, extraArgs: extraArgs || '', color: color || '#4ade80', createdAt: Date.now() }
   saveServerMap(map)
+  trackEvent('server_created')
   return { ok: true, server: map[id] }
 })
 
@@ -123,12 +268,9 @@ ipcMain.handle('servers:delete', (_, serverId) => {
   return { ok: true }
 })
 
-ipcMain.handle('servers:get', (_, serverId) => {
-  const map = getAllServersMap()
-  return map[serverId] || null
-})
+ipcMain.handle('servers:get', (_, serverId) => getAllServersMap()[serverId] || null)
 
-// ─── Server process management ─────────────────────────────────────────────
+// ─── Server process ────────────────────────────────────────────────────────
 function startServer(serverId, config) {
   if (activeServers[serverId]) return { ok: false, error: 'Ya está en ejecución' }
   const { jarPath, javaPath, minRam, maxRam, extraArgs } = config
@@ -136,18 +278,18 @@ function startServer(serverId, config) {
   if (!fs.existsSync(jarPath)) return { ok: false, error: 'No se encontró el archivo .jar' }
 
   const java = javaPath || 'java'
-  const args = [
-    `-Xms${minRam}M`, `-Xmx${maxRam}M`,
-    ...(extraArgs ? extraArgs.split(' ').filter(Boolean) : []),
-    '-jar', jarPath, '--nogui'
-  ]
+  const args = [`-Xms${minRam}M`, `-Xmx${maxRam}M`, ...(extraArgs ? extraArgs.split(' ').filter(Boolean) : []), '-jar', jarPath, '--nogui']
 
   try {
     const proc = spawn(java, args, { cwd: serverDir, shell: false })
+    const startTime = Date.now()
 
     proc.stdout.on('data', (data) => {
       data.toString().split('\n').filter(l => l.trim()).forEach(line => {
         mainWindow?.webContents.send('console-line', { serverId, text: line, type: classifyLine(line) })
+        if (/Done \([\d.]+s\)!/i.test(line)) {
+          trackEvent('server_started', { startupMs: Date.now() - startTime })
+        }
       })
     })
     proc.stderr.on('data', (data) => {
@@ -156,17 +298,21 @@ function startServer(serverId, config) {
       })
     })
     proc.on('exit', (code) => {
+      const uptime = activeServers[serverId] ? Date.now() - activeServers[serverId].startTime : 0
       delete activeServers[serverId]
       mainWindow?.webContents.send('server-stopped', { serverId, code })
+      trackEvent('server_stopped', { code, uptimeMs: uptime })
     })
     proc.on('error', (err) => {
       delete activeServers[serverId]
       mainWindow?.webContents.send('server-stopped', { serverId, error: err.message })
+      logCrash('server_process_error', err)
     })
 
-    activeServers[serverId] = { process: proc, dir: serverDir }
+    activeServers[serverId] = { process: proc, dir: serverDir, startTime: Date.now() }
     return { ok: true }
   } catch (err) {
+    logCrash('server_start_error', err)
     return { ok: false, error: err.message }
   }
 }
@@ -175,29 +321,23 @@ function stopServer(serverId) {
   const s = activeServers[serverId]
   if (!s) return { ok: false, error: 'No está en ejecución' }
   s.process.stdin.write('stop\n')
-  setTimeout(() => {
-    if (activeServers[serverId]) { activeServers[serverId].process.kill(); delete activeServers[serverId] }
-  }, 10000)
+  setTimeout(() => { if (activeServers[serverId]) { activeServers[serverId].process.kill(); delete activeServers[serverId] } }, 10000)
   return { ok: true }
 }
 
-function stopAllServers() {
-  Object.keys(activeServers).forEach(id => stopServer(id))
-}
+function stopAllServers() { Object.keys(activeServers).forEach(id => stopServer(id)) }
 
 ipcMain.handle('server:start', (_, { serverId, config }) => startServer(serverId, config))
 ipcMain.handle('server:stop', (_, serverId) => stopServer(serverId))
 ipcMain.handle('server:command', (_, { serverId, cmd }) => {
   const s = activeServers[serverId]
-  if (!s) return { ok: false, error: 'No activo' }
+  if (!s) return { ok: false }
   s.process.stdin.write(cmd + '\n')
   return { ok: true }
 })
 ipcMain.handle('server:status', (_, serverId) => ({ running: !!activeServers[serverId] }))
 ipcMain.handle('server:statusAll', () => {
-  const result = {}
-  Object.keys(activeServers).forEach(id => { result[id] = true })
-  return result
+  const r = {}; Object.keys(activeServers).forEach(id => { r[id] = true }); return r
 })
 
 function classifyLine(line) {
@@ -220,7 +360,7 @@ function startStatsPolling() {
         ramTotal: Math.round(mem.total / 1024 / 1024),
         activeServers: Object.keys(activeServers)
       })
-    } catch (_) { }
+    } catch (_) {}
   }, 2000)
 }
 
@@ -245,7 +385,7 @@ function writeProperties(serverDir, props) {
   return { ok: true }
 }
 
-ipcMain.handle('props:read', (_, serverDir) => readProperties(serverDir))
+ipcMain.handle('props:read', (_, d) => readProperties(d))
 ipcMain.handle('props:write', (_, { serverDir, props }) => writeProperties(serverDir, props))
 
 // ─── Lists ─────────────────────────────────────────────────────────────────
@@ -273,13 +413,16 @@ async function createBackup(serverDir, backupDir) {
   return new Promise((resolve) => {
     const output = fs.createWriteStream(outFile)
     const archive = archiver('zip', { zlib: { level: 6 } })
-    output.on('close', () => resolve({ ok: true, file: outFile, size: archive.pointer() }))
-    archive.on('error', (err) => resolve({ ok: false, error: err.message }))
+    output.on('close', () => {
+      trackEvent('backup_created', { sizeMb: Math.round(archive.pointer() / 1024 / 1024) })
+      resolve({ ok: true, file: outFile, size: archive.pointer() })
+    })
+    archive.on('error', (err) => { logCrash('backup_error', err); resolve({ ok: false, error: err.message }) })
     archive.pipe(output)
-      ;['world', 'world_nether', 'world_the_end'].forEach(dir => {
-        const full = path.join(serverDir, dir)
-        if (fs.existsSync(full)) archive.directory(full, dir)
-      })
+    ;['world', 'world_nether', 'world_the_end'].forEach(dir => {
+      const full = path.join(serverDir, dir)
+      if (fs.existsSync(full)) archive.directory(full, dir)
+    })
     archive.finalize()
   })
 }
@@ -296,13 +439,34 @@ ipcMain.handle('backup:list', (_, backupDir) => {
 })
 ipcMain.handle('backup:delete', (_, filePath) => { fs.unlinkSync(filePath); return { ok: true } })
 
-// ─── Settings per server ───────────────────────────────────────────────────
+// ─── Settings ──────────────────────────────────────────────────────────────
 ipcMain.handle('settings:get', (_, serverId) => settingsStore.get(`server_${serverId}`) || {})
 ipcMain.handle('settings:set', (_, { serverId, data }) => { settingsStore.set(`server_${serverId}`, data); return { ok: true } })
 
+// ─── Analytics IPC ─────────────────────────────────────────────────────────
+ipcMain.handle('analytics:getConsent', () => analyticsStore.get('analyticsEnabled', null))
+ipcMain.handle('analytics:setConsent', (_, enabled) => {
+  analyticsStore.set('analyticsEnabled', enabled)
+  if (enabled) trackEvent('analytics_enabled')
+  return { ok: true }
+})
+ipcMain.handle('analytics:getEvents', () => analyticsStore.get('events') || [])
+ipcMain.handle('analytics:getStats', () => {
+  const events = analyticsStore.get('events') || []
+  const firstSeen = analyticsStore.get('firstSeen')
+  const counts = {}
+  events.forEach(e => { counts[e.event] = (counts[e.event] || 0) + 1 })
+  return { installId: getInstallId(), firstSeen, totalEvents: events.length, counts, appVersion: app.getVersion() }
+})
+
+// ─── Crash reports IPC ─────────────────────────────────────────────────────
+ipcMain.handle('crashes:list', () => crashStore.get('crashes') || [])
+ipcMain.handle('crashes:clear', () => { crashStore.set('crashes', []); return { ok: true } })
+ipcMain.handle('crashes:getLast', () => crashStore.get('lastCrash') || null)
+
 // ─── Dialogs ───────────────────────────────────────────────────────────────
 ipcMain.handle('dialog:openJar', async () => {
-  const r = await dialog.showOpenDialog(mainWindow, { title: 'Selecciona el .jar del servidor', filters: [{ name: 'JAR', extensions: ['jar'] }], properties: ['openFile'] })
+  const r = await dialog.showOpenDialog(mainWindow, { title: 'Selecciona el .jar', filters: [{ name: 'JAR', extensions: ['jar'] }], properties: ['openFile'] })
   return r.canceled ? null : r.filePaths[0]
 })
 ipcMain.handle('dialog:openDir', async () => {
@@ -310,34 +474,9 @@ ipcMain.handle('dialog:openDir', async () => {
   return r.canceled ? null : r.filePaths[0]
 })
 ipcMain.handle('shell:openPath', (_, p) => shell.openPath(p))
+ipcMain.handle('app:version', () => app.getVersion())
 
 // ─── Window controls ───────────────────────────────────────────────────────
 ipcMain.handle('window:minimize', () => mainWindow?.minimize())
 ipcMain.handle('window:maximize', () => mainWindow?.isMaximized() ? mainWindow.unmaximize() : mainWindow?.maximize())
 ipcMain.handle('window:close', () => { stopAllServers(); setTimeout(() => app.quit(), 2000) })
-
-
-// ─── Auto Updates ──────────────────────────────────────────────────────────
-const { autoUpdater } = require('electron-updater')
-
-app.whenReady().then(() => {
-  createWindow()
-  startStatsPolling()
-
-  // Comprueba actualizaciones al arrancar (solo en producción)
-  if (app.isPackaged) {
-    autoUpdater.checkForUpdatesAndNotify()
-  }
-})
-
-autoUpdater.on('update-available', () => {
-  mainWindow?.webContents.send('update-available')
-})
-
-autoUpdater.on('update-downloaded', () => {
-  mainWindow?.webContents.send('update-downloaded')
-})
-
-ipcMain.handle('update:install', () => {
-  autoUpdater.quitAndInstall()
-})

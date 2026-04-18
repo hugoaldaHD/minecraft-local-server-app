@@ -13,11 +13,10 @@
   <div class="titlebar-left">
     <div class="app-icon">⛏</div>
     <span class="app-name">Minecraft Manager</span>
-    <!-- Breadcrumb shown when inside a server -->
     <div class="breadcrumb" id="breadcrumb" style="display:none">
       <span class="bc-sep">›</span>
       <button class="bc-btn" id="bc-servers">Mis servidores</button>
-      <span class="bc-sep bc-server-name" id="bc-server-name" style="display:none">› <span id="bc-name-text"></span></span>
+      <span class="bc-server-name" id="bc-server-name" style="display:none">› <span id="bc-name-text"></span></span>
     </div>
   </div>
   <div class="titlebar-center" id="titlebar-stats" style="display:none">
@@ -28,6 +27,7 @@
     </span>
   </div>
   <div class="titlebar-right">
+    <button class="wbtn update-btn" id="btn-update-notify" title="Actualización disponible" style="display:none">↑ Actualizar</button>
     <div class="user-chip" id="user-chip" style="display:none">
       <div class="user-avatar-sm" id="user-avatar-sm">?</div>
       <span id="user-chip-name"></span>
@@ -39,53 +39,62 @@
   </div>
 </div>
 
+<!-- ══ UPDATE BANNER ═════════════════════════════════════════════════════ -->
+<div class="update-banner" id="update-banner" style="display:none">
+  <span id="update-banner-text">Comprobando actualizaciones...</span>
+  <div class="update-progress" id="update-progress" style="display:none">
+    <div class="update-bar" id="update-bar"></div>
+  </div>
+  <button class="btn-update-install" id="btn-update-install" style="display:none">Instalar y reiniciar</button>
+  <button class="btn-update-dismiss" id="btn-update-dismiss">✕</button>
+</div>
+
+<!-- ══ SCREEN: ANALYTICS CONSENT ════════════════════════════════════════ -->
+<div class="screen" id="screen-consent">
+  <div class="auth-bg">
+    <div class="auth-card consent-card">
+      <div class="auth-logo">📊</div>
+      <h1 class="auth-title">Ayúdanos a mejorar</h1>
+      <p class="auth-sub">Antes de empezar, ¿aceptas el envío de datos anónimos de uso?</p>
+      <div class="consent-details">
+        <div class="consent-item yes">✅ Versión de la app y SO</div>
+        <div class="consent-item yes">✅ Funciones usadas (sin datos personales)</div>
+        <div class="consent-item yes">✅ Informes de error anónimos</div>
+        <div class="consent-item no">❌ Nunca: nombres, IPs, contraseñas ni datos del servidor</div>
+        <div class="consent-item no">❌ Nunca: se vende ni comparte con terceros</div>
+      </div>
+      <p style="font-size:11px;color:var(--text2);text-align:center">Puedes cambiar esto en cualquier momento desde Diagnóstico</p>
+      <div class="consent-btns">
+        <button class="btn-consent-no" id="btn-consent-no">No, gracias</button>
+        <button class="btn-consent-yes" id="btn-consent-yes">Aceptar y continuar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ══ SCREEN: AUTH ══════════════════════════════════════════════════════ -->
-<div class="screen active" id="screen-auth">
+<div class="screen" id="screen-auth">
   <div class="auth-bg">
     <div class="auth-card">
       <div class="auth-logo">⛏</div>
       <h1 class="auth-title">Minecraft Manager</h1>
-      <p class="auth-sub">Gestiona tus servidores locales</p>
-
-      <!-- Tabs -->
+      <p class="auth-sub" id="auth-version-label"></p>
       <div class="auth-tabs">
         <button class="auth-tab active" data-tab="login">Iniciar sesión</button>
         <button class="auth-tab" data-tab="register">Crear cuenta</button>
       </div>
-
-      <!-- Login form -->
       <div class="auth-form active" id="form-login">
         <div class="auth-profiles" id="auth-profiles"></div>
-        <div class="field">
-          <label>Usuario</label>
-          <input type="text" id="login-user" placeholder="Tu nombre de usuario" autocomplete="off" />
-        </div>
-        <div class="field">
-          <label>Contraseña</label>
-          <input type="password" id="login-pass" placeholder="••••••••" />
-        </div>
+        <div class="field"><label>Usuario</label><input type="text" id="login-user" placeholder="Tu nombre de usuario" autocomplete="off" /></div>
+        <div class="field"><label>Contraseña</label><input type="password" id="login-pass" placeholder="••••••••" /></div>
         <p class="auth-error" id="login-error"></p>
         <button class="btn-auth" id="btn-login">Entrar</button>
       </div>
-
-      <!-- Register form -->
       <div class="auth-form" id="form-register">
-        <div class="field">
-          <label>Nombre de usuario</label>
-          <input type="text" id="reg-user" placeholder="Elige un nombre" autocomplete="off" />
-        </div>
-        <div class="field">
-          <label>Contraseña</label>
-          <input type="password" id="reg-pass" placeholder="Mínimo 6 caracteres" />
-        </div>
-        <div class="field">
-          <label>Confirmar contraseña</label>
-          <input type="password" id="reg-pass2" placeholder="Repite la contraseña" />
-        </div>
-        <div class="field">
-          <label>Avatar (emoji)</label>
-          <div class="avatar-picker" id="avatar-picker"></div>
-        </div>
+        <div class="field"><label>Nombre de usuario</label><input type="text" id="reg-user" placeholder="Elige un nombre" autocomplete="off" /></div>
+        <div class="field"><label>Contraseña</label><input type="password" id="reg-pass" placeholder="Mínimo 6 caracteres" /></div>
+        <div class="field"><label>Confirmar contraseña</label><input type="password" id="reg-pass2" placeholder="Repite la contraseña" /></div>
+        <div class="field"><label>Avatar (emoji)</label><div class="avatar-picker" id="avatar-picker"></div></div>
         <p class="auth-error" id="reg-error"></p>
         <button class="btn-auth" id="btn-register">Crear cuenta</button>
       </div>
@@ -100,19 +109,20 @@
       <h1 class="servers-title">Mis servidores</h1>
       <p class="servers-sub" id="servers-sub">Cargando...</p>
     </div>
-    <button class="btn-new-server" id="btn-new-server">+ Añadir servidor</button>
+    <div style="display:flex;gap:8px">
+      <button class="btn-secondary" id="btn-diagnostics">🔧 Diagnóstico</button>
+      <button class="btn-new-server" id="btn-new-server">+ Añadir servidor</button>
+    </div>
   </div>
   <div class="servers-grid" id="servers-grid"></div>
 </div>
 
 <!-- ══ SCREEN: SERVER DETAIL ═════════════════════════════════════════════ -->
 <div class="screen" id="screen-detail">
-
-  <!-- Server status bar -->
   <div class="server-bar" id="server-bar">
     <div class="server-bar-left">
       <div class="server-color-dot" id="sbar-dot"></div>
-      <div class="status-pill" id="sbar-status-pill">
+      <div class="status-pill">
         <span class="dot off" id="sbar-dot-status"></span>
         <span id="sbar-status-text">Detenido</span>
       </div>
@@ -122,8 +132,6 @@
       <button class="btn-stop" id="detail-btn-stop" disabled>■ Detener</button>
     </div>
   </div>
-
-  <!-- Navigation tabs -->
   <nav class="nav" id="detail-nav">
     <button class="nav-item active" data-tab="console">Consola</button>
     <button class="nav-item" data-tab="players">Jugadores</button>
@@ -133,7 +141,6 @@
     <button class="nav-item" data-tab="config">Configuración</button>
   </nav>
 
-  <!-- Tab: Console -->
   <div class="tab active" id="tab-console">
     <div class="console-wrap"><div class="console" id="console"></div></div>
     <div class="cmd-bar">
@@ -143,12 +150,8 @@
     </div>
   </div>
 
-  <!-- Tab: Players -->
   <div class="tab" id="tab-players">
-    <div class="panel-header">
-      <h2>Jugadores conectados</h2>
-      <button class="btn-secondary" id="btn-refresh-players">↻ Actualizar</button>
-    </div>
+    <div class="panel-header"><h2>Jugadores conectados</h2><button class="btn-secondary" id="btn-refresh-players">↻ Actualizar</button></div>
     <div class="players-grid" id="players-grid"></div>
     <div class="quick-actions">
       <h3>Acciones rápidas</h3>
@@ -164,18 +167,11 @@
     </div>
   </div>
 
-  <!-- Tab: Lists -->
   <div class="tab" id="tab-lists">
     <div class="lists-container">
       <div class="list-panel">
-        <div class="list-header">
-          <h2>✅ Whitelist</h2>
-          <label class="toggle-wrap"><input type="checkbox" id="whitelist-toggle" /><span>Activa</span></label>
-        </div>
-        <div class="list-add">
-          <input type="text" id="wl-input" placeholder="Nombre del jugador" />
-          <button id="wl-add">Añadir</button>
-        </div>
+        <div class="list-header"><h2>✅ Whitelist</h2><label class="toggle-wrap"><input type="checkbox" id="whitelist-toggle" /><span>Activa</span></label></div>
+        <div class="list-add"><input type="text" id="wl-input" placeholder="Nombre del jugador" /><button id="wl-add">Añadir</button></div>
         <ul class="player-list" id="whitelist-ul"></ul>
       </div>
       <div class="list-panel">
@@ -190,21 +186,13 @@
     </div>
   </div>
 
-  <!-- Tab: Properties -->
   <div class="tab" id="tab-properties">
-    <div class="panel-header">
-      <h2>server.properties</h2>
-      <button class="btn-primary" id="btn-save-props">💾 Guardar</button>
-    </div>
+    <div class="panel-header"><h2>server.properties</h2><button class="btn-primary" id="btn-save-props">💾 Guardar</button></div>
     <div class="props-grid" id="props-grid"><div class="empty-state">Guarda la configuración del servidor primero.</div></div>
   </div>
 
-  <!-- Tab: Backups -->
   <div class="tab" id="tab-backups">
-    <div class="panel-header">
-      <h2>Backups del mundo</h2>
-      <button class="btn-primary" id="btn-backup-now">📦 Crear backup ahora</button>
-    </div>
+    <div class="panel-header"><h2>Backups del mundo</h2><button class="btn-primary" id="btn-backup-now">📦 Crear backup ahora</button></div>
     <div class="backup-auto-config">
       <h3>Backup automático</h3>
       <div class="auto-backup-row">
@@ -223,7 +211,6 @@
     <div class="backups-list" id="backups-list"></div>
   </div>
 
-  <!-- Tab: Config -->
   <div class="tab" id="tab-config">
     <div class="settings-form">
       <h2>Configuración del servidor</h2>
@@ -236,24 +223,15 @@
       </div>
       <div class="field-group">
         <label>Archivo JAR</label>
-        <div class="field-row">
-          <input type="text" id="cfg-jar" placeholder="C:\servers\minecraft\server.jar" readonly />
-          <button id="btn-pick-jar">📁 Buscar</button>
-        </div>
+        <div class="field-row"><input type="text" id="cfg-jar" placeholder="C:\servers\server.jar" readonly /><button id="btn-pick-jar">📁 Buscar</button></div>
         <p class="field-hint">Compatible con Vanilla, Paper, Spigot, Bukkit, Fabric y Forge</p>
       </div>
-      <div class="field-group">
-        <label>Ruta de Java (opcional)</label>
-        <input type="text" id="cfg-java" placeholder="java" />
-      </div>
+      <div class="field-group"><label>Ruta de Java (opcional)</label><input type="text" id="cfg-java" placeholder="java" /></div>
       <div class="field-row">
         <div class="field-group flex1"><label>RAM mínima (MB)</label><input type="number" id="cfg-min-ram" value="1024" min="512" step="256" /></div>
         <div class="field-group flex1"><label>RAM máxima (MB)</label><input type="number" id="cfg-max-ram" value="4096" min="1024" step="256" /></div>
       </div>
-      <div class="field-group">
-        <label>Argumentos JVM adicionales</label>
-        <input type="text" id="cfg-extra" placeholder="-XX:+UseG1GC -XX:+ParallelRefProcEnabled" />
-      </div>
+      <div class="field-group"><label>Argumentos JVM adicionales</label><input type="text" id="cfg-extra" placeholder="-XX:+UseG1GC" /></div>
       <div class="config-actions">
         <button class="btn-primary" id="btn-save-cfg">💾 Guardar configuración</button>
         <button class="btn-danger" id="btn-delete-server">🗑 Eliminar servidor</button>
@@ -273,21 +251,43 @@
   </div>
 </div>
 
-<!-- ══ MODAL: new/edit server ════════════════════════════════════════════ -->
+<!-- ══ SCREEN: DIAGNOSTICS ═══════════════════════════════════════════════ -->
+<div class="screen" id="screen-diagnostics">
+  <div class="servers-header">
+    <div><h1 class="servers-title">🔧 Diagnóstico</h1><p class="servers-sub">Estado de la aplicación, errores y analytics</p></div>
+    <button class="btn-secondary" id="btn-diag-back">← Volver</button>
+  </div>
+  <div class="diag-grid">
+    <div class="diag-card">
+      <h3>Información</h3>
+      <div class="diag-rows" id="diag-info"></div>
+    </div>
+    <div class="diag-card">
+      <h3>Analytics anónimos</h3>
+      <div class="diag-analytics-toggle">
+        <label class="toggle-wrap"><input type="checkbox" id="diag-analytics-toggle" /><span>Envío de datos anónimos</span></label>
+      </div>
+      <div class="diag-rows" id="diag-analytics"></div>
+    </div>
+    <div class="diag-card diag-card-wide">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <h3>Últimos errores</h3>
+        <button class="btn-secondary" id="btn-clear-crashes">Limpiar</button>
+      </div>
+      <div id="diag-crashes"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: new server ════════════════════════════════════════════════ -->
 <div class="modal-backdrop" id="modal-server" style="display:none">
   <div class="modal modal-wide">
     <h3 id="modal-server-title">Añadir servidor</h3>
     <div class="field-group"><label>Nombre</label><input type="text" id="ms-name" placeholder="Mi servidor survival" /></div>
-    <div class="field-group">
-      <label>Color identificador</label>
-      <div class="color-options" id="ms-color-options"></div>
-    </div>
+    <div class="field-group"><label>Color identificador</label><div class="color-options" id="ms-color-options"></div></div>
     <div class="field-group">
       <label>Archivo JAR</label>
-      <div class="field-row">
-        <input type="text" id="ms-jar" placeholder="Ruta al .jar del servidor" readonly />
-        <button id="ms-pick-jar">📁</button>
-      </div>
+      <div class="field-row"><input type="text" id="ms-jar" placeholder="Ruta al .jar del servidor" readonly /><button id="ms-pick-jar">📁</button></div>
     </div>
     <div class="field-row">
       <div class="field-group flex1"><label>RAM mín (MB)</label><input type="number" id="ms-min-ram" value="1024" min="512" step="256" /></div>
@@ -295,10 +295,7 @@
     </div>
     <div class="field-group"><label>Java (opcional)</label><input type="text" id="ms-java" placeholder="java" /></div>
     <p class="auth-error" id="ms-error"></p>
-    <div class="modal-actions">
-      <button id="ms-cancel">Cancelar</button>
-      <button class="btn-primary" id="ms-save">Guardar</button>
-    </div>
+    <div class="modal-actions"><button id="ms-cancel">Cancelar</button><button class="btn-primary" id="ms-save">Guardar</button></div>
   </div>
 </div>
 

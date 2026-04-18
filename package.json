@@ -1,26 +1,29 @@
 {
-  "name": "minecraft-local-server-app",
-  "version": "1.1.0",
-  "description": "Manage your local Minecraft server",
-  "author": "FixItNow",
+  "name": "minecraft-manager",
+  "version": "1.0.0",
+  "description": "Minecraft Server Manager - Administra tu servidor local",
+  "author": "Minecraft Manager",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "dev": "electron . --dev",
     "build": "set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --x64",
-    "build:portable": "set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win portable"
+    "build:portable": "set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win portable",
+    "build:ci": "electron-builder --win --x64 --publish always",
+    "version:patch": "npm version patch",
+    "version:minor": "npm version minor",
+    "version:major": "npm version major"
   },
   "build": {
     "appId": "com.minecraftmanager.app",
-    "productName": "Minecraft Local Server Manager",
+    "productName": "Minecraft Manager",
+    "publish": {
+      "provider": "github",
+      "releaseType": "release"
+    },
     "win": {
       "target": [
-        {
-          "target": "nsis",
-          "arch": [
-            "x64"
-          ]
-        }
+        { "target": "nsis", "arch": ["x64"] }
       ],
       "icon": "assets/icon.ico",
       "signingHashAlgorithms": null,
@@ -33,15 +36,10 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Minecraft Local Server Manager",
+      "shortcutName": "Minecraft Manager",
       "installerIcon": "assets/icon.ico",
       "uninstallerIcon": "assets/icon.ico",
       "include": "assets/installer.nsh"
-    },
-    "publish": {
-      "provider": "github",
-      "owner": "hugoaldaHD",
-      "repo": "minecraft-local-server-app"
     },
     "directories": {
       "output": "dist"
@@ -57,6 +55,7 @@
   },
   "dependencies": {
     "electron-store": "^8.1.0",
+    "electron-updater": "^6.3.4",
     "node-schedule": "^2.1.1",
     "systeminformation": "^5.22.0",
     "archiver": "^6.0.1",

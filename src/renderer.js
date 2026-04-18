@@ -1,12 +1,11 @@
 'use strict'
 
-// ─── App State ────────────────────────────────────────────────────────────────
 const state = {
   currentUser: null,
   currentServerId: null,
   servers: [],
   onlinePlayers: new Set(),
-  consoleLogs: {},    // { serverId: [] }
+  consoleLogs: {},
   consoleLines: 0
 }
 
@@ -15,14 +14,28 @@ const SERVER_COLORS = ['#4ade80','#60a5fa','#f59e0b','#f472b6','#a78bfa','#34d39
 const AVATARS = ['🧑','👨‍💻','🧙','⚔️','🏹','🛡️','🐉','🦄','🌋','🌊','🔥','⭐']
 const IMPORTANT_PROPS = ['server-port','max-players','level-name','gamemode','difficulty','pvp','online-mode','white-list','motd','view-distance','simulation-distance','allow-flight','enable-command-block','level-seed','spawn-protection','level-type','op-permission-level']
 
-// ─── Boot ─────────────────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   initTitlebar()
-  initAuth()
   initEvents()
   initModal()
   renderAvatarPicker()
   renderColorOptions('ms-color-options', null)
+  initUpdateBanner()
+  initDiagnostics()
+
+  // Show version on auth screen
+  const ver = await window.api.getVersion()
+  const lbl = document.getElementById('auth-version-label')
+  if (lbl) lbl.textContent = `v${ver}`
+
+  // First run: check analytics consent
+  const consent = await window.api.getAnalyticsConsent()
+  if (consent === null) {
+    showScreen('consent')
+  } else {
+    initAuth()
+    showScreen('auth')
+  }
 })
 
 // ─── Titlebar ─────────────────────────────────────────────────────────────────
@@ -34,51 +47,124 @@ function initTitlebar() {
   document.getElementById('bc-servers').onclick = () => showScreen('servers')
 }
 
-// ─── Events from main ─────────────────────────────────────────────────────────
-function initEvents() {
-  window.api.onConsoleLine(({ serverId, text, type }) => {
-    if (!state.consoleLogs[serverId]) state.consoleLogs[serverId] = []
-    state.consoleLogs[serverId].push({ text, type })
-    if (state.currentServerId === serverId) appendLog(text, type)
-    parsePlayersFromLog(text)
+// ─── Update banner ────────────────────────────────────────────────────────────
+function initUpdateBanner() {
+  document.getElementById('btn-update-dismiss').onclick = () => {
+    document.getElementById('update-banner').style.display = 'none'
+  }
+  document.getElementById('btn-update-install').onclick = () => window.api.installUpdate()
+  document.getElementById('btn-update-notify').onclick = () => {
+    document.getElementById('update-banner').style.display = 'flex'
+  }
 
-    // Update card status badge live
-    const card = document.querySelector(`[data-server-id="${serverId}"]`)
-    if (card) {
-      const badge = card.querySelector('.server-card-status span:last-child')
-      if (badge && /Done \([\d.]+s\)!/i.test(text)) badge.textContent = 'En línea'
+  window.api.onUpdateStatus((info) => {
+    const banner = document.getElementById('update-banner')
+    const text = document.getElementById('update-banner-text')
+    const progress = document.getElementById('update-progress')
+    const bar = document.getElementById('update-bar')
+    const installBtn = document.getElementById('btn-update-install')
+    const notifyBtn = document.getElementById('btn-update-notify')
+
+    switch (info.status) {
+      case 'available':
+        banner.style.display = 'flex'
+        text.textContent = `Nueva versión disponible: v${info.version} — descargando...`
+        notifyBtn.style.display = 'flex'
+        break
+      case 'downloading':
+        banner.style.display = 'flex'
+        text.textContent = `Descargando actualización... ${info.percent}%`
+        progress.style.display = 'block'
+        bar.style.width = `${info.percent}%`
+        break
+      case 'ready':
+        banner.style.display = 'flex'
+        text.textContent = `v${info.version} lista para instalar`
+        progress.style.display = 'none'
+        installBtn.style.display = 'inline-block'
+        notifyBtn.style.display = 'flex'
+        break
+      case 'error':
+        console.warn('Update error:', info.message)
+        break
     }
-  })
-
-  window.api.onServerStopped(({ serverId, code, error }) => {
-    const msg = error ? `Servidor detenido con error: ${error}` : `Servidor detenido (código ${code ?? 0})`
-    if (state.currentServerId === serverId) {
-      appendLog(msg, 'warn')
-      updateDetailBar(false)
-    }
-    state.onlinePlayers.clear()
-    refreshServersGrid()
-  })
-
-  window.api.onStatsUpdate(({ cpu, ramUsed, ramTotal, activeServers }) => {
-    document.getElementById('tstat-cpu').textContent = `${cpu}%`
-    document.getElementById('tstat-ram').textContent = `${ramUsed}/${ramTotal}MB`
-    const badge = document.getElementById('tstat-active')
-    if (activeServers.length > 0) {
-      badge.style.display = 'flex'
-      document.getElementById('tstat-count').textContent = activeServers.length
-    } else {
-      badge.style.display = 'none'
-    }
-  })
-
-  window.api.onConfirmClose(({ count }) => {
-    document.getElementById('modal-close-msg').textContent = `Hay ${count} servidor(es) en ejecución. Se detendrán antes de cerrar.`
-    document.getElementById('modal-close').style.display = 'flex'
   })
 }
 
-// ─── Screen navigation ────────────────────────────────────────────────────────
+// ─── Analytics consent ────────────────────────────────────────────────────────
+document.getElementById('btn-consent-yes').onclick = async () => {
+  await window.api.setAnalyticsConsent(true)
+  initAuth()
+  showScreen('auth')
+}
+document.getElementById('btn-consent-no').onclick = async () => {
+  await window.api.setAnalyticsConsent(false)
+  initAuth()
+  showScreen('auth')
+}
+
+// ─── Diagnostics ──────────────────────────────────────────────────────────────
+function initDiagnostics() {
+  document.getElementById('btn-diagnostics').onclick = () => showScreen('diagnostics')
+  document.getElementById('btn-diag-back').onclick = () => showScreen('servers')
+  document.getElementById('btn-clear-crashes').onclick = async () => {
+    await window.api.clearCrashes()
+    loadDiagnostics()
+  }
+  document.getElementById('diag-analytics-toggle').onchange = async (e) => {
+    await window.api.setAnalyticsConsent(e.target.checked)
+  }
+}
+
+async function loadDiagnostics() {
+  const [stats, crashes, version, consent] = await Promise.all([
+    window.api.getAnalyticsStats(),
+    window.api.getCrashes(),
+    window.api.getVersion(),
+    window.api.getAnalyticsConsent()
+  ])
+
+  document.getElementById('diag-analytics-toggle').checked = !!consent
+
+  // Info panel
+  const infoRows = [
+    ['Versión', `v${version}`],
+    ['ID de instalación', stats.installId?.slice(0, 16) + '...'],
+    ['Primera vez', stats.firstSeen ? new Date(stats.firstSeen).toLocaleDateString('es-ES') : '—'],
+    ['Plataforma', navigator.platform],
+    ['Analytics', consent ? 'Activados' : 'Desactivados'],
+    ['Eventos registrados', stats.totalEvents || 0]
+  ]
+  document.getElementById('diag-info').innerHTML = infoRows.map(([l, v]) =>
+    `<div class="diag-row"><span class="diag-row-label">${l}</span><span class="diag-row-val">${v}</span></div>`
+  ).join('')
+
+  // Analytics panel
+  const counts = stats.counts || {}
+  const analyticsRows = Object.entries(counts).map(([event, count]) =>
+    `<div class="diag-row"><span class="diag-row-label">${event}</span><span class="diag-row-val">${count}</span></div>`
+  )
+  document.getElementById('diag-analytics').innerHTML = analyticsRows.length
+    ? analyticsRows.join('')
+    : '<div style="color:var(--text2);font-size:12px">Sin eventos registrados aún</div>'
+
+  // Crashes panel
+  const crashesEl = document.getElementById('diag-crashes')
+  if (!crashes.length) {
+    crashesEl.innerHTML = '<div class="crash-empty">✅ Sin errores registrados</div>'
+  } else {
+    crashesEl.innerHTML = crashes.slice(0, 20).map(c => `
+      <div class="crash-item">
+        <div class="crash-type">${c.type}</div>
+        <div class="crash-msg">${c.message}</div>
+        <div class="crash-meta">v${c.appVersion} · ${new Date(c.timestamp).toLocaleString('es-ES')}</div>
+      </div>
+    `).join('')
+  }
+}
+
+// Override showScreen to load diagnostics when navigating there
+const _showScreen = showScreen
 function showScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'))
   document.getElementById(`screen-${name}`).classList.add('active')
@@ -87,16 +173,17 @@ function showScreen(name) {
   const stats = document.getElementById('titlebar-stats')
   const serverNameBC = document.getElementById('bc-server-name')
 
-  if (name === 'auth') {
+  if (name === 'auth' || name === 'consent') {
     bc.style.display = 'none'
     stats.style.display = 'none'
     document.getElementById('user-chip').style.display = 'none'
-  } else if (name === 'servers') {
+  } else if (name === 'servers' || name === 'diagnostics') {
     bc.style.display = 'flex'
     serverNameBC.style.display = 'none'
     stats.style.display = 'flex'
     state.currentServerId = null
-    refreshServersGrid()
+    if (name === 'servers') refreshServersGrid()
+    if (name === 'diagnostics') loadDiagnostics()
   } else if (name === 'detail') {
     bc.style.display = 'flex'
     serverNameBC.style.display = 'inline'
@@ -104,7 +191,41 @@ function showScreen(name) {
   }
 }
 
-// ─── AUTH ─────────────────────────────────────────────────────────────────────
+// ─── Events from main ─────────────────────────────────────────────────────────
+function initEvents() {
+  window.api.onConsoleLine(({ serverId, text, type }) => {
+    if (!state.consoleLogs[serverId]) state.consoleLogs[serverId] = []
+    state.consoleLogs[serverId].push({ text, type })
+    if (state.currentServerId === serverId) appendLog(text, type)
+    parsePlayersFromLog(text)
+  })
+
+  window.api.onServerStopped(({ serverId, code, error }) => {
+    const msg = error ? `Servidor detenido con error: ${error}` : `Servidor detenido (código ${code ?? 0})`
+    if (state.currentServerId === serverId) { appendLog(msg, 'warn'); updateDetailBar(false) }
+    state.onlinePlayers.clear()
+    refreshServersGrid()
+  })
+
+  window.api.onStatsUpdate(({ cpu, ramUsed, ramTotal, activeServers }) => {
+    document.getElementById('tstat-cpu').textContent = `${cpu}%`
+    document.getElementById('tstat-ram').textContent = `${ramUsed}/${ramTotal}MB`
+    const badge = document.getElementById('tstat-active')
+    if (activeServers.length > 0) { badge.style.display = 'flex'; document.getElementById('tstat-count').textContent = activeServers.length }
+    else badge.style.display = 'none'
+  })
+
+  window.api.onConfirmClose(({ count }) => {
+    document.getElementById('modal-close-msg').textContent = `Hay ${count} servidor(es) en ejecución. Se detendrán antes de cerrar.`
+    document.getElementById('modal-close').style.display = 'flex'
+  })
+
+  window.api.onCrashLogged((crash) => {
+    console.error('Crash logged:', crash)
+  })
+}
+
+// ─── Auth ─────────────────────────────────────────────────────────────────────
 function initAuth() {
   document.querySelectorAll('.auth-tab').forEach(tab => {
     tab.onclick = () => {
@@ -114,12 +235,10 @@ function initAuth() {
       document.getElementById(`form-${tab.dataset.tab}`).classList.add('active')
     }
   })
-
   document.getElementById('btn-login').onclick = doLogin
   document.getElementById('btn-register').onclick = doRegister
   document.getElementById('login-pass').onkeydown = e => { if (e.key === 'Enter') doLogin() }
   document.getElementById('reg-pass2').onkeydown = e => { if (e.key === 'Enter') doRegister() }
-
   loadProfileChips()
 }
 
@@ -157,7 +276,7 @@ async function doRegister() {
   const password2 = document.getElementById('reg-pass2').value
   const err = document.getElementById('reg-error')
   if (!username || !password) { err.textContent = 'Rellena todos los campos'; return }
-  if (password.length < 6) { err.textContent = 'La contraseña debe tener al menos 6 caracteres'; return }
+  if (password.length < 6) { err.textContent = 'Mínimo 6 caracteres'; return }
   if (password !== password2) { err.textContent = 'Las contraseñas no coinciden'; return }
   const selectedAv = document.querySelector('.av-opt.selected')
   const avatar = selectedAv ? selectedAv.dataset.emoji : '🧑'
@@ -188,11 +307,10 @@ function logout() {
 }
 
 function renderAvatarPicker() {
-  const container = document.getElementById('avatar-picker')
-  container.innerHTML = AVATARS.map(e => `
-    <div class="av-opt" data-emoji="${e}" onclick="selectAvatar(this)">${e}</div>
-  `).join('')
-  container.children[0]?.classList.add('selected')
+  document.getElementById('avatar-picker').innerHTML = AVATARS.map(e =>
+    `<div class="av-opt" data-emoji="${e}" onclick="selectAvatar(this)">${e}</div>`
+  ).join('')
+  document.querySelector('.av-opt')?.classList.add('selected')
 }
 
 window.selectAvatar = (el) => {
@@ -206,34 +324,28 @@ async function refreshServersGrid() {
   state.servers = await window.api.listServers(state.currentUser.id)
   const statusAll = await window.api.getStatusAll()
   const grid = document.getElementById('servers-grid')
-  const sub = document.getElementById('servers-sub')
   const active = Object.keys(statusAll).length
-  sub.textContent = `${state.servers.length} servidor(es) · ${active} activo(s)`
+  document.getElementById('servers-sub').textContent = `${state.servers.length} servidor(es) · ${active} activo(s)`
 
   if (!state.servers.length) {
-    grid.innerHTML = `<div class="server-empty"><div class="big-icon">🗂️</div><p>No tienes servidores aún.</p><p style="margin-top:6px;font-size:12px">Pulsa "Añadir servidor" para empezar.</p></div>`
+    grid.innerHTML = `<div class="server-empty"><div class="big-icon">🗂️</div><p>No tienes servidores aún.</p><p style="margin-top:6px;font-size:12px">Pulsa "+ Añadir servidor" para empezar.</p></div>`
     return
   }
-
   grid.innerHTML = state.servers.map(s => {
     const running = !!statusAll[s.id]
     const jarName = s.jarPath ? s.jarPath.split(/[\\/]/).pop() : 'Sin configurar'
     return `
-      <div class="server-card" data-server-id="${s.id}" style="--card-color:${s.color || '#4ade80'}" onclick="openServer('${s.id}')">
+      <div class="server-card" data-server-id="${s.id}" style="--card-color:${s.color||'#4ade80'}" onclick="openServer('${s.id}')">
         <div class="server-card-header">
           <div class="server-card-name">${s.name}</div>
-          <div class="server-card-status">
-            <span class="dot ${running ? 'on' : 'off'}"></span>
-            <span>${running ? 'En línea' : 'Detenido'}</span>
-          </div>
+          <div class="server-card-status"><span class="dot ${running?'on':'off'}"></span><span>${running?'En línea':'Detenido'}</span></div>
         </div>
         <div class="server-card-jar">${jarName}</div>
         <div class="server-card-footer">
           <div class="server-card-ram">RAM: ${s.minRam}–${s.maxRam} MB</div>
-          <button class="server-card-open" onclick="event.stopPropagation(); openServer('${s.id}')">Gestionar →</button>
+          <button class="server-card-open" onclick="event.stopPropagation();openServer('${s.id}')">Gestionar →</button>
         </div>
-      </div>
-    `
+      </div>`
   }).join('')
 }
 
@@ -245,25 +357,20 @@ async function openServer(serverId) {
   document.getElementById('bc-name-text').textContent = server.name
   document.getElementById('sbar-dot').style.background = server.color || '#4ade80'
 
-  // Load console history if any
   const console_ = document.getElementById('console')
   console_.innerHTML = ''
   state.consoleLines = 0
-  const logs = state.consoleLogs[serverId] || []
-  logs.slice(-MAX_LINES).forEach(l => appendLog(l.text, l.type))
+  ;(state.consoleLogs[serverId] || []).slice(-MAX_LINES).forEach(l => appendLog(l.text, l.type))
 
-  // Server status
   const status = await window.api.getStatus(serverId)
   updateDetailBar(status.running)
 
-  // Load settings
   const settings = await window.api.getSettings(serverId)
   loadConfigTab(server, settings)
   loadPropertiesTab(server)
   loadListsTab(server)
   loadBackupsTab(server, settings)
 
-  // Reset nav to console
   document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'))
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'))
   document.querySelector('.nav-item[data-tab="console"]').classList.add('active')
@@ -278,7 +385,7 @@ async function openServer(serverId) {
 
 // ─── New server modal ─────────────────────────────────────────────────────────
 function initModal() {
-  document.getElementById('btn-new-server').onclick = () => openServerModal()
+  document.getElementById('btn-new-server').onclick = openServerModal
   document.getElementById('ms-cancel').onclick = () => { document.getElementById('modal-server').style.display = 'none' }
   document.getElementById('ms-pick-jar').onclick = async () => {
     const p = await window.api.openJarDialog()
@@ -291,11 +398,9 @@ function initModal() {
 
 function renderColorOptions(containerId, selectedColor) {
   const container = document.getElementById(containerId)
-  container.innerHTML = SERVER_COLORS.map(c => `
-    <div class="color-opt ${c === (selectedColor || SERVER_COLORS[0]) ? 'selected' : ''}" 
-         style="background:${c}" data-color="${c}" 
-         onclick="selectColor(this, '${containerId}')"></div>
-  `).join('')
+  container.innerHTML = SERVER_COLORS.map(c =>
+    `<div class="color-opt ${c===(selectedColor||SERVER_COLORS[0])?'selected':''}" style="background:${c}" data-color="${c}" onclick="selectColor(this,'${containerId}')"></div>`
+  ).join('')
 }
 
 window.selectColor = (el, containerId) => {
@@ -322,22 +427,19 @@ async function saveNewServer() {
   if (!name) { err.textContent = 'El nombre es obligatorio'; return }
   if (!jarPath) { err.textContent = 'Selecciona el archivo .jar'; return }
   const selectedColor = document.querySelector('#ms-color-options .color-opt.selected')
-  const color = selectedColor ? selectedColor.dataset.color : SERVER_COLORS[0]
   const res = await window.api.createServer({
-    userId: state.currentUser.id,
-    name,
-    jarPath,
+    userId: state.currentUser.id, name, jarPath,
     javaPath: document.getElementById('ms-java').value.trim() || null,
     minRam: parseInt(document.getElementById('ms-min-ram').value) || 1024,
     maxRam: parseInt(document.getElementById('ms-max-ram').value) || 4096,
-    color
+    color: selectedColor ? selectedColor.dataset.color : SERVER_COLORS[0]
   })
   if (!res.ok) { err.textContent = res.error; return }
   document.getElementById('modal-server').style.display = 'none'
-  await refreshServersGrid()
+  refreshServersGrid()
 }
 
-// ─── Detail nav ───────────────────────────────────────────────────────────────
+// ─── Detail nav & bar ─────────────────────────────────────────────────────────
 function initDetailNav() {
   document.querySelectorAll('#detail-nav .nav-item').forEach(btn => {
     btn.onclick = () => {
@@ -349,15 +451,14 @@ function initDetailNav() {
   })
 }
 
-// ─── Detail bar ───────────────────────────────────────────────────────────────
 function updateDetailBar(running, starting = false) {
   const dot = document.getElementById('sbar-dot-status')
   const text = document.getElementById('sbar-status-text')
   const start = document.getElementById('detail-btn-start')
   const stop = document.getElementById('detail-btn-stop')
-  if (starting) { dot.className = 'dot starting'; text.textContent = 'Iniciando...'; start.disabled = true; stop.disabled = true }
-  else if (running) { dot.className = 'dot on'; text.textContent = 'En línea'; start.disabled = true; stop.disabled = false }
-  else { dot.className = 'dot off'; text.textContent = 'Detenido'; start.disabled = false; stop.disabled = true }
+  if (starting) { dot.className='dot starting'; text.textContent='Iniciando...'; start.disabled=true; stop.disabled=true }
+  else if (running) { dot.className='dot on'; text.textContent='En línea'; start.disabled=true; stop.disabled=false }
+  else { dot.className='dot off'; text.textContent='Detenido'; start.disabled=false; stop.disabled=true }
 }
 
 document.getElementById('detail-btn-start').onclick = async () => {
@@ -381,15 +482,10 @@ function initConsole() {
   const input = document.getElementById('cmd-input')
   const send = document.getElementById('cmd-send')
   const history = []; let histIdx = -1
-
-  const clonedSend = send.cloneNode(true)
-  send.parentNode.replaceChild(clonedSend, send)
-  const clonedInput = input.cloneNode(true)
-  input.parentNode.replaceChild(clonedInput, input)
-
+  const clonedInput = input.cloneNode(true); input.parentNode.replaceChild(clonedInput, input)
+  const clonedSend = send.cloneNode(true); send.parentNode.replaceChild(clonedSend, send)
   const newInput = document.getElementById('cmd-input')
   const newSend = document.getElementById('cmd-send')
-
   const doSend = () => {
     const val = newInput.value.trim()
     if (!val || !state.currentServerId) return
@@ -400,27 +496,26 @@ function initConsole() {
   newSend.onclick = doSend
   newInput.onkeydown = (e) => {
     if (e.key === 'Enter') { doSend(); return }
-    if (e.key === 'ArrowUp') { histIdx = Math.min(histIdx + 1, history.length - 1); newInput.value = history[histIdx] || '' }
-    if (e.key === 'ArrowDown') { histIdx = Math.max(histIdx - 1, -1); newInput.value = histIdx < 0 ? '' : history[histIdx] }
+    if (e.key === 'ArrowUp') { histIdx = Math.min(histIdx+1, history.length-1); newInput.value = history[histIdx]||'' }
+    if (e.key === 'ArrowDown') { histIdx = Math.max(histIdx-1, -1); newInput.value = histIdx<0?'':history[histIdx] }
   }
 }
 
 function appendLog(text, type = 'info') {
-  const console_ = document.getElementById('console')
+  const c = document.getElementById('console')
   const div = document.createElement('div')
   div.className = `log-line ${type}`
   div.textContent = text
-  console_.appendChild(div)
+  c.appendChild(div)
   state.consoleLines++
-  if (state.consoleLines > MAX_LINES) { console_.removeChild(console_.firstChild); state.consoleLines-- }
-  console_.scrollTop = console_.scrollHeight
+  if (state.consoleLines > MAX_LINES) { c.removeChild(c.firstChild); state.consoleLines-- }
+  c.scrollTop = c.scrollHeight
 }
 
 // ─── Players ──────────────────────────────────────────────────────────────────
 function initPlayers() {
   const btn = document.getElementById('btn-refresh-players')
-  const clone = btn.cloneNode(true)
-  btn.parentNode.replaceChild(clone, btn)
+  const clone = btn.cloneNode(true); btn.parentNode.replaceChild(clone, btn)
   document.getElementById('btn-refresh-players').onclick = () => {
     if (state.currentServerId) window.api.sendCommand(state.currentServerId, 'list')
   }
@@ -432,7 +527,7 @@ function parsePlayersFromLog(line) {
   const list = line.match(/There are \d+ of a max of \d+ players online: (.+)/)
   if (join) { state.onlinePlayers.add(join[1]); renderPlayers() }
   if (leave) { state.onlinePlayers.delete(leave[1]); renderPlayers() }
-  if (list) { list[1].split(',').map(n => n.trim()).filter(Boolean).forEach(n => state.onlinePlayers.add(n)); renderPlayers() }
+  if (list) { list[1].split(',').map(n=>n.trim()).filter(Boolean).forEach(n=>state.onlinePlayers.add(n)); renderPlayers() }
 }
 
 function renderPlayers() {
@@ -443,8 +538,7 @@ function renderPlayers() {
     <div class="player-card">
       <div class="player-avatar">🧑</div>
       <div><div style="font-weight:600">${name}</div><div style="font-size:11px;color:var(--text2)">En línea</div></div>
-    </div>
-  `).join('')
+    </div>`).join('')
 }
 
 window.playerAction = async (action) => {
@@ -457,22 +551,18 @@ window.playerAction = async (action) => {
 // ─── Lists ────────────────────────────────────────────────────────────────────
 function initLists(server) {
   const serverDir = server.jarPath ? server.jarPath.replace(/[/\\][^/\\]+$/, '') : ''
-
   const wlAdd = document.getElementById('wl-add').cloneNode(true)
   document.getElementById('wl-add').parentNode.replaceChild(wlAdd, document.getElementById('wl-add'))
   document.getElementById('wl-add').onclick = () => addToList('whitelist', serverDir)
-  document.getElementById('wl-input').onkeydown = e => { if (e.key === 'Enter') addToList('whitelist', serverDir) }
-
+  document.getElementById('wl-input').onkeydown = e => { if (e.key==='Enter') addToList('whitelist', serverDir) }
   const blAdd = document.getElementById('bl-add').cloneNode(true)
   document.getElementById('bl-add').parentNode.replaceChild(blAdd, document.getElementById('bl-add'))
   document.getElementById('bl-add').onclick = () => addToList('banlist', serverDir)
-  document.getElementById('bl-input').onkeydown = e => { if (e.key === 'Enter') addToList('banlist', serverDir) }
-
-  document.getElementById('whitelist-toggle').onchange = async (e) => {
+  document.getElementById('bl-input').onkeydown = e => { if (e.key==='Enter') addToList('banlist', serverDir) }
+  document.getElementById('whitelist-toggle').onchange = (e) => {
     if (state.currentServerId) window.api.sendCommand(state.currentServerId, e.target.checked ? 'whitelist on' : 'whitelist off')
   }
-
-  loadListsTab({ jarPath: server.jarPath })
+  loadListsTab(server)
 }
 
 async function loadListsTab(server) {
@@ -484,16 +574,16 @@ async function loadListsTab(server) {
   renderList('banlist-ul', bl.list, 'banlist', serverDir, true)
 }
 
-function renderList(id, list, type, serverDir, showReason = false) {
-  const ul = document.getElementById(id)
-  if (!ul) return
+function renderList(id, list, type, serverDir, showReason=false) {
+  const ul = document.getElementById(id); if (!ul) return
   if (!list.length) { ul.innerHTML = '<li style="color:var(--text2);font-size:12px;padding:8px 0">Sin entradas</li>'; return }
+  const escapedDir = serverDir.replace(/\\/g, '\\\\')
   ul.innerHTML = list.map((entry, i) => {
     const name = entry.name || entry
     const reason = entry.reason || ''
     return `<li>
-      <div><div style="font-size:13px">${name}</div>${showReason && reason ? `<div style="font-size:11px;color:var(--text2)">${reason}</div>` : ''}</div>
-      <button class="btn-remove" onclick="removeFromList('${type}',${i},'${serverDir.replace(/\\/g, '\\\\')}')">✕</button>
+      <div><div style="font-size:13px">${name}</div>${showReason&&reason?`<div style="font-size:11px;color:var(--text2)">${reason}</div>`:''}</div>
+      <button class="btn-remove" onclick="removeFromList('${type}',${i},'${escapedDir}')">✕</button>
     </li>`
   }).join('')
 }
@@ -504,16 +594,16 @@ async function addToList(type, serverDir) {
   if (!val || !serverDir) return
   if (type === 'whitelist') {
     const { list } = await window.api.readWhitelist(serverDir)
-    if (!list.find(e => (e.name || e) === val)) {
-      list.push({ uuid: '', name: val })
+    if (!list.find(e => (e.name||e) === val)) {
+      list.push({ uuid:'', name:val })
       await window.api.writeWhitelist(serverDir, list)
       if (state.currentServerId) window.api.sendCommand(state.currentServerId, `whitelist add ${val}`)
     }
   } else {
     const reason = document.getElementById('bl-reason').value.trim() || 'Banned by admin'
     const { list } = await window.api.readBanlist(serverDir)
-    if (!list.find(e => (e.name || e) === val)) {
-      list.push({ uuid: '', name: val, reason, created: new Date().toISOString(), source: 'Minecraft Manager', expires: 'forever' })
+    if (!list.find(e => (e.name||e) === val)) {
+      list.push({ uuid:'', name:val, reason, created:new Date().toISOString(), source:'Minecraft Manager', expires:'forever' })
       await window.api.writeBanlist(serverDir, list)
       if (state.currentServerId) window.api.sendCommand(state.currentServerId, `ban ${val} ${reason}`)
     }
@@ -527,13 +617,13 @@ async function addToList(type, serverDir) {
 window.removeFromList = async (type, idx, serverDir) => {
   if (type === 'whitelist') {
     const { list } = await window.api.readWhitelist(serverDir)
-    const name = list[idx]?.name || list[idx]
+    const name = list[idx]?.name||list[idx]
     list.splice(idx, 1)
     await window.api.writeWhitelist(serverDir, list)
     if (state.currentServerId && name) window.api.sendCommand(state.currentServerId, `whitelist remove ${name}`)
   } else {
     const { list } = await window.api.readBanlist(serverDir)
-    const name = list[idx]?.name || list[idx]
+    const name = list[idx]?.name||list[idx]
     list.splice(idx, 1)
     await window.api.writeBanlist(serverDir, list)
     if (state.currentServerId && name) window.api.sendCommand(state.currentServerId, `pardon ${name}`)
@@ -548,9 +638,8 @@ async function loadPropertiesTab(server) {
   if (!serverDir) return
   const res = await window.api.readProperties(serverDir)
   if (!res.ok) return
-  const grid = document.getElementById('props-grid')
   const allKeys = [...new Set([...IMPORTANT_PROPS, ...Object.keys(res.props)])]
-  grid.innerHTML = allKeys.map(key => {
+  document.getElementById('props-grid').innerHTML = allKeys.map(key => {
     const val = res.props[key] ?? ''
     const isBool = val === 'true' || val === 'false'
     const input = isBool
@@ -558,49 +647,39 @@ async function loadPropertiesTab(server) {
       : `<input type="text" id="prop-${key}" data-key="${key}" value="${val}" />`
     return `<div class="prop-item"><label>${key}</label>${input}</div>`
   }).join('')
-
   document.getElementById('btn-save-props').onclick = async () => {
-    const inputs = document.querySelectorAll('#props-grid [data-key]')
     const props = {}
-    inputs.forEach(el => { props[el.dataset.key] = el.value })
+    document.querySelectorAll('#props-grid [data-key]').forEach(el => { props[el.dataset.key] = el.value })
     await window.api.writeProperties(serverDir, props)
-    appendLog('server.properties guardado. Reinicia para aplicar los cambios.', 'success')
+    appendLog('server.properties guardado. Reinicia para aplicar.', 'success')
   }
 }
 
 // ─── Backups ──────────────────────────────────────────────────────────────────
 async function loadBackupsTab(server, settings) {
   const serverDir = server.jarPath ? server.jarPath.replace(/[/\\][^/\\]+$/, '') : ''
-
   if (settings.autoBackupDir) document.getElementById('auto-backup-dir').value = settings.autoBackupDir
   if (settings.autoBackupInterval) document.getElementById('auto-backup-interval').value = settings.autoBackupInterval
   document.getElementById('auto-backup-enabled').checked = !!settings.autoBackupEnabled
 
   const refreshList = async () => {
-    const dir = document.getElementById('auto-backup-dir').value
-    if (!dir) return
+    const dir = document.getElementById('auto-backup-dir').value; if (!dir) return
     const { backups } = await window.api.listBackups(dir)
     const list = document.getElementById('backups-list')
     if (!backups.length) { list.innerHTML = '<div class="empty-state">No hay backups todavía</div>'; return }
     list.innerHTML = backups.map(b => `
       <div class="backup-item">
-        <div class="backup-info">
-          <div class="bname">${b.name}</div>
-          <div class="bmeta">${new Date(b.date).toLocaleString('es-ES')} · ${(b.size/1024/1024).toFixed(1)} MB</div>
-        </div>
+        <div class="backup-info"><div class="bname">${b.name}</div><div class="bmeta">${new Date(b.date).toLocaleString('es-ES')} · ${(b.size/1024/1024).toFixed(1)} MB</div></div>
         <div class="backup-actions">
           <button class="btn-icon" onclick="window.api.openPath('${b.path.replace(/\\/g,'\\\\')}')">📁</button>
           <button class="btn-icon danger" onclick="deleteBackup('${b.path.replace(/\\/g,'\\\\')}')">🗑</button>
         </div>
-      </div>
-    `).join('')
+      </div>`).join('')
   }
 
   document.getElementById('btn-backup-dir').onclick = async () => {
-    const p = await window.api.openDirDialog()
-    if (p) { document.getElementById('auto-backup-dir').value = p; refreshList() }
+    const p = await window.api.openDirDialog(); if (p) { document.getElementById('auto-backup-dir').value = p; refreshList() }
   }
-
   document.getElementById('btn-backup-now').onclick = async () => {
     if (!serverDir) return
     const dir = document.getElementById('auto-backup-dir').value || serverDir + '\\backups'
@@ -610,17 +689,11 @@ async function loadBackupsTab(server, settings) {
     if (res.ok) { appendLog('Backup completado', 'success'); refreshList() }
     else appendLog(`Error: ${res.error}`, 'error')
   }
-
   document.getElementById('btn-save-auto').onclick = async () => {
-    const data = {
-      autoBackupEnabled: document.getElementById('auto-backup-enabled').checked,
-      autoBackupInterval: document.getElementById('auto-backup-interval').value,
-      autoBackupDir: document.getElementById('auto-backup-dir').value
-    }
+    const data = { autoBackupEnabled: document.getElementById('auto-backup-enabled').checked, autoBackupInterval: document.getElementById('auto-backup-interval').value, autoBackupDir: document.getElementById('auto-backup-dir').value }
     await window.api.saveSettings(state.currentServerId, { ...settings, ...data })
     appendLog('Configuración de backup guardada', 'success')
   }
-
   refreshList()
 }
 
@@ -640,43 +713,24 @@ function loadConfigTab(server, settings) {
   document.getElementById('cfg-max-ram').value = server.maxRam || 4096
   document.getElementById('cfg-extra').value = server.extraArgs || ''
   renderColorOptions('color-options', server.color)
-
   document.getElementById('btn-pick-jar').onclick = async () => {
-    const p = await window.api.openJarDialog()
-    if (p) document.getElementById('cfg-jar').value = p
+    const p = await window.api.openJarDialog(); if (p) document.getElementById('cfg-jar').value = p
   }
-
   document.getElementById('btn-save-cfg').onclick = async () => {
     const selectedColor = document.querySelector('#color-options .color-opt.selected')
-    const data = {
-      name: document.getElementById('cfg-name').value.trim() || server.name,
-      jarPath: document.getElementById('cfg-jar').value.trim(),
-      javaPath: document.getElementById('cfg-java').value.trim() || null,
-      minRam: parseInt(document.getElementById('cfg-min-ram').value) || 1024,
-      maxRam: parseInt(document.getElementById('cfg-max-ram').value) || 4096,
-      extraArgs: document.getElementById('cfg-extra').value.trim(),
-      color: selectedColor ? selectedColor.dataset.color : server.color
-    }
+    const data = { name: document.getElementById('cfg-name').value.trim()||server.name, jarPath: document.getElementById('cfg-jar').value.trim(), javaPath: document.getElementById('cfg-java').value.trim()||null, minRam: parseInt(document.getElementById('cfg-min-ram').value)||1024, maxRam: parseInt(document.getElementById('cfg-max-ram').value)||4096, extraArgs: document.getElementById('cfg-extra').value.trim(), color: selectedColor?selectedColor.dataset.color:server.color }
     const res = await window.api.updateServer({ serverId: server.id, data })
-    if (res.ok) {
-      document.getElementById('bc-name-text').textContent = data.name
-      document.getElementById('sbar-dot').style.background = data.color
-      appendLog('Configuración guardada', 'success')
-      loadPropertiesTab(res.server)
-    }
+    if (res.ok) { document.getElementById('bc-name-text').textContent = data.name; document.getElementById('sbar-dot').style.background = data.color; appendLog('Configuración guardada', 'success'); loadPropertiesTab(res.server) }
   }
-
   document.getElementById('btn-delete-server').onclick = async () => {
     const status = await window.api.getStatus(server.id)
     if (status.running) { appendLog('Detén el servidor antes de eliminarlo', 'warn'); return }
     if (confirm(`¿Eliminar "${server.name}"? Solo se elimina de la app, no los archivos del servidor.`)) {
-      await window.api.deleteServer(server.id)
-      showScreen('servers')
+      await window.api.deleteServer(server.id); showScreen('servers')
     }
   }
 }
 
-// ─── Quick commands ───────────────────────────────────────────────────────────
 window.qcmd = (cmd) => {
   if (!state.currentServerId) return
   window.api.sendCommand(state.currentServerId, cmd)
