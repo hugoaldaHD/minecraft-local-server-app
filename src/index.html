@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'">
+  <title>Minecraft Manager</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<!-- ══ TITLEBAR ══════════════════════════════════════════════════════════ -->
+<div class="titlebar">
+  <div class="titlebar-left">
+    <div class="app-icon">⛏</div>
+    <span class="app-name">Minecraft Manager</span>
+    <!-- Breadcrumb shown when inside a server -->
+    <div class="breadcrumb" id="breadcrumb" style="display:none">
+      <span class="bc-sep">›</span>
+      <button class="bc-btn" id="bc-servers">Mis servidores</button>
+      <span class="bc-sep bc-server-name" id="bc-server-name" style="display:none">› <span id="bc-name-text"></span></span>
+    </div>
+  </div>
+  <div class="titlebar-center" id="titlebar-stats" style="display:none">
+    <span class="tstat"><span class="tstat-label">CPU</span><span id="tstat-cpu">0%</span></span>
+    <span class="tstat"><span class="tstat-label">RAM</span><span id="tstat-ram">—</span></span>
+    <span class="tstat active-badge" id="tstat-active" style="display:none">
+      <span class="dot-small on"></span><span id="tstat-count">0</span> activo(s)
+    </span>
+  </div>
+  <div class="titlebar-right">
+    <div class="user-chip" id="user-chip" style="display:none">
+      <div class="user-avatar-sm" id="user-avatar-sm">?</div>
+      <span id="user-chip-name"></span>
+      <button class="btn-logout" id="btn-logout" title="Cerrar sesión">⏏</button>
+    </div>
+    <button class="wbtn" id="btn-min">─</button>
+    <button class="wbtn" id="btn-max">□</button>
+    <button class="wbtn danger" id="btn-close">✕</button>
+  </div>
+</div>
+
+<!-- ══ SCREEN: AUTH ══════════════════════════════════════════════════════ -->
+<div class="screen active" id="screen-auth">
+  <div class="auth-bg">
+    <div class="auth-card">
+      <div class="auth-logo">⛏</div>
+      <h1 class="auth-title">Minecraft Manager</h1>
+      <p class="auth-sub">Gestiona tus servidores locales</p>
+
+      <!-- Tabs -->
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-tab="login">Iniciar sesión</button>
+        <button class="auth-tab" data-tab="register">Crear cuenta</button>
+      </div>
+
+      <!-- Login form -->
+      <div class="auth-form active" id="form-login">
+        <div class="auth-profiles" id="auth-profiles"></div>
+        <div class="field">
+          <label>Usuario</label>
+          <input type="text" id="login-user" placeholder="Tu nombre de usuario" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label>Contraseña</label>
+          <input type="password" id="login-pass" placeholder="••••••••" />
+        </div>
+        <p class="auth-error" id="login-error"></p>
+        <button class="btn-auth" id="btn-login">Entrar</button>
+      </div>
+
+      <!-- Register form -->
+      <div class="auth-form" id="form-register">
+        <div class="field">
+          <label>Nombre de usuario</label>
+          <input type="text" id="reg-user" placeholder="Elige un nombre" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label>Contraseña</label>
+          <input type="password" id="reg-pass" placeholder="Mínimo 6 caracteres" />
+        </div>
+        <div class="field">
+          <label>Confirmar contraseña</label>
+          <input type="password" id="reg-pass2" placeholder="Repite la contraseña" />
+        </div>
+        <div class="field">
+          <label>Avatar (emoji)</label>
+          <div class="avatar-picker" id="avatar-picker"></div>
+        </div>
+        <p class="auth-error" id="reg-error"></p>
+        <button class="btn-auth" id="btn-register">Crear cuenta</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SCREEN: SERVER LIST ═══════════════════════════════════════════════ -->
+<div class="screen" id="screen-servers">
+  <div class="servers-header">
+    <div>
+      <h1 class="servers-title">Mis servidores</h1>
+      <p class="servers-sub" id="servers-sub">Cargando...</p>
+    </div>
+    <button class="btn-new-server" id="btn-new-server">+ Añadir servidor</button>
+  </div>
+  <div class="servers-grid" id="servers-grid"></div>
+</div>
+
+<!-- ══ SCREEN: SERVER DETAIL ═════════════════════════════════════════════ -->
+<div class="screen" id="screen-detail">
+
+  <!-- Server status bar -->
+  <div class="server-bar" id="server-bar">
+    <div class="server-bar-left">
+      <div class="server-color-dot" id="sbar-dot"></div>
+      <div class="status-pill" id="sbar-status-pill">
+        <span class="dot off" id="sbar-dot-status"></span>
+        <span id="sbar-status-text">Detenido</span>
+      </div>
+    </div>
+    <div class="server-bar-right">
+      <button class="btn-start" id="detail-btn-start">▶ Iniciar</button>
+      <button class="btn-stop" id="detail-btn-stop" disabled>■ Detener</button>
+    </div>
+  </div>
+
+  <!-- Navigation tabs -->
+  <nav class="nav" id="detail-nav">
+    <button class="nav-item active" data-tab="console">Consola</button>
+    <button class="nav-item" data-tab="players">Jugadores</button>
+    <button class="nav-item" data-tab="lists">Whitelist / Banlist</button>
+    <button class="nav-item" data-tab="properties">server.properties</button>
+    <button class="nav-item" data-tab="backups">Backups</button>
+    <button class="nav-item" data-tab="config">Configuración</button>
+  </nav>
+
+  <!-- Tab: Console -->
+  <div class="tab active" id="tab-console">
+    <div class="console-wrap"><div class="console" id="console"></div></div>
+    <div class="cmd-bar">
+      <span class="cmd-prefix">›</span>
+      <input type="text" id="cmd-input" placeholder="Escribe un comando de Minecraft..." autocomplete="off" spellcheck="false" />
+      <button id="cmd-send">Enviar</button>
+    </div>
+  </div>
+
+  <!-- Tab: Players -->
+  <div class="tab" id="tab-players">
+    <div class="panel-header">
+      <h2>Jugadores conectados</h2>
+      <button class="btn-secondary" id="btn-refresh-players">↻ Actualizar</button>
+    </div>
+    <div class="players-grid" id="players-grid"></div>
+    <div class="quick-actions">
+      <h3>Acciones rápidas</h3>
+      <div class="action-row">
+        <input type="text" id="player-target" placeholder="Nombre del jugador" />
+        <button class="btn-action" onclick="playerAction('kick')">Kick</button>
+        <button class="btn-action danger" onclick="playerAction('ban')">Ban</button>
+        <button class="btn-action" onclick="playerAction('op')">OP</button>
+        <button class="btn-action" onclick="playerAction('deop')">De-OP</button>
+        <button class="btn-action" onclick="playerAction('gamemode survival')">Survival</button>
+        <button class="btn-action" onclick="playerAction('gamemode creative')">Creative</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab: Lists -->
+  <div class="tab" id="tab-lists">
+    <div class="lists-container">
+      <div class="list-panel">
+        <div class="list-header">
+          <h2>✅ Whitelist</h2>
+          <label class="toggle-wrap"><input type="checkbox" id="whitelist-toggle" /><span>Activa</span></label>
+        </div>
+        <div class="list-add">
+          <input type="text" id="wl-input" placeholder="Nombre del jugador" />
+          <button id="wl-add">Añadir</button>
+        </div>
+        <ul class="player-list" id="whitelist-ul"></ul>
+      </div>
+      <div class="list-panel">
+        <div class="list-header"><h2>🚫 Banlist</h2></div>
+        <div class="list-add">
+          <input type="text" id="bl-input" placeholder="Nombre del jugador" />
+          <input type="text" id="bl-reason" placeholder="Motivo (opcional)" />
+          <button id="bl-add">Banear</button>
+        </div>
+        <ul class="player-list" id="banlist-ul"></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab: Properties -->
+  <div class="tab" id="tab-properties">
+    <div class="panel-header">
+      <h2>server.properties</h2>
+      <button class="btn-primary" id="btn-save-props">💾 Guardar</button>
+    </div>
+    <div class="props-grid" id="props-grid"><div class="empty-state">Guarda la configuración del servidor primero.</div></div>
+  </div>
+
+  <!-- Tab: Backups -->
+  <div class="tab" id="tab-backups">
+    <div class="panel-header">
+      <h2>Backups del mundo</h2>
+      <button class="btn-primary" id="btn-backup-now">📦 Crear backup ahora</button>
+    </div>
+    <div class="backup-auto-config">
+      <h3>Backup automático</h3>
+      <div class="auto-backup-row">
+        <label class="toggle-wrap"><input type="checkbox" id="auto-backup-enabled" /><span>Activar</span></label>
+        <select id="auto-backup-interval">
+          <option value="1h">Cada hora</option>
+          <option value="6h" selected>Cada 6 horas</option>
+          <option value="12h">Cada 12 horas</option>
+          <option value="24h">Una vez al día</option>
+        </select>
+        <input type="text" id="auto-backup-dir" placeholder="Carpeta de backups" readonly />
+        <button id="btn-backup-dir">📁</button>
+        <button class="btn-primary" id="btn-save-auto">Guardar</button>
+      </div>
+    </div>
+    <div class="backups-list" id="backups-list"></div>
+  </div>
+
+  <!-- Tab: Config -->
+  <div class="tab" id="tab-config">
+    <div class="settings-form">
+      <h2>Configuración del servidor</h2>
+      <div class="field-group">
+        <label>Nombre del servidor</label>
+        <div class="name-color-row">
+          <input type="text" id="cfg-name" placeholder="Mi servidor" />
+          <div class="color-options" id="color-options"></div>
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Archivo JAR</label>
+        <div class="field-row">
+          <input type="text" id="cfg-jar" placeholder="C:\servers\minecraft\server.jar" readonly />
+          <button id="btn-pick-jar">📁 Buscar</button>
+        </div>
+        <p class="field-hint">Compatible con Vanilla, Paper, Spigot, Bukkit, Fabric y Forge</p>
+      </div>
+      <div class="field-group">
+        <label>Ruta de Java (opcional)</label>
+        <input type="text" id="cfg-java" placeholder="java" />
+      </div>
+      <div class="field-row">
+        <div class="field-group flex1"><label>RAM mínima (MB)</label><input type="number" id="cfg-min-ram" value="1024" min="512" step="256" /></div>
+        <div class="field-group flex1"><label>RAM máxima (MB)</label><input type="number" id="cfg-max-ram" value="4096" min="1024" step="256" /></div>
+      </div>
+      <div class="field-group">
+        <label>Argumentos JVM adicionales</label>
+        <input type="text" id="cfg-extra" placeholder="-XX:+UseG1GC -XX:+ParallelRefProcEnabled" />
+      </div>
+      <div class="config-actions">
+        <button class="btn-primary" id="btn-save-cfg">💾 Guardar configuración</button>
+        <button class="btn-danger" id="btn-delete-server">🗑 Eliminar servidor</button>
+      </div>
+      <div class="quick-cmds">
+        <h3>Comandos rápidos</h3>
+        <div class="quick-grid">
+          <button onclick="qcmd('say Reiniciando en 5 minutos!')">Aviso reinicio</button>
+          <button onclick="qcmd('save-all')">Guardar mundo</button>
+          <button onclick="qcmd('time set day')">Poner día</button>
+          <button onclick="qcmd('weather clear')">Limpiar clima</button>
+          <button onclick="qcmd('difficulty normal')">Dificultad normal</button>
+          <button onclick="qcmd('gamerule doFireTick false')">Sin fuego</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: new/edit server ════════════════════════════════════════════ -->
+<div class="modal-backdrop" id="modal-server" style="display:none">
+  <div class="modal modal-wide">
+    <h3 id="modal-server-title">Añadir servidor</h3>
+    <div class="field-group"><label>Nombre</label><input type="text" id="ms-name" placeholder="Mi servidor survival" /></div>
+    <div class="field-group">
+      <label>Color identificador</label>
+      <div class="color-options" id="ms-color-options"></div>
+    </div>
+    <div class="field-group">
+      <label>Archivo JAR</label>
+      <div class="field-row">
+        <input type="text" id="ms-jar" placeholder="Ruta al .jar del servidor" readonly />
+        <button id="ms-pick-jar">📁</button>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-group flex1"><label>RAM mín (MB)</label><input type="number" id="ms-min-ram" value="1024" min="512" step="256" /></div>
+      <div class="field-group flex1"><label>RAM máx (MB)</label><input type="number" id="ms-max-ram" value="4096" min="1024" step="256" /></div>
+    </div>
+    <div class="field-group"><label>Java (opcional)</label><input type="text" id="ms-java" placeholder="java" /></div>
+    <p class="auth-error" id="ms-error"></p>
+    <div class="modal-actions">
+      <button id="ms-cancel">Cancelar</button>
+      <button class="btn-primary" id="ms-save">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: confirm close ══════════════════════════════════════════════ -->
+<div class="modal-backdrop" id="modal-close" style="display:none">
+  <div class="modal">
+    <h3>¿Cerrar la aplicación?</h3>
+    <p id="modal-close-msg">Hay servidores en ejecución. Se detendrán antes de cerrar.</p>
+    <div class="modal-actions">
+      <button id="modal-cancel">Cancelar</button>
+      <button class="danger" id="modal-confirm">Cerrar y detener todo</button>
+    </div>
+  </div>
+</div>
+
+<script src="renderer.js"></script>
+</body>
+</html>

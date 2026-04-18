@@ -1,0 +1,71 @@
+{
+  "name": "minecraft-local-server-app",
+  "version": "1.1.0",
+  "description": "Manage your local Minecraft server",
+  "author": "FixItNow",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --x64",
+    "build:portable": "set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win portable"
+  },
+  "build": {
+    "appId": "com.minecraftmanager.app",
+    "productName": "Minecraft Local Server Manager",
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.ico",
+      "signingHashAlgorithms": null,
+      "sign": null
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": true,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Minecraft Local Server Manager",
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico",
+      "include": "assets/installer.nsh"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "hugoaldaHD",
+      "repo": "minecraft-local-server-app"
+    },
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "src/**/*",
+      "server/**/*",
+      "assets/**/*",
+      "node_modules/**/*"
+    ]
+  },
+  "dependencies": {
+    "electron-store": "^8.1.0",
+    "node-schedule": "^2.1.1",
+    "systeminformation": "^5.22.0",
+    "archiver": "^6.0.1",
+    "adm-zip": "^0.5.10",
+    "chokidar": "^3.5.3",
+    "bcryptjs": "^2.4.3"
+  },
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  }
+}
