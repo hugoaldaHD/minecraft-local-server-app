@@ -36,6 +36,41 @@ document.addEventListener('DOMContentLoaded', async () => {
     initAuth()
     showScreen('auth')
   }
+
+  // ─── Update banner ────────────────────────────────────────────────────────────
+  function initUpdateBanner() {
+    document.getElementById('btn-update-dismiss').onclick = () => {
+      document.getElementById('update-banner').style.display = 'none'
+    }
+    document.getElementById('btn-update-install').onclick = () => {
+      window.api.installUpdate()
+    }
+
+    window.api.onUpdateStatus((info) => {
+      const banner = document.getElementById('update-banner')
+      const text = document.getElementById('update-banner-text')
+      const progress = document.getElementById('update-progress')
+      const bar = document.getElementById('update-bar')
+      const installBtn = document.getElementById('btn-update-install')
+
+      banner.style.display = 'flex'
+
+      if (info.status === 'available') {
+        text.textContent = `Nueva versión v${info.version} disponible, descargando...`
+      }
+      if (info.status === 'downloading') {
+        text.textContent = `Descargando actualización... ${info.percent}%`
+        progress.style.display = 'block'
+        bar.style.width = info.percent + '%'
+      }
+      if (info.status === 'ready') {
+        text.textContent = `v${info.version} lista para instalar`
+        progress.style.display = 'none'
+        installBtn.style.display = 'inline-block'
+      }
+    })
+  }
+
 })
 
 // ─── Titlebar ─────────────────────────────────────────────────────────────────
@@ -45,50 +80,6 @@ function initTitlebar() {
   document.getElementById('btn-close').onclick = () => window.api.close()
   document.getElementById('btn-logout').onclick = logout
   document.getElementById('bc-servers').onclick = () => showScreen('servers')
-}
-
-// ─── Update banner ────────────────────────────────────────────────────────────
-function initUpdateBanner() {
-  document.getElementById('btn-update-dismiss').onclick = () => {
-    document.getElementById('update-banner').style.display = 'none'
-  }
-  document.getElementById('btn-update-install').onclick = () => window.api.installUpdate()
-  document.getElementById('btn-update-notify').onclick = () => {
-    document.getElementById('update-banner').style.display = 'flex'
-  }
-
-  window.api.onUpdateStatus((info) => {
-    const banner = document.getElementById('update-banner')
-    const text = document.getElementById('update-banner-text')
-    const progress = document.getElementById('update-progress')
-    const bar = document.getElementById('update-bar')
-    const installBtn = document.getElementById('btn-update-install')
-    const notifyBtn = document.getElementById('btn-update-notify')
-
-    switch (info.status) {
-      case 'available':
-        banner.style.display = 'flex'
-        text.textContent = `Nueva versión disponible: v${info.version} — descargando...`
-        notifyBtn.style.display = 'flex'
-        break
-      case 'downloading':
-        banner.style.display = 'flex'
-        text.textContent = `Descargando actualización... ${info.percent}%`
-        progress.style.display = 'block'
-        bar.style.width = `${info.percent}%`
-        break
-      case 'ready':
-        banner.style.display = 'flex'
-        text.textContent = `v${info.version} lista para instalar`
-        progress.style.display = 'none'
-        installBtn.style.display = 'inline-block'
-        notifyBtn.style.display = 'flex'
-        break
-      case 'error':
-        console.warn('Update error:', info.message)
-        break
-    }
-  })
 }
 
 // ─── Analytics consent ────────────────────────────────────────────────────────

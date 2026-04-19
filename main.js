@@ -13,11 +13,11 @@ const https = require('https')
 const { autoUpdater } = require('electron-updater')
 
 // ─── Stores ────────────────────────────────────────────────────────────────
-const usersStore   = new Store({ name: 'users' })
+const usersStore = new Store({ name: 'users' })
 const serversStore = new Store({ name: 'servers' })
 const settingsStore = new Store({ name: 'settings' })
 const analyticsStore = new Store({ name: 'analytics' })
-const crashStore   = new Store({ name: 'crashes' })
+const crashStore = new Store({ name: 'crashes' })
 
 let mainWindow = null
 const activeServers = {}
@@ -71,10 +71,10 @@ function sendAnalyticsPayload(endpoint, payload) {
       headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) }
     }
     const req = https.request(options)
-    req.on('error', () => {}) // silencioso
+    req.on('error', () => { }) // silencioso
     req.write(body)
     req.end()
-  } catch (_) {}
+  } catch (_) { }
 }
 
 // ─── Crash reporter ────────────────────────────────────────────────────────
@@ -136,51 +136,45 @@ function createWindow() {
   mainWindow.on('closed', () => { mainWindow = null })
 }
 
-// ─── Auto updater ──────────────────────────────────────────────────────────
 function setupAutoUpdater() {
-  if (!app.isPackaged) return // solo en builds compilados
+  // Solo funciona en la app compilada, no en desarrollo
+  if (!app.isPackaged) return
 
-  autoUpdater.autoDownload = true
-  autoUpdater.autoInstallOnAppQuit = true
+  autoUpdater.autoDownload = true        // descarga automáticamente
+  autoUpdater.autoInstallOnAppQuit = true // instala al cerrar
 
-  autoUpdater.on('checking-for-update', () => {
-    mainWindow?.webContents.send('update-status', { status: 'checking' })
-  })
+  // Comprueba al arrancar (5s de delay para que cargue la UI primero)
+  setTimeout(() => autoUpdater.checkForUpdates(), 5000)
+
+  // Vuelve a comprobar cada 4 horas
+  setInterval(() => autoUpdater.checkForUpdates(), 4 * 60 * 60 * 1000)
+
   autoUpdater.on('update-available', (info) => {
-    mainWindow?.webContents.send('update-status', { status: 'available', version: info.version })
-    trackEvent('update_available', { version: info.version })
+    mainWindow?.webContents.send('update-status', {
+      status: 'available',
+      version: info.version
+    })
   })
-  autoUpdater.on('update-not-available', () => {
-    mainWindow?.webContents.send('update-status', { status: 'none' })
-  })
+
   autoUpdater.on('download-progress', (progress) => {
     mainWindow?.webContents.send('update-status', {
       status: 'downloading',
-      percent: Math.round(progress.percent),
-      transferred: progress.transferred,
-      total: progress.total
+      percent: Math.round(progress.percent)
     })
   })
+
   autoUpdater.on('update-downloaded', (info) => {
-    mainWindow?.webContents.send('update-status', { status: 'ready', version: info.version })
-    trackEvent('update_downloaded', { version: info.version })
+    mainWindow?.webContents.send('update-status', {
+      status: 'ready',
+      version: info.version
+    })
   })
+
   autoUpdater.on('error', (err) => {
-    mainWindow?.webContents.send('update-status', { status: 'error', message: err.message })
+    // silencioso — no molestamos al usuario si falla la comprobación
+    console.error('AutoUpdater error:', err.message)
   })
-
-  // Comprueba al arrancar y luego cada 4 horas
-  setTimeout(() => autoUpdater.checkForUpdates(), 5000)
-  setInterval(() => autoUpdater.checkForUpdates(), 4 * 60 * 60 * 1000)
 }
-
-ipcMain.handle('update:check', () => {
-  if (app.isPackaged) autoUpdater.checkForUpdates()
-  return { ok: true }
-})
-ipcMain.handle('update:install', () => {
-  autoUpdater.quitAndInstall(false, true)
-})
 
 // ─── App lifecycle ─────────────────────────────────────────────────────────
 setupCrashReporter()
@@ -360,7 +354,7 @@ function startStatsPolling() {
         ramTotal: Math.round(mem.total / 1024 / 1024),
         activeServers: Object.keys(activeServers)
       })
-    } catch (_) {}
+    } catch (_) { }
   }, 2000)
 }
 
@@ -419,10 +413,10 @@ async function createBackup(serverDir, backupDir) {
     })
     archive.on('error', (err) => { logCrash('backup_error', err); resolve({ ok: false, error: err.message }) })
     archive.pipe(output)
-    ;['world', 'world_nether', 'world_the_end'].forEach(dir => {
-      const full = path.join(serverDir, dir)
-      if (fs.existsSync(full)) archive.directory(full, dir)
-    })
+      ;['world', 'world_nether', 'world_the_end'].forEach(dir => {
+        const full = path.join(serverDir, dir)
+        if (fs.existsSync(full)) archive.directory(full, dir)
+      })
     archive.finalize()
   })
 }
@@ -480,3 +474,16 @@ ipcMain.handle('app:version', () => app.getVersion())
 ipcMain.handle('window:minimize', () => mainWindow?.minimize())
 ipcMain.handle('window:maximize', () => mainWindow?.isMaximized() ? mainWindow.unmaximize() : mainWindow?.maximize())
 ipcMain.handle('window:close', () => { stopAllServers(); setTimeout(() => app.quit(), 2000) })
+
+// ─── Auto-updater IPC ──────────────────────────────────────────────────────
+
+ipcMain.handle('update:check', () => {
+  if (app.isPackaged) autoUpdater.checkForUpdates()
+  return { ok: true }
+})
+
+ipcMain.handle('update:install', () => {
+  autoUpdater.quitAndInstall(false, true)
+})
+
+ipcMain.handle('app:version', () => app.getVersion())
