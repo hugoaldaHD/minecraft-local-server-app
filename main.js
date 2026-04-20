@@ -481,7 +481,14 @@ ipcMain.handle('app:version', () => app.getVersion())
 // ─── Window controls ───────────────────────────────────────────────────────
 ipcMain.handle('window:minimize', () => mainWindow?.minimize())
 ipcMain.handle('window:maximize', () => mainWindow?.isMaximized() ? mainWindow.unmaximize() : mainWindow?.maximize())
-ipcMain.handle('window:close', () => { stopAllServers(); setTimeout(() => app.quit(), 2000) })
+ipcMain.handle('window:close', () => {
+  stopAllServers()
+  if (Object.keys(activeServers).length > 0) {
+    setTimeout(() => app.quit(), 2000)
+  } else {
+    app.quit()
+  }
+})
 
 // ─── Auto-updater IPC ──────────────────────────────────────────────────────
 
