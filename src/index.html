@@ -13,14 +13,6 @@
 
   <!-- ══ TITLEBAR ══════════════════════════════════════════════════════════ -->
   <div class="titlebar">
-    <div class="update-banner" id="update-banner" style="display:none">
-      <span id="update-banner-text">Nueva versión disponible</span>
-      <div class="update-progress" id="update-progress" style="display:none">
-        <div class="update-bar" id="update-bar" style="width:0%"></div>
-      </div>
-      <button id="btn-update-install" style="display:none">Instalar y reiniciar</button>
-      <button id="btn-update-dismiss">✕</button>
-    </div>
     <div class="titlebar-left">
       <span class="app-name">Minecraft Local Server Manager</span>
       <div class="breadcrumb" id="breadcrumb" style="display:none">
@@ -51,13 +43,15 @@
   </div>
 
   <!-- ══ UPDATE BANNER ═════════════════════════════════════════════════════ -->
-  <div class="update-banner" id="update-banner" style="display:none">
+  <div class="update-banner" id="update-banner" style="display:none; -webkit-app-region: no-drag; position: absolute; top: 36px; left: 0; right: 0; background: var(--info); color: #000; z-index: 100; padding: 6px 16px; align-items: center; justify-content: space-between; font-weight: 500; font-size: 13px;">
     <span id="update-banner-text">Comprobando actualizaciones...</span>
-    <div class="update-progress" id="update-progress" style="display:none">
-      <div class="update-bar" id="update-bar"></div>
+    <div class="update-progress" id="update-progress" style="display:none; flex: 1; margin: 0 16px; height: 6px; background: rgba(0,0,0,0.2); border-radius: 4px; overflow: hidden;">
+      <div class="update-bar" id="update-bar" style="height: 100%; width: 0%; background: #000; border-radius: 4px;"></div>
     </div>
-    <button class="btn-update-install" id="btn-update-install" style="display:none">Instalar y reiniciar</button>
-    <button class="btn-update-dismiss" id="btn-update-dismiss">✕</button>
+    <div style="display:flex; gap: 8px;">
+      <button class="btn-update-install" id="btn-update-install" style="display:none; background: #000; color: #fff; border: none; border-radius: 4px; padding: 4px 10px; cursor: pointer; font-weight: bold;">Instalar y reiniciar</button>
+      <button class="btn-update-dismiss" id="btn-update-dismiss" style="background: none; border: none; font-size: 16px; cursor: pointer;">✕</button>
+    </div>
   </div>
 
   <!-- ══ SCREEN: ANALYTICS CONSENT ════════════════════════════════════════ -->
