@@ -78,8 +78,8 @@ function initTitlebar() {
   document.getElementById('btn-min').onclick = () => window.api.minimize()
   document.getElementById('btn-max').onclick = () => window.api.maximize()
   document.getElementById('btn-close').onclick = () => window.api.close()
-  document.getElementById('btn-logout').onclick = logout
-  document.getElementById('bc-servers').onclick = () => showScreen('servers')
+  document.getElementById('btn-back-profiles').onclick = () => showScreen('profiles')
+  document.getElementById('btn-back-servers').onclick = () => showScreen('servers')
 }
 
 // ─── Analytics consent ────────────────────────────────────────────────────────
@@ -97,7 +97,7 @@ document.getElementById('btn-consent-no').onclick = async () => {
 // ─── Diagnostics ──────────────────────────────────────────────────────────────
 function initDiagnostics() {
   document.getElementById('btn-diagnostics').onclick = () => showScreen('diagnostics')
-  document.getElementById('btn-diag-back').onclick = () => showScreen('servers')
+  document.getElementById('btn-diag-back-servers').onclick = () => showScreen('servers')
   document.getElementById('btn-clear-crashes').onclick = async () => {
     await window.api.clearCrashes()
     loadDiagnostics()
@@ -158,24 +158,17 @@ function showScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'))
   document.getElementById(`screen-${name}`).classList.add('active')
 
-  const bc = document.getElementById('breadcrumb')
   const stats = document.getElementById('titlebar-stats')
-  const serverNameBC = document.getElementById('bc-server-name')
 
   if (name === 'profiles' || name === 'consent') {
-    bc.style.display = 'none'
     stats.style.display = 'none'
     document.getElementById('user-chip').style.display = 'none'
   } else if (name === 'servers' || name === 'diagnostics') {
-    bc.style.display = 'flex'
-    serverNameBC.style.display = 'none'
     stats.style.display = 'flex'
     state.currentServerId = null
     if (name === 'servers') refreshServersGrid()
     if (name === 'diagnostics') loadDiagnostics()
   } else if (name === 'detail') {
-    bc.style.display = 'flex'
-    serverNameBC.style.display = 'inline'
     stats.style.display = 'flex'
   }
 }
@@ -344,11 +337,6 @@ async function refreshServersGrid() {
           <div class="server-card-name">${s.name}</div>
           <div class="server-card-status"><span class="dot ${running ? 'on' : 'off'}"></span><span>${running ? 'En línea' : 'Detenido'}</span></div>
         </div>
-        <div class="server-card-jar">${jarName}</div>
-        <div class="server-card-footer">
-          <div class="server-card-ram">RAM: ${s.minRam}–${s.maxRam} MB</div>
-          <button class="server-card-open" onclick="event.stopPropagation();openServer('${s.id}')">Gestionar →</button>
-        </div>
       </div>`
   }).join('')
 }
@@ -358,7 +346,8 @@ async function openServer(serverId) {
   const server = state.servers.find(s => s.id === serverId) || await window.api.getServer(serverId)
   if (!server) return
 
-  document.getElementById('bc-name-text').textContent = server.name
+  document.getElementById('sbar-server-name').textContent = server.name
+  document.getElementById('sbar-server-name').style.color = server.color || '#4ade80'
   document.getElementById('sbar-dot').style.background = server.color || '#4ade80'
 
   const console_ = document.getElementById('console')
@@ -396,7 +385,7 @@ function initModal() {
     if (p) document.getElementById('ms-jar').value = p
   }
   document.getElementById('ms-save').onclick = saveNewServer
-  document.getElementById('modal-cancel').onclick = () => { 
+  document.getElementById('modal-cancel').onclick = () => {
     document.getElementById('modal-close').style.display = 'none'
     document.getElementById('modal-close-level1').style.display = 'flex'
     document.getElementById('modal-close-level2').style.display = 'none'
@@ -741,7 +730,7 @@ function loadConfigTab(server, settings) {
     const selectedColor = document.querySelector('#color-options .color-opt.selected')
     const data = { name: document.getElementById('cfg-name').value.trim() || server.name, jarPath: document.getElementById('cfg-jar').value.trim(), javaPath: document.getElementById('cfg-java').value.trim() || null, minRam: parseInt(document.getElementById('cfg-min-ram').value) || 1024, maxRam: parseInt(document.getElementById('cfg-max-ram').value) || 4096, extraArgs: document.getElementById('cfg-extra').value.trim(), color: selectedColor ? selectedColor.dataset.color : server.color }
     const res = await window.api.updateServer({ serverId: server.id, data })
-    if (res.ok) { document.getElementById('bc-name-text').textContent = data.name; document.getElementById('sbar-dot').style.background = data.color; appendLog('Configuración guardada', 'success'); loadPropertiesTab(res.server) }
+    if (res.ok) { document.getElementById('sbar-server-name').textContent = data.name; document.getElementById('sbar-server-name').style.color = data.color; document.getElementById('sbar-dot').style.background = data.color; appendLog('Configuración guardada', 'success'); loadPropertiesTab(res.server) }
   }
   document.getElementById('btn-delete-server').onclick = async () => {
     const status = await window.api.getStatus(server.id)

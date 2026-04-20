@@ -15,11 +15,6 @@
   <div class="titlebar">
     <div class="titlebar-left">
       <span class="app-name">Minecraft Local Server Manager</span>
-      <div class="breadcrumb" id="breadcrumb" style="display:none">
-        <span class="bc-sep">›</span>
-        <button class="bc-btn" id="bc-servers">Mis servidores</button>
-        <span class="bc-server-name" id="bc-server-name" style="display:none">› <span id="bc-name-text"></span></span>
-      </div>
     </div>
     <div class="titlebar-center" id="titlebar-stats" style="display:none">
       <span class="tstat"><span class="tstat-label">CPU</span><span id="tstat-cpu">0%</span></span>
@@ -34,7 +29,6 @@
       <div class="user-chip" id="user-chip" style="display:none">
         <div class="user-avatar-sm" id="user-avatar-sm">?</div>
         <span id="user-chip-name"></span>
-        <button class="btn-logout" id="btn-logout" title="Cambiar perfil">Perfiles</button>
       </div>
       <button class="wbtn" id="btn-min">─</button>
       <button class="wbtn" id="btn-max">□</button>
@@ -42,9 +36,9 @@
     </div>
   </div>
 
-  <!-- ══ UPDATE BANNER ═════════════════════════════════════════════════════ -->
+  <!-- ══ UPDATE BANNER ══════════════════════════════════════════════════════════ -->
   <div class="update-banner" id="update-banner"
-    style="display:none; -webkit-app-region: no-drag; position: absolute; top: 36px; left: 0; right: 0; background: var(--info); color: #000; z-index: 100; padding: 6px 16px; align-items: center; justify-content: space-between; font-weight: 500; font-size: 13px;">
+    style="display:none; -webkit-app-region: no-drag; position: absolute; top: 40px; left: 0; right: 0; background: var(--info); color: #000; z-index: 100; padding: 6px 16px; align-items: center; justify-content: space-between; font-weight: 500; font-size: 13px;">
     <span id="update-banner-text">Comprobando actualizaciones...</span>
     <div class="update-progress" id="update-progress"
       style="display:none; flex: 1; margin: 0 16px; height: 6px; background: rgba(0,0,0,0.2); border-radius: 4px; overflow: hidden;">
@@ -60,7 +54,7 @@
     </div>
   </div>
 
-  <!-- ══ SCREEN: ANALYTICS CONSENT ════════════════════════════════════════ -->
+  <!-- ══ SCREEN: ANALYTICS CONSENT ════════════════════════════════════════════════ -->
   <div class="screen" id="screen-consent">
     <div class="auth-bg">
       <div class="auth-card consent-card">
@@ -84,7 +78,7 @@
     </div>
   </div>
 
-  <!-- ══ SCREEN: PROFILES ════════════════════════════════════════════════ -->
+  <!-- ══ SCREEN: PROFILES ══════════════════════════════════════════════════════════ -->
   <div class="screen" id="screen-profiles">
     <div class="profiles-bg">
       <div class="profiles-header">
@@ -98,7 +92,7 @@
 
       <!-- NEW PROFILE INLINE FORM -->
       <div class="new-profile-section" id="new-profile-section">
-        <button class="btn-new-profile" id="btn-show-new-profile">Nuevo perfil</button>
+        <button class="btn-new-server" id="btn-show-new-profile">Nuevo perfil</button>
 
         <div class="new-profile-form" id="new-profile-form" style="display:none">
           <h3 class="npf-title">Crear perfil</h3>
@@ -121,9 +115,10 @@
     </div>
   </div>
 
-  <!-- ══ SCREEN: SERVER LIST ═══════════════════════════════════════════════ -->
+  <!-- ══ SCREEN: SERVER LIST ══════════════════════════════════════════════════════════ -->
   <div class="screen" id="screen-servers">
     <div class="servers-header">
+      <button class="btn-back" id="btn-back-profiles">Perfiles</button>
       <div>
         <h1 class="servers-title" id="servers-title">Mis servidores</h1>
         <p class="servers-sub" id="servers-sub">Cargando...</p>
@@ -136,11 +131,13 @@
     <div class="servers-grid" id="servers-grid"></div>
   </div>
 
-  <!-- ══ SCREEN: SERVER DETAIL ═════════════════════════════════════════════ -->
+  <!-- ══ SCREEN: SERVER DETAIL ════════════════════════════════════════════════ -->
   <div class="screen" id="screen-detail">
     <div class="server-bar" id="server-bar">
+      <button class="btn-back" id="btn-back-servers">Servidores</button>
       <div class="server-bar-left">
         <div class="server-color-dot" id="sbar-dot"></div>
+        <span class="server-name-display" id="sbar-server-name"></span>
         <div class="status-pill">
           <span class="dot off" id="sbar-dot-status"></span>
           <span id="sbar-status-text">Detenido</span>
@@ -154,10 +151,10 @@
     <nav class="nav" id="detail-nav">
       <button class="nav-item active" data-tab="console">Consola</button>
       <button class="nav-item" data-tab="players">Jugadores</button>
-      <button class="nav-item" data-tab="lists">Whitelist / Banlist</button>
-      <button class="nav-item" data-tab="properties">server.properties</button>
+      <button class="nav-item" data-tab="lists">Listas</button>
+      <button class="nav-item" data-tab="properties">Propiedades</button>
       <button class="nav-item" data-tab="backups">Backups</button>
-      <button class="nav-item" data-tab="config">Configuración</button>
+      <button class="nav-item" data-tab="config">Ajustes</button>
     </nav>
 
     <div class="tab active" id="tab-console">
@@ -292,14 +289,15 @@
     </div>
   </div>
 
-  <!-- ══ SCREEN: DIAGNOSTICS ═══════════════════════════════════════════════ -->
+  <!-- ══ SCREEN: DIAGNOSTICS ════════════════════════════════════════════════════ -->
   <div class="screen" id="screen-diagnostics">
     <div class="servers-header">
+      <button class="btn-back" id="btn-diag-back-servers">Servidores</button>
       <div>
         <h1 class="servers-title">Diagnóstico</h1>
         <p class="servers-sub">Estado de la aplicación, errores y analytics</p>
       </div>
-      <button class="btn-secondary" id="btn-diag-back">Volver</button>
+      <button class="btn-secondary" id="btn-clear-crashes">Limpiar errores</button>
     </div>
     <div class="diag-grid">
       <div class="diag-card">
@@ -315,16 +313,13 @@
         <div class="diag-rows" id="diag-analytics"></div>
       </div>
       <div class="diag-card diag-card-wide">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-          <h3>Últimos errores</h3>
-          <button class="btn-secondary" id="btn-clear-crashes">Limpiar</button>
-        </div>
+        <h3>Últimos errores</h3>
         <div id="diag-crashes"></div>
       </div>
     </div>
   </div>
 
-  <!-- ══ MODAL: new server ════════════════════════════════════════════════ -->
+  <!-- ══ MODAL: new server ════════════════════════════════════════════════════ -->
   <div class="modal-backdrop" id="modal-server" style="display:none">
     <div class="modal modal-wide">
       <h3 id="modal-server-title">Añadir servidor</h3>
@@ -351,7 +346,7 @@
     </div>
   </div>
 
-  <!-- ══ MODAL: confirm close ══════════════════════════════════════════════ -->
+  <!-- ══ MODAL: confirm close ══════════════════════════════════════════════════════════════════ -->
   <div class="modal-backdrop" id="modal-close" style="display:none">
     <div class="modal">
       <h3 id="modal-close-title">¿Cerrar la aplicación?</h3>
