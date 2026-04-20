@@ -763,6 +763,5 @@ window.api.onUpdateAvailable(() => {
 })
 
 window.api.onUpdateDownloaded(() => {
-  const ok = confirm('Actualización lista. ¿Instalar y reiniciar ahora?')
-  if (ok) window.api.installUpdate()
+  window.api.installUpdate()
 })

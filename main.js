@@ -141,7 +141,7 @@ function setupAutoUpdater() {
   if (!app.isPackaged) return
 
   autoUpdater.autoDownload = true        // descarga automáticamente
-  autoUpdater.autoInstallOnAppQuit = false // NO instalar al cerrar automáticamente
+  autoUpdater.autoInstallOnAppQuit = true  // instalar silenciosamente al cerrar
 
   // Comprueba al arrancar (5s de delay para que cargue la UI primero)
   setTimeout(() => autoUpdater.checkForUpdates(), 5000)
@@ -498,5 +498,5 @@ ipcMain.handle('update:check', () => {
 })
 
 ipcMain.handle('update:install', () => {
-  autoUpdater.quitAndInstall(false, true)
+  autoUpdater.quitAndInstall(true, false)
 })
