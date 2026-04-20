@@ -25,9 +25,7 @@
       "target": [
         {
           "target": "nsis",
-          "arch": [
-            "x64"
-          ]
+          "arch": ["x64"]
         }
       ],
       "icon": "assets/icon.ico",
@@ -36,15 +34,10 @@
     },
     "nsis": {
       "oneClick": false,
-      "perMachine": true,
-      "allowElevation": true,
-      "allowToChangeInstallationDirectory": true,
+      "perMachine": false,
       "createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
-      "shortcutName": "Minecraft Local Server Manager",
-      "installerIcon": "assets/icon.ico",
-      "uninstallerIcon": "assets/icon.ico",
-      "include": "assets/installer.nsh"
+      "createStartMenuShortcut": false,
+      "shortcutName": "Minecraft Local Server Manager"
     },
     "directories": {
       "output": "dist"

@@ -140,8 +140,8 @@ function setupAutoUpdater() {
   // Solo funciona en la app compilada, no en desarrollo
   if (!app.isPackaged) return
 
-  autoUpdater.autoDownload = true        // descarga automáticamente
-  autoUpdater.autoInstallOnAppQuit = true  // instalar silenciosamente al cerrar
+  autoUpdater.autoDownload = true
+  autoUpdater.autoInstallOnAppQuit = true
 
   // Comprueba al arrancar (5s de delay para que cargue la UI primero)
   setTimeout(() => autoUpdater.checkForUpdates(), 5000)
