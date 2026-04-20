@@ -189,16 +189,22 @@ body {
 }
 
 .btn-logout {
-  background: none;
-  border: none;
-  color: var(--text2);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  color: var(--text);
   cursor: pointer;
-  font-size: 14px;
-  padding: 2px;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 10px;
+  margin-left: 6px;
+  transition: all 0.15s;
 }
 
 .btn-logout:hover {
-  color: var(--danger);
+  background: var(--bg3);
+  border-color: var(--info);
+  color: var(--text);
 }
 
 /* ── Screens ── */
