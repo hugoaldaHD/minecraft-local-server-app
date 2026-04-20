@@ -205,7 +205,11 @@ function initEvents() {
   })
 
   window.api.onConfirmClose(({ count }) => {
+    document.getElementById('modal-close').dataset.serverCount = count
+    document.getElementById('modal-close-title').textContent = '¿Cerrar la aplicación?'
     document.getElementById('modal-close-msg').textContent = `Hay ${count} servidor(es) en ejecución. Se detendrán antes de cerrar.`
+    document.getElementById('modal-close-level1').style.display = 'flex'
+    document.getElementById('modal-close-level2').style.display = 'none'
     document.getElementById('modal-close').style.display = 'flex'
   })
 
@@ -392,7 +396,24 @@ function initModal() {
     if (p) document.getElementById('ms-jar').value = p
   }
   document.getElementById('ms-save').onclick = saveNewServer
-  document.getElementById('modal-cancel').onclick = () => { document.getElementById('modal-close').style.display = 'none' }
+  document.getElementById('modal-cancel').onclick = () => { 
+    document.getElementById('modal-close').style.display = 'none'
+    document.getElementById('modal-close-level1').style.display = 'flex'
+    document.getElementById('modal-close-level2').style.display = 'none'
+  }
+  document.getElementById('modal-confirm-proceed').onclick = () => {
+    document.getElementById('modal-close-title').textContent = '¿Seguro que quieres cerrar?'
+    document.getElementById('modal-close-msg').textContent = 'Los servidores se detendrán y los jugadores perderán la conexión.'
+    document.getElementById('modal-close-level1').style.display = 'none'
+    document.getElementById('modal-close-level2').style.display = 'flex'
+  }
+  document.getElementById('modal-cancel-2').onclick = () => {
+    document.getElementById('modal-close-title').textContent = '¿Cerrar la aplicación?'
+    const count = document.getElementById('modal-close').dataset.serverCount || 0
+    document.getElementById('modal-close-msg').textContent = `Hay ${count} servidor(es) en ejecución. Se detendrán antes de cerrar.`
+    document.getElementById('modal-close-level1').style.display = 'flex'
+    document.getElementById('modal-close-level2').style.display = 'none'
+  }
   document.getElementById('modal-confirm').onclick = () => window.api.close()
 }
 

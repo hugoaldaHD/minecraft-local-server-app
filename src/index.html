@@ -354,10 +354,14 @@
   <!-- ══ MODAL: confirm close ══════════════════════════════════════════════ -->
   <div class="modal-backdrop" id="modal-close" style="display:none">
     <div class="modal">
-      <h3>¿Cerrar la aplicación?</h3>
+      <h3 id="modal-close-title">¿Cerrar la aplicación?</h3>
       <p id="modal-close-msg">Hay servidores en ejecución. Se detendrán antes de cerrar.</p>
-      <div class="modal-actions">
+      <div id="modal-close-level1" class="modal-actions">
         <button id="modal-cancel">Cancelar</button>
+        <button id="modal-confirm-proceed">Continuar</button>
+      </div>
+      <div id="modal-close-level2" class="modal-actions" style="display:none">
+        <button id="modal-cancel-2">Volver</button>
         <button class="danger" id="modal-confirm">Cerrar y detener todo</button>
       </div>
     </div>
