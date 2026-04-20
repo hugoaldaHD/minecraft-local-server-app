@@ -1,6 +1,6 @@
 {
   "name": "minecraft-local-server-app",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Minecraft Local Server Manager",
   "author": "FixItNow",
   "main": "main.js",
@@ -26,7 +26,9 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ]
     },
