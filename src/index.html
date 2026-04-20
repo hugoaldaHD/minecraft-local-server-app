@@ -22,8 +22,7 @@
       <button id="btn-update-dismiss">✕</button>
     </div>
     <div class="titlebar-left">
-      <div class="app-icon">⛏</div>
-      <span class="app-name">Minecraft Manager</span>
+      <span class="app-name">Minecraft Local Server Manager</span>
       <div class="breadcrumb" id="breadcrumb" style="display:none">
         <span class="bc-sep">›</span>
         <button class="bc-btn" id="bc-servers">Mis servidores</button>
@@ -43,7 +42,7 @@
       <div class="user-chip" id="user-chip" style="display:none">
         <div class="user-avatar-sm" id="user-avatar-sm">?</div>
         <span id="user-chip-name"></span>
-        <button class="btn-logout" id="btn-logout" title="Cambiar perfil">↩ Volver a perfiles</button>
+        <button class="btn-logout" id="btn-logout" title="Cambiar perfil">Perfiles</button>
       </div>
       <button class="wbtn" id="btn-min">─</button>
       <button class="wbtn" id="btn-max">□</button>
@@ -89,8 +88,7 @@
   <div class="screen" id="screen-profiles">
     <div class="profiles-bg">
       <div class="profiles-header">
-        <div class="profiles-logo">⛏</div>
-        <h1 class="profiles-title">Minecraft Manager</h1>
+        <h1 class="profiles-title">Minecraft Local Server Manager</h1>
         <p class="profiles-version" id="profiles-version-label"></p>
       </div>
 
@@ -100,13 +98,14 @@
 
       <!-- NEW PROFILE INLINE FORM -->
       <div class="new-profile-section" id="new-profile-section">
-        <button class="btn-new-profile" id="btn-show-new-profile">+ Nuevo perfil</button>
+        <button class="btn-new-profile" id="btn-show-new-profile">Nuevo perfil</button>
 
         <div class="new-profile-form" id="new-profile-form" style="display:none">
           <h3 class="npf-title">Crear perfil</h3>
           <div class="field">
             <label>Nombre del perfil</label>
-            <input type="text" id="npf-name" placeholder="Ej: Hugo, Survival, Creativo..." autocomplete="off" maxlength="24" />
+            <input type="text" id="npf-name" placeholder="Ej: Hugo, Survival, Creativo..." autocomplete="off"
+              maxlength="24" />
           </div>
           <div class="field">
             <label>Elige un avatar</label>
@@ -130,8 +129,8 @@
         <p class="servers-sub" id="servers-sub">Cargando...</p>
       </div>
       <div style="display:flex;gap:8px">
-        <button class="btn-secondary" id="btn-diagnostics">🔧 Diagnóstico</button>
-        <button class="btn-new-server" id="btn-new-server">+ Añadir servidor</button>
+        <button class="btn-secondary" id="btn-diagnostics">Diagnóstico</button>
+        <button class="btn-new-server" id="btn-new-server">Añadir servidor</button>
       </div>
     </div>
     <div class="servers-grid" id="servers-grid"></div>
@@ -148,8 +147,8 @@
         </div>
       </div>
       <div class="server-bar-right">
-        <button class="btn-start" id="detail-btn-start">▶ Iniciar</button>
-        <button class="btn-stop" id="detail-btn-stop" disabled>■ Detener</button>
+        <button class="btn-start" id="detail-btn-start">Iniciar</button>
+        <button class="btn-stop" id="detail-btn-stop" disabled>Detener</button>
       </div>
     </div>
     <nav class="nav" id="detail-nav">
@@ -175,7 +174,7 @@
 
     <div class="tab" id="tab-players">
       <div class="panel-header">
-        <h2>Jugadores conectados</h2><button class="btn-secondary" id="btn-refresh-players">↻ Actualizar</button>
+        <h2>Jugadores conectados</h2><button class="btn-secondary" id="btn-refresh-players">Actualizar</button>
       </div>
       <div class="players-grid" id="players-grid"></div>
       <div class="quick-actions">
@@ -219,7 +218,7 @@
 
     <div class="tab" id="tab-properties">
       <div class="panel-header">
-        <h2>server.properties</h2><button class="btn-primary" id="btn-save-props">💾 Guardar</button>
+        <h2>server.properties</h2><button class="btn-primary" id="btn-save-props">Guardar</button>
       </div>
       <div class="props-grid" id="props-grid">
         <div class="empty-state">Guarda la configuración del servidor primero.</div>
@@ -228,7 +227,7 @@
 
     <div class="tab" id="tab-backups">
       <div class="panel-header">
-        <h2>Backups del mundo</h2><button class="btn-primary" id="btn-backup-now">📦 Crear backup ahora</button>
+        <h2>Backups del mundo</h2><button class="btn-primary" id="btn-backup-now">Crear backup ahora</button>
       </div>
       <div class="backup-auto-config">
         <h3>Backup automático</h3>
@@ -261,7 +260,7 @@
         <div class="field-group">
           <label>Archivo JAR</label>
           <div class="field-row"><input type="text" id="cfg-jar" placeholder="C:\servers\server.jar" readonly /><button
-              id="btn-pick-jar">📁 Buscar</button></div>
+              id="btn-pick-jar">Buscar</button></div>
           <p class="field-hint">Compatible con Vanilla, Paper, Spigot, Bukkit, Fabric y Forge</p>
         </div>
         <div class="field-group"><label>Ruta de Java (opcional)</label><input type="text" id="cfg-java"
@@ -275,8 +274,8 @@
         <div class="field-group"><label>Argumentos JVM adicionales</label><input type="text" id="cfg-extra"
             placeholder="-XX:+UseG1GC" /></div>
         <div class="config-actions">
-          <button class="btn-primary" id="btn-save-cfg">💾 Guardar configuración</button>
-          <button class="btn-danger" id="btn-delete-server">🗑 Eliminar servidor</button>
+          <button class="btn-primary" id="btn-save-cfg">Guardar configuración</button>
+          <button class="btn-danger" id="btn-delete-server">Eliminar servidor</button>
         </div>
         <div class="quick-cmds">
           <h3>Comandos rápidos</h3>
@@ -297,7 +296,7 @@
   <div class="screen" id="screen-diagnostics">
     <div class="servers-header">
       <div>
-        <h1 class="servers-title">🔧 Diagnóstico</h1>
+        <h1 class="servers-title">Diagnóstico</h1>
         <p class="servers-sub">Estado de la aplicación, errores y analytics</p>
       </div>
       <button class="btn-secondary" id="btn-diag-back">← Volver</button>
