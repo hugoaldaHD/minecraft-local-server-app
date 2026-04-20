@@ -1,6 +1,6 @@
 {
   "name": "minecraft-local-server-app",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "description": "Minecraft Local Server Manager",
   "author": "FixItNow",
   "main": "main.js",
