@@ -396,6 +396,204 @@ body {
   background: rgba(74, 222, 128, 0.1);
 }
 
+/* ── PROFILES ── */
+.profiles-bg {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: radial-gradient(ellipse at 50% 0%, rgba(74, 222, 128, 0.06) 0%, transparent 70%);
+  padding: 40px 20px;
+  overflow-y: auto;
+}
+
+.profiles-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.profiles-logo {
+  font-size: 48px;
+  margin-bottom: 8px;
+}
+
+.profiles-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.profiles-version {
+  font-size: 13px;
+  color: var(--text2);
+  margin-top: 4px;
+}
+
+.profiles-subtitle {
+  font-size: 16px;
+  color: var(--text);
+  margin-bottom: 32px;
+}
+
+.profiles-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+  max-width: 800px;
+  margin-bottom: 40px;
+}
+
+.profile-card {
+  width: 140px;
+  background: var(--bg1);
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.profile-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.pcard-avatar {
+  font-size: 40px;
+  margin-bottom: 12px;
+  background: var(--bg2);
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--border);
+}
+
+.profile-card:hover .pcard-avatar {
+  border-color: var(--accent);
+}
+
+.pcard-name {
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 4px;
+  color: var(--text);
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pcard-servers {
+  font-size: 11px;
+  color: var(--text2);
+}
+
+.pcard-delete {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: var(--danger);
+  border: none;
+  color: white;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.profile-card:hover .pcard-delete {
+  opacity: 1;
+}
+
+.pcard-delete:hover {
+  background: #b91c1c;
+  transform: scale(1.1);
+}
+
+.new-profile-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 420px;
+}
+
+.btn-new-profile {
+  padding: 12px 24px;
+  background: var(--bg2);
+  border: 1px dashed var(--border2);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-new-profile:hover {
+  border-style: solid;
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(74, 222, 128, 0.05);
+}
+
+.new-profile-form {
+  background: var(--bg1);
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  padding: 24px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.npf-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.npf-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.btn-secondary {
+  padding: 8px 16px;
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.15s;
+}
+
+.btn-secondary:hover {
+  background: var(--bg3);
+  border-color: var(--info);
+}
+
 /* ── Server list ── */
 .servers-header {
   display: flex;

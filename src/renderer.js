@@ -23,9 +23,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   initUpdateBanner()
   initDiagnostics()
 
-  // Show version on auth screen
+  // Show version on profiles screen
   const ver = await window.api.getVersion()
-  const lbl = document.getElementById('auth-version-label')
+  const lbl = document.getElementById('profiles-version-label')
   if (lbl) lbl.textContent = `v${ver}`
 
   // First run: check analytics consent
@@ -33,8 +33,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (consent === null) {
     showScreen('consent')
   } else {
-    initAuth()
-    showScreen('auth')
+    initProfiles()
+    showScreen('profiles')
   }
 
   // ─── Update banner ────────────────────────────────────────────────────────────
@@ -85,13 +85,13 @@ function initTitlebar() {
 // ─── Analytics consent ────────────────────────────────────────────────────────
 document.getElementById('btn-consent-yes').onclick = async () => {
   await window.api.setAnalyticsConsent(true)
-  initAuth()
-  showScreen('auth')
+  initProfiles()
+  showScreen('profiles')
 }
 document.getElementById('btn-consent-no').onclick = async () => {
   await window.api.setAnalyticsConsent(false)
-  initAuth()
-  showScreen('auth')
+  initProfiles()
+  showScreen('profiles')
 }
 
 // ─── Diagnostics ──────────────────────────────────────────────────────────────
@@ -154,8 +154,6 @@ async function loadDiagnostics() {
   }
 }
 
-// Override showScreen to load diagnostics when navigating there
-const _showScreen = showScreen
 function showScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'))
   document.getElementById(`screen-${name}`).classList.add('active')
@@ -164,7 +162,7 @@ function showScreen(name) {
   const stats = document.getElementById('titlebar-stats')
   const serverNameBC = document.getElementById('bc-server-name')
 
-  if (name === 'auth' || name === 'consent') {
+  if (name === 'profiles' || name === 'consent') {
     bc.style.display = 'none'
     stats.style.display = 'none'
     document.getElementById('user-chip').style.display = 'none'
@@ -216,64 +214,78 @@ function initEvents() {
   })
 }
 
-// ─── Auth ─────────────────────────────────────────────────────────────────────
-function initAuth() {
-  document.querySelectorAll('.auth-tab').forEach(tab => {
-    tab.onclick = () => {
-      document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'))
-      document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'))
-      tab.classList.add('active')
-      document.getElementById(`form-${tab.dataset.tab}`).classList.add('active')
-    }
-  })
-  document.getElementById('btn-login').onclick = doLogin
-  document.getElementById('btn-register').onclick = doRegister
-  document.getElementById('login-pass').onkeydown = e => { if (e.key === 'Enter') doLogin() }
-  document.getElementById('reg-pass2').onkeydown = e => { if (e.key === 'Enter') doRegister() }
-  loadProfileChips()
+// ─── Profiles ─────────────────────────────────────────────────────────────────
+function initProfiles() {
+  renderAvatarPicker()
+
+  document.getElementById('btn-show-new-profile').onclick = () => {
+    document.getElementById('btn-show-new-profile').style.display = 'none'
+    document.getElementById('new-profile-form').style.display = 'flex'
+    document.getElementById('npf-name').focus()
+  }
+
+  document.getElementById('btn-cancel-npf').onclick = () => {
+    document.getElementById('new-profile-form').style.display = 'none'
+    document.getElementById('btn-show-new-profile').style.display = 'inline-flex'
+    document.getElementById('npf-name').value = ''
+    document.getElementById('npf-error').textContent = ''
+  }
+
+  document.getElementById('btn-create-profile').onclick = doCreateProfile
+  document.getElementById('npf-name').onkeydown = e => { if (e.key === 'Enter') doCreateProfile() }
+
+  loadProfilesGrid()
 }
 
-async function loadProfileChips() {
+async function loadProfilesGrid() {
   const users = await window.api.listUsers()
-  const container = document.getElementById('auth-profiles')
-  if (!users.length) { container.innerHTML = ''; return }
-  container.innerHTML = users.map(u => `
-    <div class="profile-chip" onclick="quickLogin('${u.username}')">
-      <div class="pav">${u.avatar || '🧑'}</div>
-      <div class="pname">${u.username}</div>
+  const grid = document.getElementById('profiles-grid')
+  const subtitle = document.querySelector('.profiles-subtitle')
+
+  if (!users.length) {
+    grid.innerHTML = ''
+    subtitle.textContent = 'Crea tu primer perfil para empezar'
+    return
+  }
+
+  subtitle.textContent = 'Selecciona un perfil para continuar'
+  grid.innerHTML = users.map(u => `
+    <div class="profile-card" id="pcard-${u.id}" onclick="selectProfile('${u.id}')">
+      <div class="pcard-avatar">${u.avatar || '\uD83E\uDDD1'}</div>
+      <div class="pcard-name">${u.username}</div>
+      <div class="pcard-servers">${u.serverCount ?? 0} servidor(es)</div>
+      <button class="pcard-delete" onclick="event.stopPropagation();deleteProfile('${u.id}','${u.username}')" title="Eliminar perfil">✕</button>
     </div>
   `).join('')
 }
 
-window.quickLogin = (username) => {
-  document.getElementById('login-user').value = username
-  document.getElementById('login-pass').focus()
+window.selectProfile = async (userId) => {
+  const users = await window.api.listUsers()
+  const user = users.find(u => u.id === userId)
+  if (!user) return
+  onLogin(user)
 }
 
-async function doLogin() {
-  const username = document.getElementById('login-user').value.trim()
-  const password = document.getElementById('login-pass').value
-  const err = document.getElementById('login-error')
-  if (!username || !password) { err.textContent = 'Rellena todos los campos'; return }
-  err.textContent = ''
-  const res = await window.api.login({ username, password })
-  if (!res.ok) { err.textContent = res.error; return }
-  onLogin(res.user)
+window.deleteProfile = async (userId, name) => {
+  if (!confirm(`¿Eliminar el perfil "${name}"? Se borrarán todos sus servidores registrados.`)) return
+  await window.api.deleteUser(userId)
+  loadProfilesGrid()
 }
 
-async function doRegister() {
-  const username = document.getElementById('reg-user').value.trim()
-  const password = document.getElementById('reg-pass').value
-  const password2 = document.getElementById('reg-pass2').value
-  const err = document.getElementById('reg-error')
-  if (!username || !password) { err.textContent = 'Rellena todos los campos'; return }
-  if (password.length < 6) { err.textContent = 'Mínimo 6 caracteres'; return }
-  if (password !== password2) { err.textContent = 'Las contraseñas no coinciden'; return }
+async function doCreateProfile() {
+  const name = document.getElementById('npf-name').value.trim()
+  const err = document.getElementById('npf-error')
+  if (!name) { err.textContent = 'Escribe un nombre para el perfil'; return }
   const selectedAv = document.querySelector('.av-opt.selected')
   const avatar = selectedAv ? selectedAv.dataset.emoji : '🧑'
   err.textContent = ''
-  const res = await window.api.register({ username, password, avatar })
+  const res = await window.api.register({ username: name, password: '__nopw__', avatar })
   if (!res.ok) { err.textContent = res.error; return }
+  document.getElementById('new-profile-form').style.display = 'none'
+  document.getElementById('btn-show-new-profile').style.display = 'inline-flex'
+  document.getElementById('npf-name').value = ''
+  document.querySelector('.av-opt.selected')?.classList.remove('selected')
+  document.querySelector('.av-opt')?.classList.add('selected')
   onLogin(res.user)
 }
 
@@ -282,7 +294,6 @@ function onLogin(user) {
   document.getElementById('user-chip').style.display = 'flex'
   document.getElementById('user-avatar-sm').textContent = user.avatar || '🧑'
   document.getElementById('user-chip-name').textContent = user.username
-  document.getElementById('login-pass').value = ''
   showScreen('servers')
 }
 
@@ -290,11 +301,8 @@ function logout() {
   state.currentUser = null
   state.currentServerId = null
   document.getElementById('user-chip').style.display = 'none'
-  document.getElementById('login-user').value = ''
-  document.getElementById('login-pass').value = ''
-  document.getElementById('login-error').textContent = ''
-  loadProfileChips()
-  showScreen('auth')
+  loadProfilesGrid()
+  showScreen('profiles')
 }
 
 function renderAvatarPicker() {
@@ -316,6 +324,7 @@ async function refreshServersGrid() {
   const statusAll = await window.api.getStatusAll()
   const grid = document.getElementById('servers-grid')
   const active = Object.keys(statusAll).length
+  document.getElementById('servers-title').textContent = `Servidores de ${state.currentUser.username}`
   document.getElementById('servers-sub').textContent = `${state.servers.length} servidor(es) · ${active} activo(s)`
 
   if (!state.servers.length) {

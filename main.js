@@ -194,13 +194,13 @@ function saveUsers(u) { usersStore.set('users', u) }
 
 ipcMain.handle('auth:register', async (_, { username, password, avatar }) => {
   const users = getUsers()
-  if (users[username.toLowerCase()]) return { ok: false, error: 'Ese nombre de usuario ya existe' }
-  const hash = await bcrypt.hash(password, 10)
+  if (users[username.toLowerCase()]) return { ok: false, error: 'Ya existe un perfil con ese nombre' }
   const id = crypto.randomUUID()
-  users[username.toLowerCase()] = { id, username, hash, avatar: avatar || 'default', createdAt: Date.now() }
+  // For profile-only mode we skip bcrypt; store a fixed sentinel instead
+  users[username.toLowerCase()] = { id, username, avatar: avatar || '\uD83E\uDDD1', createdAt: Date.now() }
   saveUsers(users)
-  trackEvent('user_register')
-  return { ok: true, user: { id, username, avatar: avatar || 'default' } }
+  trackEvent('profile_created')
+  return { ok: true, user: { id, username, avatar: avatar || '\uD83E\uDDD1' } }
 })
 
 ipcMain.handle('auth:login', async (_, { username, password }) => {
@@ -214,18 +214,26 @@ ipcMain.handle('auth:login', async (_, { username, password }) => {
 })
 
 ipcMain.handle('auth:listUsers', () => {
-  return Object.values(getUsers()).map(u => ({ id: u.id, username: u.username, avatar: u.avatar }))
+  const servers = getAllServersMap()
+  return Object.values(getUsers()).map(u => ({
+    id: u.id,
+    username: u.username,
+    avatar: u.avatar,
+    serverCount: Object.values(servers).filter(s => s.userId === u.id).length
+  }))
 })
 
-ipcMain.handle('auth:deleteUser', async (_, { userId, password }) => {
+ipcMain.handle('auth:deleteUser', async (_, userId) => {
   const users = getUsers()
   const entry = Object.entries(users).find(([, u]) => u.id === userId)
-  if (!entry) return { ok: false, error: 'Usuario no encontrado' }
-  const [key, u] = entry
-  const match = await bcrypt.compare(password, u.hash)
-  if (!match) return { ok: false, error: 'Contraseña incorrecta' }
+  if (!entry) return { ok: false, error: 'Perfil no encontrado' }
+  const [key] = entry
   delete users[key]
   saveUsers(users)
+  // Also delete all servers belonging to this profile
+  const map = getAllServersMap()
+  Object.keys(map).forEach(sid => { if (map[sid].userId === userId) delete map[sid] })
+  saveServerMap(map)
   return { ok: true }
 })
 
@@ -485,5 +493,3 @@ ipcMain.handle('update:check', () => {
 ipcMain.handle('update:install', () => {
   autoUpdater.quitAndInstall(false, true)
 })
-
-ipcMain.handle('app:version', () => app.getVersion())

@@ -5,7 +5,7 @@
   <meta charset="UTF-8" />
   <meta http-equiv="Content-Security-Policy"
     content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'">
-  <title>Minecraft Manager</title>
+  <title>Minecraft Local Server Manager</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 
@@ -43,7 +43,7 @@
       <div class="user-chip" id="user-chip" style="display:none">
         <div class="user-avatar-sm" id="user-avatar-sm">?</div>
         <span id="user-chip-name"></span>
-        <button class="btn-logout" id="btn-logout" title="Cerrar sesión">⏏</button>
+        <button class="btn-logout" id="btn-logout" title="Cambiar perfil">↩ Volver a perfiles</button>
       </div>
       <button class="wbtn" id="btn-min">─</button>
       <button class="wbtn" id="btn-max">□</button>
@@ -85,38 +85,38 @@
     </div>
   </div>
 
-  <!-- ══ SCREEN: AUTH ══════════════════════════════════════════════════════ -->
-  <div class="screen" id="screen-auth">
-    <div class="auth-bg">
-      <div class="auth-card">
-        <div class="auth-logo">⛏</div>
-        <h1 class="auth-title">Minecraft Manager</h1>
-        <p class="auth-sub" id="auth-version-label"></p>
-        <div class="auth-tabs">
-          <button class="auth-tab active" data-tab="login">Iniciar sesión</button>
-          <button class="auth-tab" data-tab="register">Crear cuenta</button>
-        </div>
-        <div class="auth-form active" id="form-login">
-          <div class="auth-profiles" id="auth-profiles"></div>
-          <div class="field"><label>Usuario</label><input type="text" id="login-user" placeholder="Tu nombre de usuario"
-              autocomplete="off" /></div>
-          <div class="field"><label>Contraseña</label><input type="password" id="login-pass" placeholder="••••••••" />
+  <!-- ══ SCREEN: PROFILES ════════════════════════════════════════════════ -->
+  <div class="screen" id="screen-profiles">
+    <div class="profiles-bg">
+      <div class="profiles-header">
+        <div class="profiles-logo">⛏</div>
+        <h1 class="profiles-title">Minecraft Manager</h1>
+        <p class="profiles-version" id="profiles-version-label"></p>
+      </div>
+
+      <p class="profiles-subtitle">Selecciona un perfil para continuar</p>
+
+      <div class="profiles-grid" id="profiles-grid"></div>
+
+      <!-- NEW PROFILE INLINE FORM -->
+      <div class="new-profile-section" id="new-profile-section">
+        <button class="btn-new-profile" id="btn-show-new-profile">+ Nuevo perfil</button>
+
+        <div class="new-profile-form" id="new-profile-form" style="display:none">
+          <h3 class="npf-title">Crear perfil</h3>
+          <div class="field">
+            <label>Nombre del perfil</label>
+            <input type="text" id="npf-name" placeholder="Ej: Hugo, Survival, Creativo..." autocomplete="off" maxlength="24" />
           </div>
-          <p class="auth-error" id="login-error"></p>
-          <button class="btn-auth" id="btn-login">Entrar</button>
-        </div>
-        <div class="auth-form" id="form-register">
-          <div class="field"><label>Nombre de usuario</label><input type="text" id="reg-user"
-              placeholder="Elige un nombre" autocomplete="off" /></div>
-          <div class="field"><label>Contraseña</label><input type="password" id="reg-pass"
-              placeholder="Mínimo 6 caracteres" /></div>
-          <div class="field"><label>Confirmar contraseña</label><input type="password" id="reg-pass2"
-              placeholder="Repite la contraseña" /></div>
-          <div class="field"><label>Avatar (emoji)</label>
+          <div class="field">
+            <label>Elige un avatar</label>
             <div class="avatar-picker" id="avatar-picker"></div>
           </div>
-          <p class="auth-error" id="reg-error"></p>
-          <button class="btn-auth" id="btn-register">Crear cuenta</button>
+          <p class="auth-error" id="npf-error"></p>
+          <div class="npf-actions">
+            <button class="btn-secondary" id="btn-cancel-npf">Cancelar</button>
+            <button class="btn-auth" id="btn-create-profile">Crear perfil</button>
+          </div>
         </div>
       </div>
     </div>
@@ -126,7 +126,7 @@
   <div class="screen" id="screen-servers">
     <div class="servers-header">
       <div>
-        <h1 class="servers-title">Mis servidores</h1>
+        <h1 class="servers-title" id="servers-title">Mis servidores</h1>
         <p class="servers-sub" id="servers-sub">Cargando...</p>
       </div>
       <div style="display:flex;gap:8px">
