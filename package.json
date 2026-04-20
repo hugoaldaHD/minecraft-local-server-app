@@ -44,9 +44,7 @@
       "shortcutName": "Minecraft Local Server Manager",
       "installerIcon": "assets/icon.ico",
       "uninstallerIcon": "assets/icon.ico",
-      "include": "assets/installer.nsh",
-      "installerArguments": "/S",
-      "installMode": "currentApp"
+      "include": "assets/installer.nsh"
     },
     "directories": {
       "output": "dist"
