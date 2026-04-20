@@ -141,7 +141,7 @@ function setupAutoUpdater() {
   if (!app.isPackaged) return
 
   autoUpdater.autoDownload = true        // descarga automáticamente
-  autoUpdater.autoInstallOnAppQuit = true // instala al cerrar
+  autoUpdater.autoInstallOnAppQuit = false // NO instalar al cerrar automáticamente
 
   // Comprueba al arrancar (5s de delay para que cargue la UI primero)
   setTimeout(() => autoUpdater.checkForUpdates(), 5000)
