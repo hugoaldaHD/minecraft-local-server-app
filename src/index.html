@@ -31,7 +31,7 @@
         <span id="user-chip-name"></span>
       </div>
       <button class="wbtn" id="btn-min">─</button>
-      <button class="wbtn" id="btn-max">□</button>
+      <button class="wbtn" id="btn-max">❐</button>
       <button class="wbtn danger" id="btn-close">✕</button>
     </div>
   </div>
@@ -85,14 +85,10 @@
         <h1 class="profiles-title">Minecraft Local Server Manager</h1>
         <p class="profiles-version" id="profiles-version-label"></p>
       </div>
-
       <p class="profiles-subtitle">Selecciona un perfil para continuar</p>
-
       <div class="profiles-grid" id="profiles-grid"></div>
-
-      <!-- NEW PROFILE INLINE FORM -->
       <div class="new-profile-section" id="new-profile-section">
-        <button class="btn-new-server" id="btn-show-new-profile">Nuevo perfil</button>
+        <button class="btn-new-profile" id="btn-show-new-profile">Nuevo perfil</button>
 
         <div class="new-profile-form" id="new-profile-form" style="display:none">
           <h3 class="npf-title">Crear perfil</h3>
@@ -119,11 +115,11 @@
   <div class="screen" id="screen-servers">
     <div class="servers-header">
       <button class="btn-back" id="btn-back-profiles">Perfiles</button>
-      <div>
+      <div class="servers-header-title">
         <h1 class="servers-title" id="servers-title">Mis servidores</h1>
         <p class="servers-sub" id="servers-sub">Cargando...</p>
       </div>
-      <div style="display:flex;gap:8px">
+      <div class="servers-header-right">
         <button class="btn-secondary" id="btn-diagnostics">Diagnóstico</button>
         <button class="btn-new-server" id="btn-new-server">Añadir servidor</button>
       </div>
@@ -136,7 +132,6 @@
     <div class="server-bar" id="server-bar">
       <button class="btn-back" id="btn-back-servers">Servidores</button>
       <div class="server-bar-left">
-        <div class="server-color-dot" id="sbar-dot"></div>
         <span class="server-name-display" id="sbar-server-name"></span>
         <div class="status-pill">
           <span class="dot off" id="sbar-dot-status"></span>
@@ -273,17 +268,6 @@
         <div class="config-actions">
           <button class="btn-primary" id="btn-save-cfg">Guardar configuración</button>
           <button class="btn-danger" id="btn-delete-server">Eliminar servidor</button>
-        </div>
-        <div class="quick-cmds">
-          <h3>Comandos rápidos</h3>
-          <div class="quick-grid">
-            <button onclick="qcmd('say Reiniciando en 5 minutos!')">Aviso reinicio</button>
-            <button onclick="qcmd('save-all')">Guardar mundo</button>
-            <button onclick="qcmd('time set day')">Poner día</button>
-            <button onclick="qcmd('weather clear')">Limpiar clima</button>
-            <button onclick="qcmd('difficulty normal')">Dificultad normal</button>
-            <button onclick="qcmd('gamerule doFireTick false')">Sin fuego</button>
-          </div>
         </div>
       </div>
     </div>

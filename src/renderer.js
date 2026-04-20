@@ -348,7 +348,6 @@ async function openServer(serverId) {
 
   document.getElementById('sbar-server-name').textContent = server.name
   document.getElementById('sbar-server-name').style.color = server.color || '#4ade80'
-  document.getElementById('sbar-dot').style.background = server.color || '#4ade80'
 
   const console_ = document.getElementById('console')
   console_.innerHTML = ''
@@ -730,7 +729,7 @@ function loadConfigTab(server, settings) {
     const selectedColor = document.querySelector('#color-options .color-opt.selected')
     const data = { name: document.getElementById('cfg-name').value.trim() || server.name, jarPath: document.getElementById('cfg-jar').value.trim(), javaPath: document.getElementById('cfg-java').value.trim() || null, minRam: parseInt(document.getElementById('cfg-min-ram').value) || 1024, maxRam: parseInt(document.getElementById('cfg-max-ram').value) || 4096, extraArgs: document.getElementById('cfg-extra').value.trim(), color: selectedColor ? selectedColor.dataset.color : server.color }
     const res = await window.api.updateServer({ serverId: server.id, data })
-    if (res.ok) { document.getElementById('sbar-server-name').textContent = data.name; document.getElementById('sbar-server-name').style.color = data.color; document.getElementById('sbar-dot').style.background = data.color; appendLog('Configuración guardada', 'success'); loadPropertiesTab(res.server) }
+    if (res.ok) { document.getElementById('sbar-server-name').textContent = data.name; document.getElementById('sbar-server-name').style.color = data.color; appendLog('Configuración guardada', 'success'); loadPropertiesTab(res.server) }
   }
   document.getElementById('btn-delete-server').onclick = async () => {
     const status = await window.api.getStatus(server.id)
