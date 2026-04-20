@@ -9,7 +9,7 @@
     "dev": "electron . --dev",
     "build": "set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --x64",
     "build:portable": "set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win portable",
-    "build:ci": "electron-builder --win --x64 --publish always",
+    "build:ci": "electron-builder --win portable --publish always",
     "release:patch": "npm version patch && git push && git push --tags",
     "release:minor": "npm version minor && git push && git push --tags",
     "release:major": "npm version major && git push && git push --tags"
@@ -19,27 +19,18 @@
     "productName": "Minecraft Local Server Manager",
     "publish": {
       "provider": "github",
-      "releaseType": "release"
+      "releaseType": "portable"
     },
     "win": {
       "target": [
         {
-          "target": "nsis",
-          "arch": [
-            "x64"
-          ]
+          "target": "portable",
+          "arch": ["x64"]
         }
       ],
       "icon": "assets/icon.ico",
       "signingHashAlgorithms": null,
       "sign": null
-    },
-    "nsis": {
-      "oneClick": false,
-      "perMachine": false,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": false,
-      "shortcutName": "Minecraft Local Server Manager"
     },
     "directories": {
       "output": "dist"
