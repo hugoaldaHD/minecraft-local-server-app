@@ -134,6 +134,11 @@ function createWindow() {
     }
   })
   mainWindow.on('closed', () => { mainWindow = null })
+  mainWindow.on('maximize', () => { mainWindow?.webContents.send('window:maximized', true) })
+  mainWindow.on('unmaximize', () => { mainWindow?.webContents.send('window:maximized', false) })
+  mainWindow.webContents.on('did-finish-load', () => {
+    mainWindow?.webContents.send('window:maximized', mainWindow.isMaximized())
+  })
 }
 
 function setupAutoUpdater() {

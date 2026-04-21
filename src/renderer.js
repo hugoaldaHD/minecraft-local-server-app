@@ -80,6 +80,11 @@ function initTitlebar() {
   document.getElementById('btn-close').onclick = () => window.api.close()
   document.getElementById('btn-back-profiles').onclick = () => showScreen('profiles')
   document.getElementById('btn-back-servers').onclick = () => showScreen('servers')
+  window.api.onMaximized((isMaximized) => {
+    document.getElementById('btn-max').textContent = isMaximized ? '🗗' : '☐'
+    document.getElementById('btn-max').title = isMaximized ? 'Restaurar' : 'Maximizar'
+  })
+  document.getElementById('btn-max').title = 'Maximizar'
 }
 
 // ─── Analytics consent ────────────────────────────────────────────────────────
