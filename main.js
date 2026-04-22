@@ -503,5 +503,5 @@ ipcMain.handle('update:check', () => {
 })
 
 ipcMain.handle('update:install', () => {
-  autoUpdater.quitAndInstall(false, true)
+  autoUpdater.quitAndInstall(true, true)
 })
