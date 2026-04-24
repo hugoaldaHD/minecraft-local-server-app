@@ -277,6 +277,36 @@ ipcMain.handle('servers:delete', (_, serverId) => {
 
 ipcMain.handle('servers:get', (_, serverId) => getAllServersMap()[serverId] || null)
 
+// ─── External process detection ───────────────────────────────────────────────
+// Detecta si un proceso Java está ejecutando un JAR específico (puede haber sido
+// iniciado fuera de la app o antes de reiniciarla)
+function isJarRunning(jarPath) {
+  return new Promise((resolve) => {
+    if (!fs.existsSync(jarPath)) return resolve(false)
+    const absPath = path.resolve(jarPath).replace(/\\/g, '\\\\')
+    const cmd = `wmic process where "name='java.exe' and commandline like '%${absPath}%'" get processid`
+    const child = spawn('cmd', ['/c', cmd], { shell: true })
+    let output = ''
+    child.stdout.on('data', (d) => { output += d })
+    child.on('close', () => {
+      const pids = output.trim().split('\n').slice(1).map(l => l.trim()).filter(Boolean)
+      resolve(pids.length > 0 ? pids[0] : false)
+    })
+    child.on('error', () => resolve(false))
+  })
+}
+
+// Detecta todos los servidores que están corriendo externamente
+async function detectExternalServers() {
+  const serversMap = getAllServersMap()
+  const external = {}
+  for (const [id, server] of Object.entries(serversMap)) {
+    const pid = await isJarRunning(server.jarPath)
+    if (pid) external[id] = pid
+  }
+  return external
+}
+
 // ─── Server process ────────────────────────────────────────────────────────
 function startServer(serverId, config) {
   if (activeServers[serverId]) return { ok: false, error: 'Ya está en ejecución' }
@@ -342,9 +372,26 @@ ipcMain.handle('server:command', (_, { serverId, cmd }) => {
   s.process.stdin.write(cmd + '\n')
   return { ok: true }
 })
-ipcMain.handle('server:status', (_, serverId) => ({ running: !!activeServers[serverId] }))
-ipcMain.handle('server:statusAll', () => {
-  const r = {}; Object.keys(activeServers).forEach(id => { r[id] = true }); return r
+ipcMain.handle('server:status', async (_, serverId) => {
+  if (activeServers[serverId]) return { running: true }
+  const server = getAllServersMap()[serverId]
+  if (server) {
+    const pid = await isJarRunning(server.jarPath)
+    if (pid) return { running: true, external: true, pid }
+  }
+  return { running: false }
+})
+
+ipcMain.handle('server:statusAll', async () => {
+  const r = {}
+  Object.keys(activeServers).forEach(id => { r[id] = true })
+  const external = await detectExternalServers()
+  Object.keys(external).forEach(id => { if (!r[id]) r[id] = { external: true, pid: external[id] } })
+  return r
+})
+
+ipcMain.handle('server:takeover', (_, serverId) => {
+  return { ok: false, error: 'No se puede asumir el control de un servidor iniciado externamente. Usa la consola integrada.' }
 })
 
 function classifyLine(line) {

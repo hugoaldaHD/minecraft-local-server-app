@@ -334,7 +334,8 @@ async function refreshServersGrid() {
     return
   }
   grid.innerHTML = state.servers.map(s => {
-    const running = !!statusAll[s.id]
+    const info = statusAll[s.id]
+    const running = !!info
     const jarName = s.jarPath ? s.jarPath.split(/[\\/]/).pop() : 'Sin configurar'
     return `
       <div class="server-card" data-server-id="${s.id}" style="--card-color:${s.color || '#4ade80'}" onclick="openServer('${s.id}')">
