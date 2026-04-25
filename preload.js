@@ -73,7 +73,6 @@ contextBridge.exposeInMainWorld('api', {
   onStatsUpdate: (cb) => ipcRenderer.on('stats-update', (_, d) => cb(d)),
   onConfirmClose: (cb) => ipcRenderer.on('confirm-close', (_, d) => cb(d)),
   onUpdateStatus: (cb) => ipcRenderer.on('update-status', (_, d) => cb(d)),
-  onExternalServersDetected: (cb) => ipcRenderer.on('external-servers-detected', (_, d) => cb(d)),
   onCrashLogged: (cb) => ipcRenderer.on('crash-logged', (_, d) => cb(d)),
   removeAllListeners: (ch) => ipcRenderer.removeAllListeners(ch)
 })
