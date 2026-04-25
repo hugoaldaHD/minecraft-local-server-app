@@ -6,7 +6,8 @@ const state = {
   servers: [],
   onlinePlayers: new Set(),
   consoleLogs: {},
-  consoleLines: 0
+  consoleLines: 0,
+  consoleExternalNotified: false
 }
 
 const MAX_LINES = 2000
@@ -187,11 +188,27 @@ function initEvents() {
     parsePlayersFromLog(text)
   })
 
-  window.api.onServerStopped(({ serverId, code, error }) => {
+window.api.onServerStopped(({ serverId, code, error }) => {
     const msg = error ? `Servidor detenido con error: ${error}` : `Servidor detenido (código ${code ?? 0})`
     if (state.currentServerId === serverId) { appendLog(msg, 'warn'); updateDetailBar(false) }
     state.onlinePlayers.clear()
     refreshServersGrid()
+  })
+
+  // Detectar servidores iniciados externamente (por CMD)
+  window.api.onExternalServersDetected((externalServers) => {
+    const externalIds = Object.keys(externalServers)
+    if (externalIds.length > 0 && state.currentUser) {
+      refreshServersGrid()
+      if (state.currentServerId && externalIds.includes(state.currentServerId)) {
+        const status = { running: true, external: true }
+        updateDetailBar(status)
+        if (!state.consoleExternalNotified) {
+          appendLog('Detectado servidor iniciado externamente. Usa la consola integrada.', 'warn')
+          state.consoleExternalNotified = true
+        }
+      }
+    }
   })
 
   window.api.onStatsUpdate(({ cpu, ramUsed, ramTotal, activeServers }) => {
@@ -349,6 +366,7 @@ async function refreshServersGrid() {
 
 async function openServer(serverId) {
   state.currentServerId = serverId
+  state.consoleExternalNotified = false // Reset flag al abrir servidor
   const server = state.servers.find(s => s.id === serverId) || await window.api.getServer(serverId)
   if (!server) return
 
@@ -471,8 +489,13 @@ function updateDetailBar(running, starting = false) {
   const text = document.getElementById('sbar-status-text')
   const start = document.getElementById('detail-btn-start')
   const stop = document.getElementById('detail-btn-stop')
+
+  // Soporta both boolean or { running, external }
+  const isRunning = typeof running === 'object' ? running?.running : running
+  const isExternal = typeof running === 'object' ? running?.external : false
+
   if (starting) { dot.className = 'dot starting'; text.textContent = 'Iniciando...'; start.disabled = true; stop.disabled = true }
-  else if (running) { dot.className = 'dot on'; text.textContent = 'En línea'; start.disabled = true; stop.disabled = false }
+  else if (isRunning) { dot.className = 'dot on'; text.textContent = isExternal ? 'En línea (externo)' : 'En línea'; start.disabled = true; stop.disabled = false }
   else { dot.className = 'dot off'; text.textContent = 'Detenido'; start.disabled = false; stop.disabled = true }
 }
 

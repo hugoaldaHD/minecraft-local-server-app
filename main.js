@@ -187,6 +187,7 @@ setupCrashReporter()
 app.whenReady().then(() => {
   createWindow()
   startStatsPolling()
+  startExternalPolling() // Verificar servidores iniciados externamente
   setupAutoUpdater()
   trackEvent('app_launch', { version: app.getVersion() })
 })
@@ -400,6 +401,25 @@ function classifyLine(line) {
   if (/joined the game|left the game/i.test(line)) return 'player'
   if (/Done \([\d.]+s\)!/i.test(line)) return 'success'
   return 'info'
+}
+
+// ─── External process detection polling ───────────────────────────────────────
+let externalPollInterval = null
+let lastKnownExternal = {}
+
+function startExternalPolling() {
+  if (externalPollInterval) clearInterval(externalPollInterval)
+  externalPollInterval = setInterval(async () => {
+    if (!mainWindow) return
+    const external = await detectExternalServers()
+    // Comparar con los previously conocidos para notificar cambios
+    const changed = Object.keys(external).some(id => !lastKnownExternal[id]) ||
+                    Object.keys(lastKnownExternal).some(id => !external[id])
+    if (changed || Object.keys(external).length !== Object.keys(lastKnownExternal).length) {
+      lastKnownExternal = { ...external }
+      mainWindow.webContents.send('external-servers-detected', external)
+    }
+  }, 5000) // Verificar cada 5 segundos
 }
 
 // ─── Stats ─────────────────────────────────────────────────────────────────
