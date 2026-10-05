@@ -13,18 +13,14 @@
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141815;--ink:#e6eadb;--mute:#97a48f;--line:#2c352d;--grass:#6cb43f;--grass-ink:#10200a;--win:#0c0f0d}}
 :root[data-theme="dark"]{--bg:#141815;--ink:#e6eadb;--mute:#97a48f;--line:#2c352d;--grass:#6cb43f;--grass-ink:#10200a;--win:#0c0f0d}
-html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 72px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:400 17px/1.6 "IBM Plex Sans",system-ui,sans-serif}
 a{color:inherit}
 .lang{font:700 13px "Silkscreen",monospace;background:none;color:var(--ink);border:2px solid var(--line);padding:6px 10px;cursor:pointer;border-radius:2px}
 :focus-visible{outline:3px solid var(--grass);outline-offset:3px}
 .wrap{max-width:1040px;margin:0 auto;padding:0 24px}
-.top{position:fixed;top:0;left:0;right:0;z-index:10;background:var(--bg);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px);transition:transform .25s ease}
-.top.hide{transform:translateY(-100%)}
-.top .wrap{display:flex;justify-content:space-between;align-items:center;padding-top:14px;padding-bottom:14px}
-body{padding-top:68px}
-@media (prefers-reduced-motion:reduce){.top{transition:none}}
+header{display:flex;justify-content:space-between;align-items:center;padding:20px 0}
 .logo{font:700 18px "Silkscreen",monospace;text-decoration:none;display:flex;gap:10px;align-items:center}
 .logo i{width:18px;height:18px;background:var(--grass);border-bottom:6px solid var(--dirt);display:block}
 nav a{margin-left:20px;font-size:15px;color:var(--mute);text-decoration:none}
@@ -34,10 +30,7 @@ h1{font:700 clamp(34px,5.4vw,58px)/1.05 "Silkscreen",monospace;margin:0 0 22px;l
 .lead{font-size:19px;color:var(--mute);max-width:46ch;margin:0 0 30px}
 .btn{display:inline-block;background:var(--grass);color:var(--grass-ink);font:700 15px "Silkscreen",monospace;padding:14px 22px;text-decoration:none;border-bottom:5px solid rgba(0,0,0,.28);border-radius:2px}
 .btn:hover{filter:brightness(1.08)}
-.btn.alt{background:transparent;color:var(--ink);border:2px solid var(--line);padding:12px 20px}
-.actions{display:flex;flex-wrap:wrap;gap:14px;align-items:stretch}
-.actions .btn{display:flex;align-items:center}
-.cta .actions{justify-content:center}
+.btn.alt{background:transparent;color:var(--ink);border:2px solid var(--line);margin-left:10px;padding:12px 20px}
 .win{background:var(--win);border-radius:6px;border:1px solid var(--line);box-shadow:8px 8px 0 var(--dirt);overflow:hidden;color:var(--win-ink)}
 .bar{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid #2c352d;font:13px "IBM Plex Sans",sans-serif}
 .status{display:flex;align-items:center;gap:8px}
@@ -65,21 +58,21 @@ h2{font:700 clamp(24px,3.4vw,34px)/1.15 "Silkscreen",monospace;margin:0 0 36px;m
 .cta p{color:var(--mute);margin:0 auto 28px;max-width:44ch}
 footer{padding:32px 0 40px;border-top:2px solid var(--line);color:var(--mute);font-size:14px}
 footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
-@media (max-width:820px){.hero{grid-template-columns:1fr;padding-top:24px}.row{grid-template-columns:1fr;gap:6px}nav a:not(:last-child){display:none}}
+@media (max-width:820px){.hero{grid-template-columns:1fr;padding-top:24px}.row{grid-template-columns:1fr;gap:6px}nav a:not(:last-child){display:none}.btn.alt{margin:12px 0 0}}
 </style>
 </head>
 <body>
-<header class="top"><div class="wrap">
+<div class="wrap">
+<header>
   <a class="logo" href="#"><i></i>Server Manager</a>
   <nav><button id="lang" type="button" class="lang" aria-label="Change language"></button><a href="#funciones">Funciones</a><a href="#compatibilidad">Compatibilidad</a><a href="https://github.com/hugoaldaHD/minecraft-local-server-app">GitHub</a></nav>
-</div></header>
-<div class="wrap">
+</header>
 
 <div class="hero">
   <div>
     <h1>Tu servidor de Minecraft, bajo control.</h1>
     <p class="lead">Una aplicación de escritorio para crear, arrancar y administrar servidores locales de Minecraft sin pelearte con la línea de comandos.</p>
-    <div class="actions"><a class="btn dl" href="https://github.com/hugoaldaHD/minecraft-local-server-app/releases/latest">Descargar para Windows</a><a class="btn alt" href="#funciones">Ver funciones</a></div>
+    <a class="btn dl" href="https://github.com/hugoaldaHD/minecraft-local-server-app/releases/latest">Descargar para Windows</a><a class="btn alt" href="#funciones">Ver funciones</a>
     <p class="linux">También para Linux:<a class="dl-l" data-f="Minecraft-Local-Server-Manager.AppImage" href="https://github.com/hugoaldaHD/minecraft-local-server-app/releases/latest">AppImage</a><a class="dl-l" data-f="Minecraft-Local-Server-Manager.deb" href="https://github.com/hugoaldaHD/minecraft-local-server-app/releases/latest">.deb</a></p>
   </div>
   <div class="win" aria-label="Vista previa de la consola del servidor">
@@ -116,7 +109,7 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
 <section class="cta"><div class="wrap">
   <h2>Empieza a gestionar tu servidor</h2>
   <p>Consigue la última versión y consulta el código en GitHub.</p>
-  <div class="actions"><a class="btn dl" href="https://github.com/hugoaldaHD/minecraft-local-server-app/releases/latest">Descargar para Windows</a><a class="btn alt" href="https://github.com/hugoaldaHD/minecraft-local-server-app">Ver el código</a></div>
+  <a class="btn dl" href="https://github.com/hugoaldaHD/minecraft-local-server-app/releases/latest">Descargar para Windows</a><a class="btn alt" href="https://github.com/hugoaldaHD/minecraft-local-server-app">Ver el código</a>
   <p class="linux">También para Linux:<a class="dl-l" data-f="Minecraft-Local-Server-Manager.AppImage" href="https://github.com/hugoaldaHD/minecraft-local-server-app/releases/latest">AppImage</a><a class="dl-l" data-f="Minecraft-Local-Server-Manager.deb" href="https://github.com/hugoaldaHD/minecraft-local-server-app/releases/latest">.deb</a></p>
 </div></section>
 
@@ -191,18 +184,6 @@ var cur;try{cur=localStorage.getItem("lang")}catch(e){}
 if(!cur)cur=(navigator.language||"es").slice(0,2)==="es"?"es":"en";
 btn.addEventListener("click",function(){cur=cur==="en"?"es":"en";set(cur)});
 set(cur);
-})();
-</script>
-<script>
-(function(){
-var h=document.querySelector(".top"),last=window.scrollY;
-window.addEventListener("scroll",function(){
-  var y=window.scrollY,d=y-last;
-  if(y<10||d<-4)h.classList.remove("hide");
-  else if(d>4&&y>80)h.classList.add("hide");
-  if(Math.abs(d)>4)last=y;
-},{passive:true});
-h.addEventListener("focusin",function(){h.classList.remove("hide")});
 })();
 </script>
 </body>
