@@ -157,7 +157,8 @@ function setupAutoUpdater() {
   autoUpdater.on('update-available', (info) => {
     mainWindow?.webContents.send('update-status', {
       status: 'available',
-      version: info.version
+      version: info.version,
+      releaseNotes: info.releaseNotes || null
     })
   })
 

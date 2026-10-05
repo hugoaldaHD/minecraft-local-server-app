@@ -1804,6 +1804,32 @@ code {
   font-size: 14px;
 }
 
+.update-notes {
+  flex-basis: 100%;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(0, 0, 0, 0.15);
+  max-height: 120px;
+  overflow-y: auto;
+  font-size: 12px;
+  font-weight: 400;
+  color: #000;
+}
+
+.update-notes-title {
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.update-notes ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.update-notes li {
+  margin: 1px 0;
+}
+
 /* ── Consent screen ── */
 .consent-card {
   max-width: 460px;

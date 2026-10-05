@@ -57,6 +57,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       if (info.status === 'available') {
         text.textContent = `Nueva versión v${info.version} disponible, descargando...`
+        if (info.releaseNotes) renderUpdateNotes(info.releaseNotes)
       }
       if (info.status === 'downloading') {
         text.textContent = `Descargando actualización... ${info.percent}%`
@@ -69,6 +70,30 @@ document.addEventListener('DOMContentLoaded', async () => {
         installBtn.style.display = 'inline-block'
       }
     })
+  }
+
+  function renderUpdateNotes(raw) {
+    const box = document.getElementById('update-notes')
+    const lines = String(raw).split('\n').map(l => l.trim()).filter(Boolean)
+    const heading = lines.find(l => l.startsWith('#'))
+    const items = lines.filter(l => !l.startsWith('#')).map(l => l.replace(/^[-*]\s*/, ''))
+    box.innerHTML = ''
+    if (heading) {
+      const title = document.createElement('div')
+      title.className = 'update-notes-title'
+      title.textContent = heading.replace(/^#+\s*/, '')
+      box.appendChild(title)
+    }
+    if (items.length) {
+      const ul = document.createElement('ul')
+      items.forEach(item => {
+        const li = document.createElement('li')
+        li.textContent = item
+        ul.appendChild(li)
+      })
+      box.appendChild(ul)
+    }
+    box.style.display = 'block'
   }
 
 })

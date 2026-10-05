@@ -38,7 +38,7 @@
 
   <!-- ══ UPDATE BANNER ══════════════════════════════════════════════════════════ -->
   <div class="update-banner" id="update-banner"
-    style="display:none; -webkit-app-region: no-drag; position: absolute; top: 40px; left: 0; right: 0; background: var(--info); color: #000; z-index: 100; padding: 6px 16px; align-items: center; justify-content: space-between; font-weight: 500; font-size: 13px;">
+    style="display:none; -webkit-app-region: no-drag; position: absolute; top: 40px; left: 0; right: 0; background: var(--info); color: #000; z-index: 100; padding: 6px 16px; align-items: center; justify-content: space-between; font-weight: 500; font-size: 13px; flex-wrap: wrap;">
     <span id="update-banner-text">Comprobando actualizaciones...</span>
     <div class="update-progress" id="update-progress"
       style="display:none; flex: 1; margin: 0 16px; height: 6px; background: rgba(0,0,0,0.2); border-radius: 4px; overflow: hidden;">
@@ -52,6 +52,7 @@
       <button class="btn-update-dismiss" id="btn-update-dismiss"
         style="background: none; border: none; font-size: 16px; cursor: pointer;">✕</button>
     </div>
+    <div class="update-notes" id="update-notes" style="display:none"></div>
   </div>
 
   <!-- ══ SCREEN: ANALYTICS CONSENT ════════════════════════════════════════════════ -->

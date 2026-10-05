@@ -10,9 +10,8 @@
     "build": "set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --x64",
     "build:portable": "set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win portable",
     "build:ci": "electron-builder --win --x64 --publish always",
-    "release:patch": "npm version patch && git push && git push --tags",
-    "release:minor": "npm version minor && git push && git push --tags",
-    "release:major": "npm version major && git push && git push --tags"
+    "release": "node scripts/release.mjs",
+    "release:notes": "node scripts/release.mjs --backfill"
   },
   "build": {
     "appId": "com.minecraftmanager.app",
@@ -21,6 +20,9 @@
     "publish": {
       "provider": "github",
       "releaseType": "release"
+    },
+    "releaseInfo": {
+      "releaseNotesFile": "release-notes.md"
     },
     "win": {
       "target": [
