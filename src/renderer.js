@@ -616,7 +616,7 @@ async function loadListsTab(server) {
 
 function renderList(id, list, type, serverDir, showReason = false) {
   const ul = document.getElementById(id); if (!ul) return
-  if (!list.length) { ul.innerHTML = '<li style="color:var(--text2);font-size:12px;padding:8px 0">Sin entradas</li>'; return }
+  if (!list.length) { ul.innerHTML = '<li class="list-empty">Sin entradas</li>'; return }
   const escapedDir = serverDir.replace(/\\/g, '\\\\')
   ul.innerHTML = list.map((entry, i) => {
     const name = entry.name || entry

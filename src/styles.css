@@ -707,6 +707,7 @@ body {
 .servers-header {
   display: flex;
   align-items: center;
+  gap: 20px;
   padding: 18px 20px;
   border-bottom: 2px solid var(--line);
   flex-shrink: 0;
@@ -720,7 +721,6 @@ body {
 .servers-header-title .servers-title,
 .servers-header-title .servers-sub {
   text-align: left;
-  margin-left: 20px;
 }
 
 .servers-header-right {
@@ -1318,6 +1318,16 @@ body {
   padding: 9px 12px;
   font-family: var(--mono);
   font-size: 12px;
+}
+
+.player-list li.list-empty {
+  justify-content: center;
+  background: none;
+  border: 2px dashed var(--line);
+  color: var(--text2);
+  font-family: var(--font);
+  padding: 12px 14px;
+  text-align: center;
 }
 
 .btn-remove {
