@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.1.15 - Changelog + Fix Release (2026-10-05)
+
+- Se ha añadido un Changelog a modo historial de las release y se han añadido tanto el nombre como las descripciones
+- de estas mismas.
+
 ## v1.1.14 (2026-04-25)
 - visual patch
 
