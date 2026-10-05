@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.3.1 - Nuevo Icono y Estilos (2026-10-05)
+
+- Nuevo icono para la aplicación.
+- Arreglos puntuales de algunos estilos de la aplicación.
+
 ## v1.3.0 - Fresh Styles (2026-10-05)
 
 - Nuevos estilos homogeneos con la página web y con el juego en sí.
