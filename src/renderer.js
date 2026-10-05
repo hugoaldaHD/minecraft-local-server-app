@@ -10,7 +10,7 @@ const state = {
 }
 
 const MAX_LINES = 2000
-const SERVER_COLORS = ['#4ade80', '#60a5fa', '#f59e0b', '#f472b6', '#a78bfa', '#34d399', '#fb923c', '#e879f9']
+const SERVER_COLORS = ['#6cb43f', '#8fd14f', '#e5c454', '#e2685c', '#8fd1ff', '#3f7d24', '#cfc6a8', '#97a48f']
 const AVATARS = ['🧑', '👨‍💻', '🧙', '⚔️', '🏹', '🛡️', '🐉', '🦄', '🌋', '🌊', '🔥', '⭐']
 const IMPORTANT_PROPS = ['server-port', 'max-players', 'level-name', 'gamemode', 'difficulty', 'pvp', 'online-mode', 'white-list', 'motd', 'view-distance', 'simulation-distance', 'allow-flight', 'enable-command-block', 'level-seed', 'spawn-protection', 'level-type', 'op-permission-level']
 
@@ -363,7 +363,7 @@ async function refreshServersGrid() {
     const running = !!info
     const jarName = s.jarPath ? s.jarPath.split(/[\\/]/).pop() : 'Sin configurar'
     return `
-      <div class="server-card" data-server-id="${s.id}" style="--card-color:${s.color || '#4ade80'}" onclick="openServer('${s.id}')">
+      <div class="server-card" data-server-id="${s.id}" style="--card-color:${s.color || SERVER_COLORS[0]}" onclick="openServer('${s.id}')">
         <div class="server-card-header">
           <div class="server-card-name">${s.name}</div>
           <div class="server-card-status"><span class="dot ${running ? 'on' : 'off'}"></span><span>${running ? 'En línea' : 'Detenido'}</span></div>
@@ -378,7 +378,7 @@ async function openServer(serverId) {
   if (!server) return
 
   document.getElementById('sbar-server-name').textContent = server.name
-  document.getElementById('sbar-server-name').style.color = server.color || '#4ade80'
+  document.getElementById('sbar-server-name').style.color = server.color || SERVER_COLORS[0]
 
   const console_ = document.getElementById('console')
   console_.innerHTML = ''

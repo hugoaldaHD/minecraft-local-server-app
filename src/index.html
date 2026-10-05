@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta http-equiv="Content-Security-Policy"
-    content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'">
+    content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; font-src 'self' file: data:; img-src 'self' data:">
   <title>Minecraft Local Server Manager</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -38,19 +38,14 @@
 
   <!-- ══ UPDATE BANNER ══════════════════════════════════════════════════════════ -->
   <div class="update-banner" id="update-banner"
-    style="display:none; -webkit-app-region: no-drag; position: absolute; top: 40px; left: 0; right: 0; background: var(--info); color: #000; z-index: 100; padding: 6px 16px; align-items: center; justify-content: space-between; font-weight: 500; font-size: 13px; flex-wrap: wrap;">
+    style="display:none; -webkit-app-region: no-drag; position: absolute; top: 40px; left: 0; right: 0; z-index: 100; padding: 8px 16px; align-items: center; justify-content: space-between; font-size: 13px; flex-wrap: wrap;">
     <span id="update-banner-text">Comprobando actualizaciones...</span>
-    <div class="update-progress" id="update-progress"
-      style="display:none; flex: 1; margin: 0 16px; height: 6px; background: rgba(0,0,0,0.2); border-radius: 4px; overflow: hidden;">
-      <div class="update-bar" id="update-bar" style="height: 100%; width: 0%; background: #000; border-radius: 4px;">
-      </div>
+    <div class="update-progress" id="update-progress" style="display:none">
+      <div class="update-bar" id="update-bar"></div>
     </div>
-    <div style="display:flex; gap: 8px;">
-      <button class="btn-update-install" id="btn-update-install"
-        style="display:none; background: #000; color: #fff; border: none; border-radius: 4px; padding: 4px 10px; cursor: pointer; font-weight: bold;">Instalar
-        y reiniciar</button>
-      <button class="btn-update-dismiss" id="btn-update-dismiss"
-        style="background: none; border: none; font-size: 16px; cursor: pointer;">✕</button>
+    <div style="display:flex; gap: 10px;">
+      <button id="btn-update-install" style="display:none">Instalar y reiniciar</button>
+      <button id="btn-update-dismiss" title="Cerrar aviso">✕</button>
     </div>
     <div class="update-notes" id="update-notes" style="display:none"></div>
   </div>

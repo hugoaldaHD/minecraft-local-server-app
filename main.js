@@ -118,7 +118,7 @@ function createWindow() {
     width: 1280, height: 800, minWidth: 1024, minHeight: 640,
     title: 'Minecraft Manager',
     icon: path.join(__dirname, 'assets', process.platform === 'win32' ? 'icon.ico' : 'icon.png'),
-    backgroundColor: '#0f0f1a',
+    backgroundColor: '#141815',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true, nodeIntegration: false
