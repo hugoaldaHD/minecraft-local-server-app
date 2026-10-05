@@ -24,24 +24,24 @@ Grab the latest release from the [releases page](https://github.com/hugoaldaHD/m
 
 ### Windows
 
-Download `Minecraft Local Server Manager.exe` and run the installer.
+Download `Minecraft-Local-Server-Manager.exe` and run the installer.
 
 ### Linux (x64)
 
-- **AppImage** - `Minecraft Local Server Manager.AppImage`: no installation needed.
+- **AppImage** - `Minecraft-Local-Server-Manager.AppImage`: no installation needed.
 
   ```bash
-  chmod +x "Minecraft Local Server Manager.AppImage"
-  ./Minecraft\ Local\ Server\ Manager.AppImage
+  chmod +x Minecraft-Local-Server-Manager.AppImage
+  ./Minecraft-Local-Server-Manager.AppImage
   ```
 
   The app registers itself as an installed app on first run, so it shows up in the
   application menu with its own icon.
 
-- **Debian / Ubuntu** - `Minecraft Local Server Manager.deb`:
+- **Debian / Ubuntu** - `Minecraft-Local-Server-Manager.deb`:
 
   ```bash
-  sudo apt install ./Minecraft\ Local\ Server\ Manager.deb
+  sudo apt install ./Minecraft-Local-Server-Manager.deb
   ```
 
   Updates for the `.deb` come from your package manager, not from the app.
