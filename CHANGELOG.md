@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.3.0 - Fresh Styles (2026-10-05)
+
+- Nuevos estilos homogeneos con la página web y con el juego en sí.
+
 ## v1.2.0 - Descarga en Linux (2026-10-05)
 
 - Ahora es posible descargar e instalar esta aplicación en Linux.
