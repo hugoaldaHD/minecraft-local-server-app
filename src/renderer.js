@@ -722,7 +722,7 @@ async function loadBackupsTab(server, settings) {
   }
   document.getElementById('btn-backup-now').onclick = async () => {
     if (!serverDir) return
-    const dir = document.getElementById('auto-backup-dir').value || serverDir + '\\backups'
+    const dir = document.getElementById('auto-backup-dir').value || serverDir + '/backups'
     appendLog('Creando backup...', 'info')
     if (state.currentServerId) window.api.sendCommand(state.currentServerId, 'save-all')
     const res = await window.api.createBackup(serverDir, dir)

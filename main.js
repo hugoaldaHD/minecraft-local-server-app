@@ -117,7 +117,7 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1280, height: 800, minWidth: 1024, minHeight: 640,
     title: 'Minecraft Manager',
-    icon: path.join(__dirname, 'assets', 'icon.ico'),
+    icon: path.join(__dirname, 'assets', process.platform === 'win32' ? 'icon.ico' : 'icon.png'),
     backgroundColor: '#0f0f1a',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -141,9 +141,17 @@ function createWindow() {
   })
 }
 
+// electron-updater solo soporta AppImage en Linux: los .deb/.rpm se actualizan
+// con el gestor de paquetes del sistema.
+function canAutoUpdate() {
+  if (!app.isPackaged) return false
+  if (process.platform === 'linux' && !process.env.APPIMAGE) return false
+  return true
+}
+
 function setupAutoUpdater() {
   // Solo funciona en la app compilada, no en desarrollo
-  if (!app.isPackaged) return
+  if (!canAutoUpdate()) return
 
   autoUpdater.autoDownload = true
   autoUpdater.autoInstallOnAppQuit = true
@@ -284,14 +292,23 @@ ipcMain.handle('servers:get', (_, serverId) => getAllServersMap()[serverId] || n
 function isJarRunning(jarPath) {
   return new Promise((resolve) => {
     if (!fs.existsSync(jarPath)) return resolve(false)
-    const absPath = path.resolve(jarPath).replace(/\\/g, '\\\\')
-    const cmd = `wmic process where "name='java.exe' and commandline like '%${absPath}%'" get processid`
-    const child = spawn('cmd', ['/c', cmd], { shell: true })
+    const absPath = path.resolve(jarPath)
+    const isWindows = process.platform === 'win32'
+    // Windows: PowerShell + CIM (wmic desaparece en Windows 11 24H2).
+    // Linux/macOS: pgrep busca el jar en la linea de comandos.
+    const cmd = isWindows
+      ? 'powershell.exe'
+      : 'pgrep'
+    const args = isWindows
+      ? ['-NoProfile', '-NonInteractive', '-Command',
+        `(Get-CimInstance Win32_Process -Filter "Name='java.exe'") | Where-Object { $_.CommandLine -and $_.CommandLine.Contains('${absPath.replace(/'/g, "''")}') } | Select-Object -First 1 -ExpandProperty ProcessId`]
+      : ['-f', absPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')]
+    const child = spawn(cmd, args, { shell: false })
     let output = ''
     child.stdout.on('data', (d) => { output += d })
     child.on('close', () => {
-      const pids = output.trim().split('\n').slice(1).map(l => l.trim()).filter(Boolean)
-      resolve(pids.length > 0 ? pids[0] : false)
+      const pid = output.split('\n').map(l => l.trim()).find(l => /^\d+$/.test(l))
+      resolve(pid || false)
     })
     child.on('error', () => resolve(false))
   })
@@ -546,7 +563,7 @@ ipcMain.handle('window:close', () => {
 // ─── Auto-updater IPC ──────────────────────────────────────────────────────
 
 ipcMain.handle('update:check', () => {
-  if (app.isPackaged) autoUpdater.checkForUpdates()
+  if (canAutoUpdate()) autoUpdater.checkForUpdates()
   return { ok: true }
 })
 

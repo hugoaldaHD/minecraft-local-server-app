@@ -3,20 +3,27 @@
   "version": "1.1.15",
   "description": "Minecraft Local Server Manager",
   "author": "FixItNow",
+  "homepage": "https://github.com/hugoaldaHD/minecraft-local-server-app",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hugoaldaHD/minecraft-local-server-app.git"
+  },
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "dev": "electron . --dev",
     "build": "set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --x64",
     "build:portable": "set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win portable",
-    "build:ci": "electron-builder --win --x64 --publish always",
+    "build:ci": "npm run build:win",
+    "build:win": "electron-builder --win --x64 --publish always",
+    "build:linux": "electron-builder --linux AppImage deb --x64 --publish always",
     "release": "node scripts/release.mjs",
     "release:notes": "node scripts/release.mjs --backfill"
   },
   "build": {
     "appId": "com.minecraftmanager.app",
     "productName": "Minecraft Local Server Manager",
-    "artifactName": "${productName}-${version}.${ext}",
+    "artifactName": "${productName}.${ext}",
     "publish": {
       "provider": "github",
       "releaseType": "release"
@@ -42,6 +49,35 @@
       "shortcutName": "Minecraft Manager",
       "installerIcon": "assets/icon.ico",
       "uninstallerIcon": "assets/icon.ico"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Utility",
+      "icon": "assets/icon.png",
+      "synopsis": "Gestor de servidores locales de Minecraft",
+      "desktop": {
+        "Name": "Minecraft Manager",
+        "StartupWMClass": "minecraft-local-server-manager"
+      }
+    },
+    "deb": {
+      "maintainer": "FixItNow <hugoaldaHD@users.noreply.github.com>",
+      "priority": "optional",
+      "depends": [
+        "libgtk-3-0 | libgtk-3-0t64",
+        "libnotify4",
+        "libnss3",
+        "libxss1",
+        "libxtst6",
+        "libasound2 | libasound2t64",
+        "libatspi2.0-0 | libatspi2.0-0t64",
+        "libsecret-1-0",
+        "libuuid1",
+        "xdg-utils"
+      ]
     },
     "directories": {
       "output": "dist"
