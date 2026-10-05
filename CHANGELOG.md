@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.2.0 - Descarga en Linux (2026-10-05)
+
+- Ahora es posible descargar e instalar esta aplicación en Linux.
+
 ## v1.1.15 - Changelog + Fix Release (2026-10-05)
 
 - Se ha añadido un Changelog a modo historial de las release y se han añadido tanto el nombre como las descripciones
