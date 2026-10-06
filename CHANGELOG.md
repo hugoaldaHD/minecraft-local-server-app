@@ -1,5 +1,32 @@
 # Changelog
 
+## v1.4.0 - Mejoras de Seguridad y Funcionamiento (2026-10-06)
+
+- `onUpdateAvailable`/`onUpdateDownloaded` no existían → `TypeError` en cada arranque | Ambos canales expuestos en `preload.js` y suscritos al final de `src/renderer.js` (filtrados por `update-status`).
+- Backups automáticos fantasma (`node-schedule` nunca se usaba) | `scheduleAutoBackup`/`initAutoBackups` en `main/backups.js:82-117` (1h/6h/12h/24h); se reprograma en `settings:set` y se cancela en `servers:delete`.
+- La app quedaba viva al cerrar | `quitWhenServersStopped` en `main/window.js:11-26` (poll cada 200 ms, timeout 15 s) + limpieza en `will-quit`.
+- La consola mentía con servidores externos (`{ok:false}` ignorado) | Wrapper `run()` en el renderer + comprobación de `{ok:false}` en todas las acciones.
+- Lista de jugadores global, no por servidor | Mapa `state.playersByServer[serverId]`.
+- IPC sin validar rutas/ejecutables | `main/validate.js`: allow-lists de directorios de servidor/backup, `..` rechazado, comparación case-insensitive en win32; `server:start` usa solo la config guardada.
+- XSS por `innerHTML` sin escapar | `esc()`/`safeColor()` en todas las interpolaciones de `src/renderer.js`.
+- CSP con `'unsafe-inline'` | `src/index.html`: `default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self' file: data:; img-src 'self' data:`.
+- 36 asignaciones `.style.*` para mostrar/ocultar | Clases `.hidden` + `classList`; solo quedan `.style.*` dinámicos (barra de progreso, colores), legales con CSP.
+- 20 `style="…"` inline en HTML | 0 `style=""` en `src/` (banner de update, colores y notas movidos a `styles.css`).
+- 6 `onclick="…"` inline + dinámicos | 0 `onclick=` en `src/`; delegación de eventos por contenedor (`initDelegates()`).
+- Renderer sin try/catch y handlers de FS sin guardar | Wrapper `run()` + `unhandledrejection` en el renderer; todos los handlers de FS con try/catch → `logCrash`.
+- `main.js` god-file (572 líneas, 44 canales) | `main/index.js` + 12 módulos: `state, stores, validate, analytics, crash, servers, properties, backups, window, updater, stats, auth`.
+- Sin ESLint, Prettier ni CI de calidad | ESLint 9 (`eslint.config.js`, flat config) + Prettier (`.prettierrc`) + `npm run lint` en CI (`.github/workflows/lint.yml`).
+- CORREGIDAS POR REBOTE (9):
+- `consoleLogs` crecía sin límite en memoria | Recorte con `MAX_LINES` al insertar y al rehidratar (`src/renderer.js:13, 292`).
+- `auth:login` código muerto roto (bcrypt) | Eliminado `login` y la dependencia `bcryptjs`.
+- `server:takeover` stub siempre-error | Eliminado.
+- Sin guardas de navegación | `setWindowOpenHandler` → deny y `will-navigate` → preventDefault (`main/window.js:57-58`).
+- Endpoint de analytics sin validar ni timeout | Solo `https:`, timeout 5 s, errores silenciosos (`main/analytics.js:42-64`).
+- Hack de clonar nodos para resetear listeners | Delegación de eventos por contenedor; sin `cloneNode`.
+- `preload.js` con claves duplicadas | Preload reescrito sin duplicados.
+- Código y dependencias muertas (`logout`, `qcmd`, `server:takeover`, `chokidar`, `adm-zip`, `bcryptjs`, `activeServers[].dir`) | Todo eliminado; quedan solo las 5 dependencias usadas.
+- `servers:update` extendía ciegamente los datos del renderer | `sanitizeServerFields()` (`main/servers.js:159-171`): `id`/`userId`/`createdAt` inmutables.
+
 ## v1.3.1 - Nuevo Icono y Estilos (2026-10-05)
 
 - Nuevo icono para la aplicación.
