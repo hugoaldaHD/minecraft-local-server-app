@@ -3,6 +3,10 @@
 Historial de versiones de **Minecraft Local Server Manager**, reconstruido a partir
 de los tags y commits del repositorio. Formato de [Keep a Changelog](https://keepachangelog.com/es/1.1.0/).
 
+## v1.5.2 - Logo Fix (2026-10-07)
+
+- Logo fixed.
+
 ## v1.5.1 - Nuevo Icono (2026-10-06)
 
 - Nuevo icono para la aplicación.
