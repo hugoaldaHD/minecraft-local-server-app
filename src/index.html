@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta http-equiv="Content-Security-Policy"
-    content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; font-src 'self' file: data:; img-src 'self' data:">
+    content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self' file: data:; img-src 'self' data:">
   <title>Minecraft Local Server Manager</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -16,17 +16,17 @@
     <div class="titlebar-left">
       <span class="app-name">Minecraft Local Server Manager</span>
     </div>
-    <div class="titlebar-center" id="titlebar-stats" style="display:none">
+    <div class="titlebar-center hidden" id="titlebar-stats">
       <span class="tstat"><span class="tstat-label">CPU</span><span id="tstat-cpu">0%</span></span>
       <span class="tstat"><span class="tstat-label">RAM</span><span id="tstat-ram">—</span></span>
-      <span class="tstat active-badge" id="tstat-active" style="display:none">
+      <span class="tstat active-badge hidden" id="tstat-active">
         <span class="dot-small on"></span><span id="tstat-count">0</span> activo(s)
       </span>
     </div>
     <div class="titlebar-right">
-      <button class="wbtn update-btn" id="btn-update-notify" title="Actualización disponible" style="display:none">↑
+      <button class="wbtn update-btn hidden" id="btn-update-notify" title="Actualización disponible">↑
         Actualizar</button>
-      <div class="user-chip" id="user-chip" style="display:none">
+      <div class="user-chip hidden" id="user-chip">
         <div class="user-avatar-sm" id="user-avatar-sm">?</div>
         <span id="user-chip-name"></span>
       </div>
@@ -37,17 +37,16 @@
   </div>
 
   <!-- ══ UPDATE BANNER ══════════════════════════════════════════════════════════ -->
-  <div class="update-banner" id="update-banner"
-    style="display:none; -webkit-app-region: no-drag; position: absolute; top: 40px; left: 0; right: 0; z-index: 100; padding: 8px 16px; align-items: center; justify-content: space-between; font-size: 13px; flex-wrap: wrap;">
+  <div class="update-banner hidden" id="update-banner">
     <span id="update-banner-text">Comprobando actualizaciones...</span>
-    <div class="update-progress" id="update-progress" style="display:none">
+    <div class="update-progress hidden" id="update-progress">
       <div class="update-bar" id="update-bar"></div>
     </div>
-    <div style="display:flex; gap: 10px;">
-      <button id="btn-update-install" style="display:none">Instalar y reiniciar</button>
+    <div class="update-actions">
+      <button id="btn-update-install" class="hidden">Instalar y reiniciar</button>
       <button id="btn-update-dismiss" title="Cerrar aviso">✕</button>
     </div>
-    <div class="update-notes" id="update-notes" style="display:none"></div>
+    <div class="update-notes hidden" id="update-notes"></div>
   </div>
 
   <!-- ══ SCREEN: ANALYTICS CONSENT ════════════════════════════════════════════════ -->
@@ -64,7 +63,7 @@
           <div class="consent-item no">❌ Nunca: nombres, IPs, contraseñas ni datos del servidor</div>
           <div class="consent-item no">❌ Nunca: se vende ni comparte con terceros</div>
         </div>
-        <p style="font-size:11px;color:var(--text2);text-align:center">Puedes cambiar esto en cualquier momento desde
+        <p class="consent-note">Puedes cambiar esto en cualquier momento desde
           Diagnóstico</p>
         <div class="consent-btns">
           <button class="btn-consent-no" id="btn-consent-no">No, gracias</button>
@@ -86,7 +85,7 @@
       <div class="new-profile-section" id="new-profile-section">
         <button class="btn-new-profile" id="btn-show-new-profile">Nuevo perfil</button>
 
-        <div class="new-profile-form" id="new-profile-form" style="display:none">
+        <div class="new-profile-form hidden" id="new-profile-form">
           <h3 class="npf-title">Crear perfil</h3>
           <div class="field">
             <label>Nombre del perfil</label>
@@ -169,12 +168,12 @@
         <h3>Acciones rápidas</h3>
         <div class="action-row">
           <input type="text" id="player-target" placeholder="Nombre del jugador" />
-          <button class="btn-action" onclick="playerAction('kick')">Kick</button>
-          <button class="btn-action danger" onclick="playerAction('ban')">Ban</button>
-          <button class="btn-action" onclick="playerAction('op')">OP</button>
-          <button class="btn-action" onclick="playerAction('deop')">De-OP</button>
-          <button class="btn-action" onclick="playerAction('gamemode survival')">Survival</button>
-          <button class="btn-action" onclick="playerAction('gamemode creative')">Creative</button>
+          <button class="btn-action" data-action="kick">Kick</button>
+          <button class="btn-action danger" data-action="ban">Ban</button>
+          <button class="btn-action" data-action="op">OP</button>
+          <button class="btn-action" data-action="deop">De-OP</button>
+          <button class="btn-action" data-action="gamemode survival">Survival</button>
+          <button class="btn-action" data-action="gamemode creative">Creative</button>
         </div>
       </div>
     </div>
@@ -300,7 +299,7 @@
   </div>
 
   <!-- ══ MODAL: new server ════════════════════════════════════════════════════ -->
-  <div class="modal-backdrop" id="modal-server" style="display:none">
+  <div class="modal-backdrop hidden" id="modal-server">
     <div class="modal modal-wide">
       <h3 id="modal-server-title">Añadir servidor</h3>
       <div class="field-group"><label>Nombre</label><input type="text" id="ms-name"
@@ -327,7 +326,7 @@
   </div>
 
   <!-- ══ MODAL: confirm close ══════════════════════════════════════════════════════════════════ -->
-  <div class="modal-backdrop" id="modal-close" style="display:none">
+  <div class="modal-backdrop hidden" id="modal-close">
     <div class="modal">
       <h3 id="modal-close-title">¿Cerrar la aplicación?</h3>
       <p id="modal-close-msg">Hay servidores en ejecución. Se detendrán antes de cerrar.</p>
@@ -335,7 +334,7 @@
         <button id="modal-cancel">Cancelar</button>
         <button id="modal-confirm-proceed">Continuar</button>
       </div>
-      <div id="modal-close-level2" class="modal-actions" style="display:none">
+      <div id="modal-close-level2" class="modal-actions hidden">
         <button id="modal-cancel-2">Volver</button>
         <button class="danger" id="modal-confirm">Cerrar y detener todo</button>
       </div>

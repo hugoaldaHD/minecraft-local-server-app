@@ -1,0 +1,6 @@
+node_modules/
+dist/
+build/
+assets/fonts/
+package-lock.json
+*.md

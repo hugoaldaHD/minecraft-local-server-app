@@ -8,10 +8,14 @@
     "type": "git",
     "url": "https://github.com/hugoaldaHD/minecraft-local-server-app.git"
   },
-  "main": "main.js",
+  "main": "main/index.js",
   "scripts": {
     "start": "electron .",
     "dev": "electron . --dev",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "build": "set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --x64",
     "build:portable": "set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win portable",
     "build:ci": "npm run build:win",
@@ -83,7 +87,8 @@
       "output": "dist"
     },
     "files": [
-      "main.js",
+      "main/index.js",
+      "main/*.js",
       "preload.js",
       "src/**/*",
       "assets/**/*",
@@ -91,17 +96,16 @@
     ]
   },
   "dependencies": {
+    "archiver": "^6.0.1",
     "electron-store": "^8.1.0",
     "electron-updater": "^6.3.4",
     "node-schedule": "^2.1.1",
-    "systeminformation": "^5.22.0",
-    "archiver": "^6.0.1",
-    "adm-zip": "^0.5.10",
-    "chokidar": "^3.5.3",
-    "bcryptjs": "^2.4.3"
+    "systeminformation": "^5.22.0"
   },
   "devDependencies": {
     "electron": "^28.0.0",
-    "electron-builder": "^24.9.1"
+    "electron-builder": "^24.9.1",
+    "eslint": "^9.39.5",
+    "prettier": "^3.9.9"
   }
 }

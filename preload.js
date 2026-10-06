@@ -3,7 +3,6 @@ const { contextBridge, ipcRenderer } = require('electron')
 contextBridge.exposeInMainWorld('api', {
   // Auth
   register: (d) => ipcRenderer.invoke('auth:register', d),
-  login: (d) => ipcRenderer.invoke('auth:login', d),
   listUsers: () => ipcRenderer.invoke('auth:listUsers'),
   deleteUser: (d) => ipcRenderer.invoke('auth:deleteUser', d),
 
@@ -15,7 +14,7 @@ contextBridge.exposeInMainWorld('api', {
   getServer: (id) => ipcRenderer.invoke('servers:get', id),
 
   // Server process
-  startServer: (serverId, config) => ipcRenderer.invoke('server:start', { serverId, config }),
+  startServer: (serverId) => ipcRenderer.invoke('server:start', { serverId }),
   stopServer: (serverId) => ipcRenderer.invoke('server:stop', serverId),
   sendCommand: (serverId, cmd) => ipcRenderer.invoke('server:command', { serverId, cmd }),
   getStatus: (serverId) => ipcRenderer.invoke('server:status', serverId),
@@ -41,6 +40,8 @@ contextBridge.exposeInMainWorld('api', {
   installUpdate: () => ipcRenderer.invoke('update:install'),
   getVersion: () => ipcRenderer.invoke('app:version'),
   onUpdateStatus: (cb) => ipcRenderer.on('update-status', (_, d) => cb(d)),
+  onUpdateAvailable: (cb) => ipcRenderer.on('update-status', (_, d) => { if (d.status === 'available') cb(d) }),
+  onUpdateDownloaded: (cb) => ipcRenderer.on('update-status', (_, d) => { if (d.status === 'ready') cb(d) }),
 
   // Analytics
   getAnalyticsConsent: () => ipcRenderer.invoke('analytics:getConsent'),
@@ -52,9 +53,6 @@ contextBridge.exposeInMainWorld('api', {
   getCrashes: () => ipcRenderer.invoke('crashes:list'),
   clearCrashes: () => ipcRenderer.invoke('crashes:clear'),
   getLastCrash: () => ipcRenderer.invoke('crashes:getLast'),
-
-  // App info
-  getVersion: () => ipcRenderer.invoke('app:version'),
 
   // Dialogs
   openJarDialog: () => ipcRenderer.invoke('dialog:openJar'),
@@ -72,7 +70,6 @@ contextBridge.exposeInMainWorld('api', {
   onServerStopped: (cb) => ipcRenderer.on('server-stopped', (_, d) => cb(d)),
   onStatsUpdate: (cb) => ipcRenderer.on('stats-update', (_, d) => cb(d)),
   onConfirmClose: (cb) => ipcRenderer.on('confirm-close', (_, d) => cb(d)),
-  onUpdateStatus: (cb) => ipcRenderer.on('update-status', (_, d) => cb(d)),
   onCrashLogged: (cb) => ipcRenderer.on('crash-logged', (_, d) => cb(d)),
   removeAllListeners: (ch) => ipcRenderer.removeAllListeners(ch)
 })

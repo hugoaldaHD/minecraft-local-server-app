@@ -126,6 +126,11 @@ body {
   flex-direction: column;
 }
 
+/* Utilidad: mostrar/ocultar sin estilos inline (CSP estricta) */
+.hidden {
+  display: none !important;
+}
+
 :focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 2px;
@@ -637,6 +642,9 @@ body {
   border-radius: var(--radius);
   color: var(--text);
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   transition: border-color 0.12s, color 0.12s;
 }
 
@@ -847,6 +855,11 @@ body {
 .server-empty .big-icon {
   font-size: 44px;
   margin-bottom: 14px;
+}
+
+.server-empty-sub {
+  margin-top: 6px;
+  font-size: 12px;
 }
 
 /* ═══ Barra de detalle del servidor ═══════════════════════════════════ */
@@ -1172,6 +1185,15 @@ body {
   border: 1px solid var(--line2);
 }
 
+.player-name {
+  font-weight: 600;
+}
+
+.player-status {
+  font-size: 11px;
+  color: var(--text2);
+}
+
 .quick-actions {
   padding: 18px 20px;
   border-top: 2px solid var(--line);
@@ -1342,6 +1364,15 @@ body {
 
 .btn-remove:hover {
   color: var(--danger);
+}
+
+.list-name {
+  font-size: 13px;
+}
+
+.list-sub {
+  font-size: 11px;
+  color: var(--text2);
 }
 
 /* ═══ Propiedades ═════════════════════════════════════════════════════ */
@@ -1766,10 +1797,27 @@ code {
 
 /* ═══ Banner de actualización ════════════════════════════════════════ */
 .update-banner {
+  position: absolute;
+  top: 40px;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  font-size: 13px;
+  -webkit-app-region: no-drag;
   background: rgba(108, 180, 63, 0.14);
   border-bottom: 2px solid rgba(108, 180, 63, 0.4);
   color: var(--text);
   flex-shrink: 0;
+}
+
+.update-actions {
+  display: flex;
+  gap: 10px;
 }
 
 .update-banner span {
@@ -1912,6 +1960,12 @@ code {
   border-color: var(--text3);
 }
 
+.consent-note {
+  font-size: 11px;
+  color: var(--text2);
+  text-align: center;
+}
+
 /* ═══ Diagnóstico ════════════════════════════════════════════════════ */
 .diag-grid {
   flex: 1;
@@ -2010,6 +2064,11 @@ code {
   font-size: 13px;
   text-align: center;
   padding: 24px 0;
+}
+
+.diag-note {
+  color: var(--text2);
+  font-size: 12px;
 }
 
 /* ═══ Versión ═════════════════════════════════════════════════════════ */
