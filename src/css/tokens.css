@@ -1,0 +1,118 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Minecraft Local Server Manager — hoja de estilos
+   Identidad visual compartida con la web (web/index.html), tema oscuro.
+
+   Paleta: Pergamino/tierra/verde de la web en su variante oscura.
+   Tipografías: Silkscreen (pixel) para títulos y botones,
+                IBM Plex Sans para texto, IBM Plex Mono para consola y datos.
+   Formas: bordes duros de 2px, esquinas de 2px, sombras desplazadas de bloque.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Fuentes (empaquetadas en assets/fonts, sin conexión a internet) ── */
+@font-face {
+  font-family: 'Silkscreen';
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url('../../assets/fonts/Silkscreen-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Silkscreen';
+  font-style: normal;
+  font-weight: 700;
+  font-display: block;
+  src: url('../../assets/fonts/Silkscreen-Bold.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../../assets/fonts/IBMPlexSans-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('../../assets/fonts/IBMPlexSans-Medium.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('../../assets/fonts/IBMPlexSans-SemiBold.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../../assets/fonts/IBMPlexMono-Regular.woff2') format('woff2');
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  color-scheme: dark;
+
+  /* Fondos */
+  --bg0: #0c0f0d;
+  --bg1: #141815;
+  --bg2: #1c211c;
+  --bg3: #26302a;
+
+  /* Acento (verde hierba) */
+  --accent: #6cb43f;
+  --accent2: #8fd14f;
+  --accent3: #4e8f2c;
+  --accent-ink: #10200a;
+
+  /* Semánticos */
+  --danger: #c2362b;
+  --danger-deep: #8f231b;
+  --danger-text: #e2685c;
+  --warn: #e5c454;
+  --info: #8fd1ff;
+
+  /* Texto */
+  --text: #e6eadb;
+  --text2: #97a48f;
+  --text3: #6b7767;
+  --text-inverse: #fff;
+  --win-ink: #cfe3c4;
+
+  /* Líneas */
+  --line: #2c352d;
+  --line2: #3a463b;
+
+  /* Tierra: sombra de bloque */
+  --dirt: #7a4e30;
+
+  /* Formas */
+  --radius: 2px;
+  --radius-lg: 2px;
+
+  /* Tipografías */
+  --font: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  --pixel: 'Silkscreen', 'Courier New', monospace;
+  --mono: 'IBM Plex Mono', 'Consolas', 'Courier New', monospace;
+
+  /* Sombras: siempre desplazadas, nunca difusas */
+  --shadow: 4px 4px 0 var(--dirt);
+  --shadow-hover: 6px 6px 0 var(--dirt);
+  --shadow-lg: 8px 8px 0 var(--dirt);
+}
+

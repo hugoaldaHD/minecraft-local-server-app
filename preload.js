@@ -14,11 +14,12 @@ contextBridge.exposeInMainWorld('api', {
   getServer: (id) => ipcRenderer.invoke('servers:get', id),
 
   // Server process
-  startServer: (serverId) => ipcRenderer.invoke('server:start', { serverId }),
+  startServer: (serverId, acceptEula) => ipcRenderer.invoke('server:start', { serverId, acceptEula }),
   stopServer: (serverId) => ipcRenderer.invoke('server:stop', serverId),
   sendCommand: (serverId, cmd) => ipcRenderer.invoke('server:command', { serverId, cmd }),
   getStatus: (serverId) => ipcRenderer.invoke('server:status', serverId),
   getStatusAll: () => ipcRenderer.invoke('server:statusAll'),
+  javaCheck: (p) => ipcRenderer.invoke('java:check', p),
 
   // Properties / Lists / Backups
   readProperties: (dir) => ipcRenderer.invoke('props:read', dir),

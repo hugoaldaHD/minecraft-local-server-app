@@ -7,7 +7,7 @@ const { registerServersIpc, stopAllServers } = require('./servers')
 const { registerPropertiesIpc } = require('./properties')
 const { registerBackupsIpc, scheduleAutoBackup, initAutoBackups } = require('./backups')
 const { registerAuthIpc } = require('./auth')
-const { setupAutoUpdater, registerUpdaterIpc } = require('./updater')
+const { setupAutoUpdater, stopUpdater, registerUpdaterIpc } = require('./updater')
 const { startStatsPolling, stopStatsPolling } = require('./stats')
 const { isPlainObject, isStr } = require('./validate')
 
@@ -54,6 +54,7 @@ app.whenReady().then(() => {
 app.on('window-all-closed', () => { app.quit() })
 
 app.on('will-quit', () => {
+  stopUpdater()
   stopStatsPolling()
   stopAllServers()
 })

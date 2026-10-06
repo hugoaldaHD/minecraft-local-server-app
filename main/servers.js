@@ -38,18 +38,44 @@ function isJarRunning(jarPath) {
   })
 }
 
-async function detectExternalServers() {
-  const serversMap = getAllServersMap()
-  const external = {}
-  for (const [id, server] of Object.entries(serversMap)) {
-    const pid = await isJarRunning(server.jarPath)
-    if (pid) external[id] = pid
-  }
-  return external
+// ─── Java version detection ───────────────────────────────────────────────────
+// java -version escribe por stderr. Solo se cachean los resultados válidos para
+// no penalizar una instalación que se arregle en caliente.
+const javaVersionCache = new Map()
+
+function detectJavaVersion(javaPath) {
+  return new Promise((resolve) => {
+    if (javaVersionCache.has(javaPath)) return resolve(javaVersionCache.get(javaPath))
+    let out = ''
+    let child
+    try {
+      child = spawn(javaPath, ['-version'], { shell: false })
+    } catch (_) {
+      return resolve(null)
+    }
+    child.stdout.on('data', (d) => { out += d })
+    child.stderr.on('data', (d) => { out += d })
+    child.on('error', () => resolve(null))
+    child.on('close', () => {
+      let major = null
+      const quoted = out.match(/version\s+"([^"]+)"/)
+      if (quoted) {
+        const parts = quoted[1].split('.')
+        major = Number(parts[0]) === 1 ? Number(parts[1]) : Number(parts[0])
+      } else {
+        const m = out.match(/(?:openjdk|java)\s+(\d+)/i)
+        if (m) major = Number(m[1])
+      }
+      if (!Number.isFinite(major) || major <= 0) return resolve(null)
+      const ver = { major, raw: (out.trim().split('\n')[0] || '').slice(0, 120) }
+      javaVersionCache.set(javaPath, ver)
+      resolve(ver)
+    })
+  })
 }
 
 // ─── Server process ──────────────────────────────────────────────────────────
-function startServer(serverId) {
+async function startServer(serverId, acceptEula = false) {
   if (activeServers[serverId]) return { ok: false, error: 'Ya está en ejecución' }
   // La configuración SIEMPRE sale del almacenamiento propio: el renderer no
   // puede inyectar javaPath/extraArgs arbitrarios.
@@ -62,6 +88,22 @@ function startServer(serverId) {
   const serverDir = path.dirname(jarPath)
 
   const java = isStr(javaPath) ? javaPath : 'java'
+  // Requisito del README: Java 17+ (las versiones 1.x se leen como 8, 11…)
+  const ver = await detectJavaVersion(java)
+  if (!ver) return { ok: false, error: `No se pudo ejecutar "${java} -version". Instala Java 17+ o corrige la ruta de Java.` }
+  if (ver.major < 17) return { ok: false, error: `Se requiere Java 17+ (detectado Java ${ver.major}). Cambia la ruta de Java en la configuración del servidor.` }
+
+  // eula.txt: el primer arranque necesita aceptación explícita del usuario
+  const eulaFile = path.join(serverDir, 'eula.txt')
+  if (!fs.existsSync(eulaFile)) {
+    if (!acceptEula) return { ok: false, code: 'eula', error: 'Falta aceptar la EULA de Minecraft (eula.txt)' }
+    try {
+      fs.writeFileSync(eulaFile, '# Aceptación de la EULA de Minecraft (https://aka.ms/MinecraftEULA)\n# Generado por Minecraft Local Server Manager\neula=true\n', 'utf8')
+    } catch (err) {
+      logCrash('eula_write_error', err)
+      return { ok: false, error: 'No se pudo crear eula.txt: ' + err.message }
+    }
+  }
   const extra = isStr(extraArgs) ? extraArgs.split(' ').filter(Boolean) : []
   const args = [`-Xms${isIntInRange(minRam, 256, 65536, 1024)}M`, `-Xmx${isIntInRange(maxRam, 256, 131072, 4096)}M`, ...extra, '-jar', jarPath, '--nogui']
 
@@ -223,7 +265,9 @@ function registerServersIpc() {
 
   ipcMain.handle('servers:get', (_, serverId) => (isStr(serverId) ? getAllServersMap()[serverId] || null : null))
 
-  ipcMain.handle('server:start', (_, { serverId } = {}) => (isStr(serverId) ? startServer(serverId) : { ok: false, error: 'Datos inválidos' }))
+  ipcMain.handle('server:start', (_, { serverId, acceptEula } = {}) => (
+    isStr(serverId) ? startServer(serverId, acceptEula === true) : { ok: false, error: 'Datos inválidos' }
+  ))
   ipcMain.handle('server:stop', (_, serverId) => (isStr(serverId) ? stopServer(serverId) : { ok: false, error: 'Datos inválidos' }))
   ipcMain.handle('server:command', (_, { serverId, cmd } = {}) => {
     if (!isStr(serverId) || typeof cmd !== 'string' || !cmd.trim()) return { ok: false, error: 'Comando inválido' }
@@ -239,13 +283,30 @@ function registerServersIpc() {
     return { running: false }
   })
 
+  // Validación de Java para la UI (diagnóstico / formulario de servidores)
+  ipcMain.handle('java:check', async (_, p) => {
+    const target = isStr(p) && p ? p : 'java'
+    if (!isValidJavaPath(target)) return { ok: false, error: 'Ruta de Java no válida' }
+    const base = path.basename(target).toLowerCase()
+    if (base !== 'java' && base !== 'java.exe') return { ok: false, error: 'El ejecutable debe ser java' }
+    const ver = await detectJavaVersion(target)
+    return ver ? { ok: true, path: target, ...ver } : { ok: false, path: target, error: 'No se pudo detectar la versión' }
+  })
+
+  // Caché corta: evita lanzar un proceso PowerShell/pgrep por servidor en
+  // cada refresco de la UI.
+  let statusAllCache = { at: 0, value: null }
   ipcMain.handle('server:statusAll', async () => {
+    if (statusAllCache.value && Date.now() - statusAllCache.at < 3000) return statusAllCache.value
     const r = {}
     Object.keys(activeServers).forEach(id => { r[id] = true })
     try {
-      const external = await detectExternalServers()
-      Object.keys(external).forEach(id => { if (!r[id]) r[id] = { external: true, pid: external[id] } })
+      const map = getAllServersMap()
+      const ids = Object.keys(map).filter(id => !r[id] && isStr(map[id].jarPath))
+      const results = await Promise.all(ids.map(id => isJarRunning(map[id].jarPath)))
+      ids.forEach((id, i) => { if (results[i]) r[id] = { external: true, pid: results[i] } })
     } catch (_) { }
+    statusAllCache = { at: Date.now(), value: r }
     return r
   })
 }

@@ -9,72 +9,67 @@
 - 🟡 **Media** — deuda técnica, UX degradada o falta importante
 - 🟢 **Baja** — pulido, limpieza y buenas prácticas
 
-**Estado:** 🔴 **14/14 corregidas** · total **23/46 implementadas** (ver [Mejoras implementadas](#-mejoras-implementadas)) · **23 pendientes** en las tablas de abajo (~ = parcialmente hecha).
+**Estado:** ✅ **46/46 implementadas** (23 en [tanda 1](#-mejoras-implementadas--tanda-1-23) · 23 en [tanda 2](#-mejoras-implementadas--tanda-2-23)). Las tablas de abajo quedan vacías a propósito: lo corregido se documenta en sus secciones.
 
 > Nota: el `main.js` original (572 líneas) se dividió en `main/index.js` + 12 módulos (#29) y `src/renderer.js` se reescribió; las referencias apuntan a las ubicaciones actuales.
 
 ---
 
-## 🐛 Bugs y funcionamiento (pendientes)
+## 🐛 Bugs y funcionamiento
 
-| # | Prioridad | Mejora | Referencias | Acción |
-|---|---|---|---|---|
-| 7 | 🟡 | **`server.properties` pierde comentarios y orden** en cada guardado (regenera una cabecera de 2 líneas) | `main/properties.js:28-45` | Preservar comentarios/orden al escribir |
-| 8 | 🟡 | **Carrera de doble escritura en whitelist/banlist:** se escribe el JSON *y* se manda el comando de consola; entradas con `uuid: ''` no son válidas | `src/renderer.js:794-831` | Usar solo la consola (o solo el archivo) y resolver UUIDs |
-| 9 | 🟡 | **Borrado por índice:** `removeFromList(type, i)` usa el índice del render → si el archivo cambió, borra la entrada equivocada | `src/renderer.js:176-180, 816` | Identificar entradas por nombre/uuid, no por índice |
-| 11 | 🟡 | **Consentimiento de analytics saltado:** `analyticsEnabled` default `true` y `app_launch` se registra antes de ver la pantalla de consentimiento; declinar no purga eventos | `main/analytics.js:19`, `main/index.js:51` | Default `false` hasta consentir + purgar al declinar |
-| 13 | 🟢 | ~ **Cierres de recursos con race:** stats ya se limpia en `will-quit`, pero el `setInterval` del updater nunca se limpia | `main/updater.js:24`, `main/index.js:57` | Limpiar el intervalo del updater al salir |
+✅ **Todo corregido** — #7, #8, #9, #11 y #13 resueltos (ver [tanda 2](#-mejoras-implementadas--tanda-2-23)).
 
 ## 🔒 Seguridad (pendientes)
 
-✅ **Todo corregido** — los 5 ítems de seguridad (#14–#18) están resueltos: validación de rutas en IPC, escapado XSS, CSP estricta, guardas de navegación y analytics con timeout. Ver [Mejoras implementadas](#-mejoras-implementadas).
+✅ **Todo corregido** — los 5 ítems de seguridad (#14–#18) están resueltos: validación de rutas en IPC, escapado XSS, CSP estricta, guardas de navegación y analytics con timeout. Ver [tanda 1](#-mejoras-implementadas--tanda-1-23).
 
-## 🎨 Estilos (pendientes)
+## 🎨 Estilos
 
-| # | Prioridad | Mejora | Referencias | Acción |
-|---|---|---|---|---|
-| 22 | 🟡 | **Tokens de color rotos:** hex hardcodeados fuera de `:root` (`#fff`, `#8f231b`) | `styles.css:265, 605, 950, 952, 1620, 1629, 1756, 1761` | Reemplazar por variables (`--bg*`, `--accent`…) |
-| 23 | 🟡 | **Cero `@media queries`** en 2.000+ líneas de CSS: sin responsive ni soporte de ventana pequeña (mitigado solo por `minWidth: 1024`) | `src/styles.css`, `main/window.js` | Breakpoints para 1024px y modo compacto |
-| 24 | 🟡 | **CSS monolítico de 2.000+ líneas** sin organización modular | `src/styles.css` | Dividir por módulos (concatenar en build o `@import`) |
-| 25 | 🟢 | **Sin estados hover/focus visibles en todos los controles** y sin `prefers-reduced-motion` | `src/styles.css` | Auditoría de accesibilidad básica |
-| 26 | 🟢 | **Valores de sombra/duplicación del "estilo bloque" inlineados** en vez de tokens | `src/styles.css` | Extraer `--shadow`, offsets, etc. |
-| 27 | 🟢 | **Landing y app comparten diseño pero no tokens** (la landing usa Google Fonts CDN y sus propios colores) | `web/index.html:23-84` | Unificar variables de diseño |
+✅ **Todo corregido** — #22–#27 resueltos (ver [tanda 2](#-mejoras-implementadas--tanda-2-23)).
 
-## ⚙️ Implementación / arquitectura (pendientes)
+## ⚙️ Implementación / arquitectura
 
-| # | Prioridad | Mejora | Referencias | Acción |
-|---|---|---|---|---|
-| 31 | 🟡 | ~ **UI construida con template strings + `innerHTML`** (18 sitios): todos ya escapados con `esc()`, pero siguen sin ser DOM API | `src/renderer.js:448, 774, 849, 889` (etc.) | Reemplazar por `createElement`/`textContent` |
-| 32 | 🟡 | **Falta `eula.txt`:** el primer arranque de cualquier jar vanilla falla hasta crearlo a mano | añadir en `main/servers.js` (`startServer`) | Detectar/crear `eula.txt` con confirmación del usuario |
-| 33 | 🟡 | ~ **Sin detección ni validación de Java 17+** (requisito del README): `minRam ≤ maxRam` ya se fuerza, falta comprobar la versión | `main/servers.js:159-171` | Comprobar versión con `java -version` + wizard de selección |
-| 34 | 🟡 | **Estadísticas de CPU/RAM son del sistema, no del servidor**, aunque la landing promete lo contrario | `main/stats.js:8`, `web/index.html:116` | Medir el proceso `java` con `systeminformation`/WMI |
-| 35 | 🟡 | **i18n inconsistente:** app 100% español, README en inglés, landing con ES/EN | `src/*`, `README.md`, `web/index.html:164-210` | Extraer strings a un diccionario i18n |
-| 38 | 🟢 | **Borrar perfil deja huérfanos** los `settings` (`server_<id>`) y los backups en disco | `main/auth.js` (`deleteUser`) | Limpiar también sus datos |
-| 39 | 🟢 | **`getStatusAll` lanza un proceso PowerShell/`pgrep` por servidor** en cada refresco → lag con varios servidores | `main/servers.js:17-48, 240-248` | Consulta única + caché corta |
+✅ **Todo corregido** — #31–#35, #38 y #39 resueltos (ver [tanda 2](#-mejoras-implementadas--tanda-2-23)).
 
-## 🛠️ Tooling y proceso (pendientes)
+## 🛠️ Tooling y proceso
 
-| # | Prioridad | Mejora | Referencias | Acción |
-|---|---|---|---|---|
-| 42 | 🟡 | **`npm run build` usa sintaxis Windows** (`set VAR && …`) que falla en shells POSIX | `package.json` (`scripts.build`) | Usar `cross-env` |
-| 43 | 🟡 | **README sin sección de desarrollo** (no menciona `npm start`, estructura ni arquitectura) y **sin política de privacidad** a pesar de recolectar analytics | `README.md` | Añadir secciones de dev + privacidad |
-| 44 | 🟢 | **Higiene de git inconsistente:** `.gitignore` ignora a sí mismo y a `RELEASE_GUIDE.md` (que además está trackeado); artefactos `build/release-*.txt` sin trackear; iconos duplicados en `assets/` y `web/` | `.gitignore`, repo | Reglas coherentes + `git rm --cached` |
-| 45 | 🟢 | **`assets/installer.nsh` probablemente muerto:** electron-builder solo autoincluye `installer.nsh` desde `build/` (gitignored), no desde `assets/` | `assets/installer.nsh` | Moverlo a `build/` o verificarlo en el instalador |
-| 46 | 🟢 | **`RELEASE_GUIDE.md` y CHANGELOG** con entradas "Sin descripción"; no hay `CONTRIBUTING.md` | docs | Completar docs |
+✅ **Todo corregido** — #42–#46 resueltos (ver [tanda 2](#-mejoras-implementadas--tanda-2-23)).
 
 ---
 
-## 🚀 Quick wins pendientes (mayor impacto, poco esfuerzo)
+## ✅ Mejoras implementadas — tanda 2 (23)
 
-| Orden | Qué | Por qué |
+> Segunda tanda (06/10/2026): todos los ítems 🟡/🟢 que quedaban. Verificación: ESLint 0 errores, `node --check` en los 15 JS, script de paridad i18n (194 claves es/en) y pruebas de arranque/navegación de Electron.
+
+| # | Mejora | Cómo quedó |
 |---|---|---|
-| 1 | #11 — Default `false` en analytics hasta consentir | Privacidad real |
-| 2 | #7 — Preservar comentarios de `server.properties` | Deja de destrozar la config |
-| 3 | #9 — Borrado de listas por nombre, no por índice | Evita borrar la entrada equivocada |
+| 7 | `server.properties` pierde comentarios y orden al guardar | `writeProperties` fusiona con el archivo original: preserva comentarios/orden/claves desconocidas y solo sustituye valores o añade nuevas (`main/properties.js`) |
+| 8 | Doble escritura whitelist/banlist + `uuid: ''` inválidos | `listWrite()`: vía única por estado — servidor en marcha → solo comando de consola (vanilla resuelve UUID y persiste); detenido → solo archivo, con el UUID offline (mismo algoritmo `OfflinePlayer:`) completado por el main (`main/properties.js`, `src/renderer.js:878`) |
+| 9 | Borrado de listas por índice | `removeFromList` identifica por `data-name`/`data-uuid` (identidad de la entrada, nunca índice de render) |
+| 11 | Analytics consentidos por defecto | `analyticsEnabled` default `false`; `app_launch` solo tras consentir; `setConsent(false)` purga los eventos locales (`main/analytics.js`) |
+| 13 | `setInterval` del updater sin limpiar | `stopUpdater()` invocado en `will-quit` (`main/updater.js`) |
+| 22 | Hex hardcodeados fuera de `:root` | 0 hex fuera de tokens; nuevos `--text-inverse`, `--danger-deep`, `--shadow-hover` (`src/css/tokens.css`) |
+| 23 | Cero media queries | Breakpoints 1300px/1100px con modo compacto (`src/css/responsive.css`) |
+| 24 | CSS monolítico de 2.000+ líneas | Dividido en 6 módulos: `tokens/base/layout/components/screens/responsive`; concatenación verifiicada byte-idéntica al original |
+| 25 | Sin estados hover/focus ni `prefers-reduced-motion` | `:focus-visible` en todos los controles + animaciones reducidas/desactivadas con `prefers-reduced-motion` |
+| 26 | Sombras/offsets inlineados | Extraídos a tokens reutilizables (`--shadow`, offsets de bloque) |
+| 27 | Landing con Google Fonts CDN y colores propios | `@font-face` local con las mismas fuentes (Silkscreen, IBM Plex Sans/Mono) desde `assets/fonts/`; sin CDN, variables compartidas |
+| 31 | UI con template strings + `innerHTML` (18 sitios) | 0 `innerHTML` en `src/`; constructor DOM `h()`/`fill()`/`textContent`; `esc()` ya no es necesario |
+| 32 | Falta `eula.txt` en el primer arranque | `startServer` detecta y devuelve `{ok:false, code:'eula'}`; el renderer confirma al usuario y reintenta con `acceptEula:true` que crea el archivo (`main/servers.js`, `src/renderer.js:679`) |
+| 33 | Sin validación de Java 17+ | `detectJavaVersion` (spawn `java -version`, parsea `version "x.y"`, cache solo resultados válidos); arranque bloqueado si no detecta o <17; canal `java:check`; fila "Java" en Diagnóstico |
+| 34 | Estadísticas del sistema, no del servidor | `main/stats.js` reescrito: CPU/RAM por proceso (suma de `cpu`/`memRss` de los PIDs activos de servidores) con `scope: 'server'\|'system'` |
+| 35 | i18n inconsistente | `src/i18n.js` (diccionario es/en de 194 claves con paridad verificada), `T()` en el renderer (107 usos), `data-i18n*` en el HTML (92), selector ES/EN en la titlebar, idioma por navegador/localStorage |
+| 38 | Borrar perfil deja huérfanos | `deleteUser` en cascada: cancela auto-backups, borra `server_<id>`, elimina backups del directorio por defecto (nunca dirs custom) (`main/auth.js`) |
+| 39 | `getStatusAll` costoso con varios servidores | `Promise.all` + caché de 3 s; `detectExternalServers` eliminado (`main/servers.js`) |
+| 42 | Build con sintaxis Windows | `cross-env@^7` + `CSC_IDENTITY_AUTO_DISCOVERY=false` por script; portable POSIX/Windows (`package.json`) |
+| 43 | README sin dev/privacidad | Secciones Development, Architecture y Privacy añadidas |
+| 44 | Higiene de git inconsistente | `.gitignore` coherente (`node_modules/`, `dist/`, `build/`, logs); auto-ignores retirados |
+| 45 | `installer.nsh` muerto y destructivo | Eliminado: su `customUnInstall` borraba `%APPDATA%\minecraft-local-server-app` |
+| 46 | Docs con "Sin descripción" y sin `CONTRIBUTING.md` | CHANGELOG reconstruido desde los 34 tags de git, `RELEASE_GUIDE.md` completado, `CONTRIBUTING.md` creado |
 
 ---
 
-## ✅ Mejoras implementadas
+## ✅ Mejoras implementadas — tanda 1 (23)
 
 > Las 14 🔴 están todas resueltas (06/10/2026). Verificación: ESLint 0 errores, `node --check` en todos los JS y 3 pruebas de arranque de Electron (CSP estricta aplicada, 0 atributos inline, sin errores en consola).
 

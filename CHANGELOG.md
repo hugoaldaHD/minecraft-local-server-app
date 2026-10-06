@@ -1,136 +1,337 @@
 # Changelog
 
+Historial de versiones de **Minecraft Local Server Manager**, reconstruido a partir
+de los tags y commits del repositorio. Formato de [Keep a Changelog](https://keepachangelog.com/es/1.1.0/).
+
 ## v1.4.0 - Mejoras de Seguridad y Funcionamiento (2026-10-06)
 
-- `onUpdateAvailable`/`onUpdateDownloaded` no existían → `TypeError` en cada arranque | Ambos canales expuestos en `preload.js` y suscritos al final de `src/renderer.js` (filtrados por `update-status`).
-- Backups automáticos fantasma (`node-schedule` nunca se usaba) | `scheduleAutoBackup`/`initAutoBackups` en `main/backups.js:82-117` (1h/6h/12h/24h); se reprograma en `settings:set` y se cancela en `servers:delete`.
-- La app quedaba viva al cerrar | `quitWhenServersStopped` en `main/window.js:11-26` (poll cada 200 ms, timeout 15 s) + limpieza en `will-quit`.
-- La consola mentía con servidores externos (`{ok:false}` ignorado) | Wrapper `run()` en el renderer + comprobación de `{ok:false}` en todas las acciones.
-- Lista de jugadores global, no por servidor | Mapa `state.playersByServer[serverId]`.
-- IPC sin validar rutas/ejecutables | `main/validate.js`: allow-lists de directorios de servidor/backup, `..` rechazado, comparación case-insensitive en win32; `server:start` usa solo la config guardada.
-- XSS por `innerHTML` sin escapar | `esc()`/`safeColor()` en todas las interpolaciones de `src/renderer.js`.
-- CSP con `'unsafe-inline'` | `src/index.html`: `default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self' file: data:; img-src 'self' data:`.
-- 36 asignaciones `.style.*` para mostrar/ocultar | Clases `.hidden` + `classList`; solo quedan `.style.*` dinámicos (barra de progreso, colores), legales con CSP.
-- 20 `style="…"` inline en HTML | 0 `style=""` en `src/` (banner de update, colores y notas movidos a `styles.css`).
-- 6 `onclick="…"` inline + dinámicos | 0 `onclick=` en `src/`; delegación de eventos por contenedor (`initDelegates()`).
-- Renderer sin try/catch y handlers de FS sin guardar | Wrapper `run()` + `unhandledrejection` en el renderer; todos los handlers de FS con try/catch → `logCrash`.
-- `main.js` god-file (572 líneas, 44 canales) | `main/index.js` + 12 módulos: `state, stores, validate, analytics, crash, servers, properties, backups, window, updater, stats, auth`.
-- Sin ESLint, Prettier ni CI de calidad | ESLint 9 (`eslint.config.js`, flat config) + Prettier (`.prettierrc`) + `npm run lint` en CI (`.github/workflows/lint.yml`).
-- CORREGIDAS POR REBOTE (9):
-- `consoleLogs` crecía sin límite en memoria | Recorte con `MAX_LINES` al insertar y al rehidratar (`src/renderer.js:13, 292`).
-- `auth:login` código muerto roto (bcrypt) | Eliminado `login` y la dependencia `bcryptjs`.
-- `server:takeover` stub siempre-error | Eliminado.
-- Sin guardas de navegación | `setWindowOpenHandler` → deny y `will-navigate` → preventDefault (`main/window.js:57-58`).
-- Endpoint de analytics sin validar ni timeout | Solo `https:`, timeout 5 s, errores silenciosos (`main/analytics.js:42-64`).
-- Hack de clonar nodos para resetear listeners | Delegación de eventos por contenedor; sin `cloneNode`.
-- `preload.js` con claves duplicadas | Preload reescrito sin duplicados.
-- Código y dependencias muertas (`logout`, `qcmd`, `server:takeover`, `chokidar`, `adm-zip`, `bcryptjs`, `activeServers[].dir`) | Todo eliminado; quedan solo las 5 dependencias usadas.
-- `servers:update` extendía ciegamente los datos del renderer | `sanitizeServerFields()` (`main/servers.js:159-171`): `id`/`userId`/`createdAt` inmutables.
+### Added
+
+- Auditoría de la aplicación con el listado de mejoras (`MEJORAS.md`).
+- ESLint 9 con configuración plana (`eslint.config.js`), Prettier (`.prettierrc`)
+  y workflow de CI (`.github/workflows/lint.yml`) que ejecuta `npm run lint`.
+- Backups automáticos de verdad: `scheduleAutoBackup`/`initAutoBackups` en
+  `main/backups.js` con `node-schedule` (cada 1, 6, 12 o 24 horas); se
+  reprograman al cambiar los ajustes del servidor y se cancelan al borrarlo.
+- Validación de IPC en `main/validate.js`: allow-lists de directorios de
+  servidor y de backup, rechazo de `..` y comparación case-insensitive en
+  win32; `server:start` usa únicamente la configuración guardada.
+- Guardas de navegación: `setWindowOpenHandler` deniega ventanas nuevas y
+  `will-navigate` cancela la navegación.
+- Recorte del búfer de consola (`MAX_LINES`) para que no crezca sin límite en
+  memoria.
+
+### Fixed
+
+- `onUpdateAvailable`/`onUpdateDownloaded` no existían y provocaban un
+  `TypeError` en cada arranque; ambos canales se expusieron en `preload.js`.
+- La app seguía viva después de cerrar la ventana con servidores en marcha
+  (`quitWhenServersStopped`: espera a que paren, con timeout de 15 s).
+- La consola ignoraba las respuestas `{ ok: false }` de los IPC al usar
+  servidores externos.
+- La lista de jugadores era global y se mezclaba entre servidores
+  (`state.playersByServer[serverId]`).
+- XSS por `innerHTML` sin escapar: `esc()`/`safeColor()` en todas las
+  interpolaciones de `src/renderer.js`.
+- CSP con `'unsafe-inline'`: ahora `default-src 'self'` sin scripts ni estilos
+  inline; se eliminaron los `onclick` y los `style` inline (delegación de
+  eventos por contenedor en el renderer).
+- Endpoint de analytics sin validar ni timeout: ahora solo `https:`, timeout de
+  5 s y errores silenciados.
+- `servers:update` extendía ciegamente los datos que manda el renderer
+  (`sanitizeServerFields()`: `id`/`userId`/`createdAt` inmutables).
+- Handlers de sistema de archivos sin `try/catch` en el proceso principal: ya
+  se registran en el log de crashes.
+- Código roto o muerto eliminado: `auth:login` (bcrypt), `server:takeover`
+  siempre en error, claves duplicadas en `preload.js` y dependencias sin uso
+  (`chokidar`, `adm-zip`, `bcryptjs`).
+
+### Changed
+
+- `main.js` (572 líneas, 44 canales IPC) dividido en `main/index.js` + 12
+  módulos: `state`, `stores`, `validate`, `analytics`, `crash`, `servers`,
+  `properties`, `backups`, `window`, `updater`, `stats`, `auth`.
+- `src/renderer.js` reescrito con delegación de eventos por contenedor
+  (`initDelegates()`), helper `esc()` y un wrapper `run()` que captura los
+  errores de IPC; sin `cloneNode` para reiniciar listeners.
+- Mostrar/ocultar elementos pasa de asignaciones `.style.*` a la clase
+  `.hidden` con `classList`.
+- Icono de la página web (`web/`).
 
 ## v1.3.1 - Nuevo Icono y Estilos (2026-10-05)
 
-- Nuevo icono para la aplicación.
-- Arreglos puntuales de algunos estilos de la aplicación.
+### Changed
+
+- Nuevo icono de la aplicación (`assets/icon.ico` y `assets/icon.png`).
+- Ajustes puntuales de estilos de la interfaz y de la página web.
 
 ## v1.3.0 - Fresh Styles (2026-10-05)
 
-- Nuevos estilos homogeneos con la página web y con el juego en sí.
+### Added
+
+- Página web informativa en `web/index.html` con su configuración de despliegue
+  (`vercel.json`) y varias correcciones (`web fix`, `web fix v2`, `web fix v3`).
+
+### Changed
+
+- Rediseño completo de los estilos de la app (`src/styles.css`), alineado con
+  la página web y con el juego; tipografías propias empaquetadas en
+  `assets/fonts/`.
+- README actualizado tras el nuevo diseño.
 
 ## v1.2.0 - Descarga en Linux (2026-10-05)
 
-- Ahora es posible descargar e instalar esta aplicación en Linux.
+### Added
+
+- Builds de Linux: AppImage y paquete `.deb`, con icono PNG y targets en el
+  workflow de release (se compilan en `ubuntu-latest`).
+- Sección de Linux en el README (AppImage y `apt install` del `.deb`).
+
+### Changed
+
+- El auto-update solo se activa cuando la app corre como AppImage
+  (`canAutoUpdate()`): el `.deb` se actualiza con el gestor de paquetes.
+- Detección del proceso del servidor con PowerShell/CIM en Windows y `pgrep` en
+  Linux/macOS, en lugar de `wmic` (eliminado en Windows 11 24H2).
+- Icono de la ventana según plataforma (`icon.ico` en Windows, `icon.png` en el
+  resto).
 
 ## v1.1.15 - Changelog + Fix Release (2026-10-05)
 
-- Se ha añadido un Changelog a modo historial de las release y se han añadido tanto el nombre como las descripciones
-- de estas mismas.
+### Added
+
+- `scripts/release.mjs`, el flujo de release interactivo (`npm run release` y
+  `npm run release:notes`), y este `CHANGELOG.md` como historial versionado.
+- Notas de la release dentro del banner de actualización: la lista de cambios
+  se muestra al recibir una actualización.
+
+### Changed
+
+- El workflow de release prepara el nombre y las notas desde el tag
+  (`--prepare-notes`) y los aplica a la release de GitHub (`--apply-notes`).
+- `releaseInfo.releaseNotesFile` en `package.json`: `release-notes.md` viaja en
+  `latest.yml` como `releaseNotes`.
 
 ## v1.1.14 (2026-04-25)
-- visual patch
+
+### Fixed
+
+- Título de la ventana restaurado a "Minecraft Local Server Manager" (se había
+  cambiado a un texto de prueba en v1.1.6).
 
 ## v1.1.13 (2026-04-25)
-- Sin descripción
+
+### Changed
+
+- Solo actualización de versión en `package.json`/`package-lock.json`; sin
+  cambios de código.
 
 ## v1.1.12 (2026-04-25)
-- revert autodetect software
+
+### Changed
+
+- Alineación del campo `version` de `package.json` (1.1.9 → 1.1.11) tras los
+  tags paralelos; sin cambios de código.
 
 ## v1.1.11 (2026-04-25)
-- Sin descripción
+
+### Changed
+
+- Solo actualización de versión. Este tag está en una rama paralela que nunca
+  se fusionó con `main`.
 
 ## v1.1.10 (2026-04-25)
-- Sin descripción
+
+### Changed
+
+- Solo actualización de versión. Este tag está en una rama paralela que nunca
+  se fusionó con `main`.
 
 ## v1.1.9 (2026-04-25)
-- Revert "autodetect servers running"
+
+### Removed
+
+- Revert del experimento de detección de servidores en ejecución introducido
+  en v1.1.8.
 
 ## v1.1.8 (2026-04-25)
-- autodetect servers running
+
+### Added
+
+- Detección de servidores que ya estaban en ejecución fuera de la app (PID por
+  escaneo de procesos) y su muestra en la interfaz.
 
 ## v1.1.7 (2026-04-24)
-- autodetect server
+
+### Added
+
+- Detección de procesos Java externos que ejecutan el JAR de un servidor
+  (`isJarRunning`/`detectExternalServers`), para que el estado en la interfaz
+  refleje lo que corre fuera de la app.
 
 ## v1.1.6 (2026-04-23)
-- v patch
+
+### Changed
+
+- Cambio puntual del título de la ventana (texto de prueba, revertido en
+  v1.1.14).
 
 ## v1.1.5 (2026-04-22)
-- update patch restart
+
+### Changed
+
+- Ajuste de los parámetros de `quitAndInstall` al instalar una actualización
+  (`true, true`).
 
 ## v1.1.4 (2026-04-22)
-- update checl
+
+### Fixed
+
+- Instalación de actualizaciones: se pasó de `app.quit()` a
+  `autoUpdater.quitAndInstall(false, true)`.
 
 ## v1.1.3 (2026-04-21)
-- window icons
+
+### Added
+
+- Sincronización del estado de ventana maximizada con la UI (evento
+  `window:maximized` al maximizar, restaurar y al terminar de cargar) y icono
+  con tooltip en el botón de maximizar.
 
 ## v1.1.2 (2026-04-20)
-- update patch v4
+
+### Changed
+
+- El build de CI pasa de portable a instalador NSIS x64 y `publish.releaseType`
+  de `portable` a `release`.
+- Artefactos con la versión en el nombre (`${productName}-${version}.${ext}`).
+- Opciones NSIS: instalación sin privilegios elevados, carpeta elegible por el
+  usuario, acceso directo en el escritorio.
 
 ## v1.1.1 (2026-04-20)
-- update patch v3
+
+### Changed
+
+- El binario de CI vuelve a ser portable: se retira la configuración NSIS y
+  `publish.releaseType` pasa a `portable`.
+- La instalación de actualizaciones se hace al cerrar la app
+  (`autoInstallOnAppQuit` + `app.quit()`).
 
 ## v1.1.0 (2026-04-20)
-- new ui v1
-- visual patch v2
-- rework ui styles
+
+### Changed
+
+- Nueva interfaz: `rework ui styles`, `visual patch v2` y `new ui v1`
+  (HTML/CSS/renderer).
 
 ## v1.0.14 (2026-04-20)
-- update patch v2
+
+### Changed
+
+- Instalador NSIS por usuario (`perMachine: false`), sin elevación, sin acceso
+  en el menú de inicio y sin `installer.nsh` personalizado.
 
 ## v1.0.13 (2026-04-20)
-- nsis pathc
+
+### Fixed
+
+- Instalación de actualizaciones con `quitAndInstall(true, true)`.
 
 ## v1.0.12 (2026-04-20)
-- fix auto update
+
+### Fixed
+
+- Actualización automática: la versión descargada se instala al cerrar la app
+  (`autoInstallOnAppQuit` + `app.quit()`).
 
 ## v1.0.11 (2026-04-20)
-- update patch
+
+### Changed
+
+- Botones de la barra de título (minimizar/maximizar/cerrar) con iconos SVG.
+- Las actualizaciones se instalan automáticamente al salir de la app.
 
 ## v1.0.10 (2026-04-20)
-- double kill confirmation
+
+### Added
+
+- Confirmación en dos pasos al cerrar la aplicación con servidores en
+  ejecución (primero "Continuar", después "Cerrar y detener todo").
 
 ## v1.0.9 (2026-04-20)
-- window css
+
+### Changed
+
+- Al cerrar la ventana, la app sale enseguida si no hay servidores activos y
+  espera 2 s si los hay; ajustes de estilos de la ventana.
 
 ## v1.0.8 (2026-04-20)
-- update con close
+
+### Changed
+
+- Las actualizaciones dejan de instalarse solas al cerrar
+  (`autoInstallOnAppQuit: false`).
 
 ## v1.0.7 (2026-04-20)
-- titlebar modified
+
+### Changed
+
+- Rediseño de la barra de título.
 
 ## v1.0.6 (2026-04-20)
-- update btn
+
+### Changed
+
+- El banner de actualización se movió fuera de la barra de título y se
+  recoloreó con progreso y botones propios.
 
 ## v1.0.5 (2026-04-20)
-- visuals v2
+
+### Changed
+
+- Ajustes visuales de la interfaz (`visuals v2`).
 
 ## v1.0.4 (2026-04-20)
-- release workflow & visuals
+
+### Added
+
+- Workflow de GitHub Actions para compilar y publicar la release
+  (`.github/workflows/release.yml`).
+
+### Changed
+
+- Nuevos estilos (`src/styles.css`) y ajustes en el proceso principal y el
+  renderer (`release workflow & visuals`).
 
 ## v1.0.3 (2026-04-19)
-- auto-updater y GitHub Actions
-- auto-updater y GitHub Actions
+
+### Added
+
+- Scripts de publicación por tag en `package.json`
+  (`release:patch/minor/major`: versionan, hacen push del commit y de los
+  tags).
+
+### Changed
+
+- Los errores del auto-updater dejan de llegarse al banner: solo se registran
+  por consola.
+- Gran rediseño de estilos e interfaz (HTML/CSS/renderer).
+- `author` del paquete cambiado a "FixItNow" y `server/**/*` fuera de los
+  ficheros empaquetados.
 
 ## v1.0.1 (2026-04-19)
-- Name change
-- Autoupdate deployment
-- Deployment version 1.1.0
-- Initial commit
+
+### Added
+
+- Primera versión publicada: app Electron completa (proceso principal
+  `main.js`, `preload.js` y renderer en `src/`) con perfiles locales,
+  inicio/parada de servidores, consola en tiempo real, estadísticas de CPU y
+  RAM, gestión de jugadores, whitelist/banlist, editor de `server.properties`
+  y backups manuales y automáticos.
+- Auto-update con `electron-updater` y publicación de releases en GitHub
+  (`publish` + `build:ci`).
+
+### Changed
+
+- Cambio de nombre del paquete y de la aplicación a "Minecraft Local Server
+  Manager".

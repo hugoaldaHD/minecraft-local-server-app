@@ -1,4 +1,7 @@
+/* global I18N */
 'use strict'
+
+const T = (k, v) => I18N.t(k, v)
 
 const state = {
   currentUser: null,
@@ -7,7 +10,11 @@ const state = {
   servers: [],
   playersByServer: {},
   consoleLogs: {},
-  consoleLines: 0
+  consoleLines: 0,
+  isRunning: false,
+  updateInfo: null,
+  detailBar: [false, false],
+  maximized: false
 }
 
 const MAX_LINES = 2000
@@ -15,11 +22,30 @@ const SERVER_COLORS = ['#6cb43f', '#8fd14f', '#e5c454', '#e2685c', '#8fd1ff', '#
 const AVATARS = ['🧑', '👨‍💻', '🧙', '⚔️', '🏹', '🛡️', '🐉', '🦄', '🌋', '🌊', '🔥', '⭐']
 const IMPORTANT_PROPS = ['server-port', 'max-players', 'level-name', 'gamemode', 'difficulty', 'pvp', 'online-mode', 'white-list', 'motd', 'view-distance', 'simulation-distance', 'allow-flight', 'enable-command-block', 'level-seed', 'spawn-protection', 'level-type', 'op-permission-level']
 
-const ESC_CHARS = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }
-function esc(v) { return String(v ?? '').replace(/[&<>"']/g, c => ESC_CHARS[c]) }
-
 function safeColor(c) {
   return typeof c === 'string' && /^#[0-9a-fA-F]{3,8}$/.test(c) ? c : SERVER_COLORS[0]
+}
+
+// Constructor DOM seguro: sin innerHTML no hay riesgo de inyección (#15/#31).
+function h(tag, attrs = {}, ...children) {
+  const node = document.createElement(tag)
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v === null || v === undefined || v === false) continue
+    if (k === 'class') node.className = v
+    else if (k === 'text') node.textContent = String(v)
+    else node.setAttribute(k, String(v))
+  }
+  for (const c of children.flat()) {
+    if (c === null || c === undefined || c === false) continue
+    node.appendChild(typeof c === 'object' ? c : document.createTextNode(String(c)))
+  }
+  return node
+}
+
+function fill(container, ...children) {
+  container.textContent = ''
+  children.flat().forEach(c => { if (c) container.appendChild(c) })
+  return container
 }
 
 function serverDirOf(server) {
@@ -37,13 +63,13 @@ async function run(label, fn, fallback = null) {
     return await fn()
   } catch (err) {
     console.error(`[${label}]`, err)
-    if (state.currentServerId) appendLog(`Error (${label}): ${err?.message || err}`, 'error')
+    if (state.currentServerId) appendLog(T('log.runError', { label, msg: err?.message || err }), 'error')
     return fallback
   }
 }
 
 window.addEventListener('unhandledrejection', (e) => {
-  console.error('Rechazo de promesa no manejado:', e.reason)
+  console.error(T('log.unhandledRejection'), e.reason)
 })
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -57,12 +83,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   initDiagnostics()
 
   // Show version on profiles screen
-  const ver = await run('versión', () => window.api.getVersion(), '')
+  const ver = await run(T('run.version'), () => window.api.getVersion(), '')
   const lbl = document.getElementById('profiles-version-label')
   if (lbl && ver) lbl.textContent = `v${ver}`
 
   // First run: check analytics consent
-  const consent = await run('consentimiento', () => window.api.getAnalyticsConsent(), undefined)
+  const consent = await run(T('run.consent'), () => window.api.getAnalyticsConsent(), undefined)
   if (consent === null) {
     showScreen('consent')
   } else {
@@ -80,56 +106,61 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     window.api.onUpdateStatus((info) => {
-      const banner = document.getElementById('update-banner')
-      const text = document.getElementById('update-banner-text')
-      const progress = document.getElementById('update-progress')
-      const bar = document.getElementById('update-bar')
-      const installBtn = document.getElementById('btn-update-install')
-
-      banner.classList.remove('hidden')
-
-      if (info.status === 'available') {
-        text.textContent = `Nueva versión v${info.version} disponible, descargando...`
-        if (info.releaseNotes) renderUpdateNotes(info.releaseNotes)
-      }
-      if (info.status === 'downloading') {
-        text.textContent = `Descargando actualización... ${info.percent}%`
-        progress.classList.remove('hidden')
-        bar.style.width = info.percent + '%'
-      }
-      if (info.status === 'ready') {
-        text.textContent = `v${info.version} lista para instalar`
-        progress.classList.add('hidden')
-        installBtn.classList.remove('hidden')
-      }
+      state.updateInfo = info
+      renderUpdateStatus(info)
     })
   }
 
-  function renderUpdateNotes(raw) {
-    const box = document.getElementById('update-notes')
-    const lines = String(raw).split('\n').map(l => l.trim()).filter(Boolean)
-    const heading = lines.find(l => l.startsWith('#'))
-    const items = lines.filter(l => !l.startsWith('#')).map(l => l.replace(/^[-*]\s*/, ''))
-    box.textContent = ''
-    if (heading) {
-      const title = document.createElement('div')
-      title.className = 'update-notes-title'
-      title.textContent = heading.replace(/^#+\s*/, '')
-      box.appendChild(title)
-    }
-    if (items.length) {
-      const ul = document.createElement('ul')
-      items.forEach(item => {
-        const li = document.createElement('li')
-        li.textContent = item
-        ul.appendChild(li)
-      })
-      box.appendChild(ul)
-    }
-    box.classList.remove('hidden')
-  }
-
 })
+
+function renderUpdateStatus(info) {
+  const banner = document.getElementById('update-banner')
+  const text = document.getElementById('update-banner-text')
+  const progress = document.getElementById('update-progress')
+  const bar = document.getElementById('update-bar')
+  const installBtn = document.getElementById('btn-update-install')
+
+  banner.classList.remove('hidden')
+
+  if (info.status === 'available') {
+    text.textContent = T('update.available', { version: info.version })
+    if (info.releaseNotes) renderUpdateNotes(info.releaseNotes)
+  }
+  if (info.status === 'downloading') {
+    text.textContent = T('update.downloading', { percent: info.percent })
+    progress.classList.remove('hidden')
+    bar.style.width = info.percent + '%'
+  }
+  if (info.status === 'ready') {
+    text.textContent = T('update.ready', { version: info.version })
+    progress.classList.add('hidden')
+    installBtn.classList.remove('hidden')
+  }
+}
+
+function renderUpdateNotes(raw) {
+  const box = document.getElementById('update-notes')
+  const lines = String(raw).split('\n').map(l => l.trim()).filter(Boolean)
+  const heading = lines.find(l => l.startsWith('#'))
+  const items = lines.filter(l => !l.startsWith('#')).map(l => l.replace(/^[-*]\s*/, ''))
+  box.textContent = ''
+  if (heading) {
+    const title = document.createElement('div')
+    title.className = 'update-notes-title'
+    title.textContent = heading.replace(/^#+\s*/, '')
+    box.appendChild(title)
+  }
+  if (items.length) {
+    const ul = document.createElement('ul')
+    items.forEach(item => {
+      const li = document.createElement('li')
+      li.textContent = item
+      ul.appendChild(li)
+    })
+    box.appendChild(ul)
+  }
+  box.classList.remove('hidden')
+}
 
 // ─── Titlebar ─────────────────────────────────────────────────────────────────
 function initTitlebar() {
@@ -138,11 +169,31 @@ function initTitlebar() {
   document.getElementById('btn-close').onclick = () => window.api.close()
   document.getElementById('btn-back-profiles').onclick = () => showScreen('profiles')
   document.getElementById('btn-back-servers').onclick = () => showScreen('servers')
+  document.getElementById('lang-es').onclick = () => I18N.setLang('es')
+  document.getElementById('lang-en').onclick = () => I18N.setLang('en')
+  updateLangButtons()
   window.api.onMaximized((isMaximized) => {
+    state.maximized = isMaximized
     document.getElementById('btn-max').textContent = isMaximized ? '🗗' : '☐'
-    document.getElementById('btn-max').title = isMaximized ? 'Restaurar' : 'Maximizar'
+    updateMaxTitle()
   })
-  document.getElementById('btn-max').title = 'Maximizar'
+  updateMaxTitle()
+}
+
+function updateMaxTitle() {
+  document.getElementById('btn-max').title = state.maximized ? T('win.restore') : T('win.maximize')
+}
+
+function updateLangButtons() {
+  const active = I18N.getLang()
+  const codes = ['es', 'en']
+  codes.forEach(code => {
+    const btn = document.getElementById(`lang-${code}`)
+    if (!btn) return
+    const on = code === active
+    btn.style.color = on ? 'var(--accent)' : ''
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false')
+  })
 }
 
 // ─── Delegación de eventos (sin onclick inline: requerido por la CSP) ────────
@@ -173,11 +224,11 @@ function initDelegates() {
 
   document.getElementById('whitelist-ul').addEventListener('click', (e) => {
     const btn = e.target.closest('.btn-remove')
-    if (btn) removeFromList('whitelist', Number(btn.dataset.index))
+    if (btn) removeFromList('whitelist', btn.dataset.name, btn.dataset.uuid)
   })
   document.getElementById('banlist-ul').addEventListener('click', (e) => {
     const btn = e.target.closest('.btn-remove')
-    if (btn) removeFromList('banlist', Number(btn.dataset.index))
+    if (btn) removeFromList('banlist', btn.dataset.name, btn.dataset.uuid)
   })
 
   document.getElementById('backups-list').addEventListener('click', (e) => {
@@ -195,12 +246,12 @@ function initDelegates() {
 
 // ─── Analytics consent ────────────────────────────────────────────────────────
 document.getElementById('btn-consent-yes').onclick = async () => {
-  await run('consentimiento', () => window.api.setAnalyticsConsent(true))
+  await run(T('run.consent'), () => window.api.setAnalyticsConsent(true))
   initProfiles()
   showScreen('profiles')
 }
 document.getElementById('btn-consent-no').onclick = async () => {
-  await run('consentimiento', () => window.api.setAnalyticsConsent(false))
+  await run(T('run.consent'), () => window.api.setAnalyticsConsent(false))
   initProfiles()
   showScreen('profiles')
 }
@@ -210,56 +261,59 @@ function initDiagnostics() {
   document.getElementById('btn-diagnostics').onclick = () => showScreen('diagnostics')
   document.getElementById('btn-diag-back-servers').onclick = () => showScreen('servers')
   document.getElementById('btn-clear-crashes').onclick = async () => {
-    await run('limpiar errores', () => window.api.clearCrashes())
+    await run(T('run.clearErrors'), () => window.api.clearCrashes())
     loadDiagnostics()
   }
   document.getElementById('diag-analytics-toggle').onchange = async (e) => {
-    await run('consentimiento', () => window.api.setAnalyticsConsent(e.target.checked))
+    await run(T('run.consent'), () => window.api.setAnalyticsConsent(e.target.checked))
   }
 }
 
 async function loadDiagnostics() {
-  const stats = await run('diagnóstico', () => window.api.getAnalyticsStats(), {})
-  const crashes = await run('diagnóstico', () => window.api.getCrashes(), [])
-  const version = await run('diagnóstico', () => window.api.getVersion(), '')
-  const consent = await run('diagnóstico', () => window.api.getAnalyticsConsent(), null)
+  const stats = await run(T('run.diagnostics'), () => window.api.getAnalyticsStats(), {})
+  const crashes = await run(T('run.diagnostics'), () => window.api.getCrashes(), [])
+  const version = await run(T('run.diagnostics'), () => window.api.getVersion(), '')
+  const consent = await run(T('run.diagnostics'), () => window.api.getAnalyticsConsent(), null)
+  const java = await run(T('run.diagnostics'), () => window.api.javaCheck(), null)
 
   document.getElementById('diag-analytics-toggle').checked = !!consent
 
+  const diagRow = (label, value) => h('div', { class: 'diag-row' },
+    h('span', { class: 'diag-row-label', text: label }),
+    h('span', { class: 'diag-row-val', text: String(value) })
+  )
+
   // Info panel
   const infoRows = [
-    ['Versión', `v${version}`],
-    ['ID de instalación', (stats.installId ? stats.installId.slice(0, 16) + '...' : '—')],
-    ['Primera vez', stats.firstSeen ? new Date(stats.firstSeen).toLocaleDateString('es-ES') : '—'],
-    ['Plataforma', navigator.platform],
-    ['Analytics', consent ? 'Activados' : 'Desactivados'],
-    ['Eventos registrados', stats.totalEvents || 0]
+    [T('diag.version'), `v${version}`],
+    ['Java', java && java.ok ? (java.raw || `Java ${java.major}`) : T('diag.javaNotDetected')],
+    [T('diag.installId'), (stats.installId ? stats.installId.slice(0, 16) + '...' : '—')],
+    [T('diag.firstSeen'), stats.firstSeen ? new Date(stats.firstSeen).toLocaleDateString(I18N.locale()) : '—'],
+    [T('diag.platform'), navigator.platform],
+    ['Analytics', consent ? T('diag.enabled') : T('diag.disabled')],
+    [T('diag.totalEvents'), stats.totalEvents || 0]
   ]
-  document.getElementById('diag-info').innerHTML = infoRows.map(([l, v]) =>
-    `<div class="diag-row"><span class="diag-row-label">${esc(l)}</span><span class="diag-row-val">${esc(v)}</span></div>`
-  ).join('')
+  fill(document.getElementById('diag-info'), ...infoRows.map(([l, v]) => diagRow(l, v)))
 
   // Analytics panel
   const counts = stats.counts || {}
-  const analyticsRows = Object.entries(counts).map(([event, count]) =>
-    `<div class="diag-row"><span class="diag-row-label">${esc(event)}</span><span class="diag-row-val">${esc(count)}</span></div>`
+  const entries = Object.entries(counts)
+  fill(document.getElementById('diag-analytics'),
+    entries.length
+      ? entries.map(([event, count]) => diagRow(event, count))
+      : h('div', { class: 'diag-note', text: T('diag.noEvents') })
   )
-  document.getElementById('diag-analytics').innerHTML = analyticsRows.length
-    ? analyticsRows.join('')
-    : '<div class="diag-note">Sin eventos registrados aún</div>'
 
   // Crashes panel
   const crashesEl = document.getElementById('diag-crashes')
   if (!crashes.length) {
-    crashesEl.innerHTML = '<div class="crash-empty">✅ Sin errores registrados</div>'
+    fill(crashesEl, h('div', { class: 'crash-empty', text: T('diag.noErrors') }))
   } else {
-    crashesEl.innerHTML = crashes.slice(0, 20).map(c => `
-      <div class="crash-item">
-        <div class="crash-type">${esc(c.type)}</div>
-        <div class="crash-msg">${esc(c.message)}</div>
-        <div class="crash-meta">v${esc(c.appVersion)} · ${esc(new Date(c.timestamp).toLocaleString('es-ES'))}</div>
-      </div>
-    `).join('')
+    fill(crashesEl, ...crashes.slice(0, 20).map(c => h('div', { class: 'crash-item' },
+      h('div', { class: 'crash-type', text: c.type }),
+      h('div', { class: 'crash-msg', text: c.message }),
+      h('div', { class: 'crash-meta', text: `v${c.appVersion} · ${new Date(c.timestamp).toLocaleString(I18N.locale())}` })
+    )))
   }
 }
 
@@ -295,8 +349,8 @@ function initEvents() {
   })
 
   window.api.onServerStopped(({ serverId, code, error }) => {
-    const msg = error ? `Servidor detenido con error: ${error}` : `Servidor detenido (código ${code ?? 0})`
-    if (state.currentServerId === serverId) { appendLog(msg, 'warn'); updateDetailBar(false) }
+    const msg = error ? T('log.serverStoppedError', { error }) : T('log.serverStopped', { code: code ?? 0 })
+    if (state.currentServerId === serverId) { appendLog(msg, 'warn'); updateDetailBar(false); state.isRunning = false }
     // Solo se limpian los jugadores del servidor que se detuvo
     delete state.playersByServer[serverId]
     if (state.currentServerId === serverId) renderPlayers()
@@ -313,8 +367,8 @@ function initEvents() {
 
   window.api.onConfirmClose(({ count }) => {
     document.getElementById('modal-close').dataset.serverCount = count
-    document.getElementById('modal-close-title').textContent = '¿Cerrar la aplicación?'
-    document.getElementById('modal-close-msg').textContent = `Hay ${count} servidor(es) en ejecución. Se detendrán antes de cerrar.`
+    document.getElementById('modal-close-title').textContent = T('close.title')
+    document.getElementById('modal-close-msg').textContent = T('close.msgWithCount', { count })
     document.getElementById('modal-close-level1').classList.remove('hidden')
     document.getElementById('modal-close-level2').classList.add('hidden')
     document.getElementById('modal-close').classList.remove('hidden')
@@ -349,40 +403,38 @@ function initProfiles() {
 }
 
 async function loadProfilesGrid() {
-  const users = await run('cargar perfiles', () => window.api.listUsers(), [])
+  const users = await run(T('run.loadProfiles'), () => window.api.listUsers(), [])
   const grid = document.getElementById('profiles-grid')
   const subtitle = document.querySelector('.profiles-subtitle')
 
   if (!users.length) {
     grid.textContent = ''
-    subtitle.textContent = 'Crea tu primer perfil para empezar'
+    subtitle.textContent = T('profiles.createFirst')
     return
   }
 
-  subtitle.textContent = 'Selecciona un perfil para continuar'
-  grid.innerHTML = users.map(u => `
-    <div class="profile-card" id="pcard-${esc(u.id)}" data-user-id="${esc(u.id)}">
-      <div class="pcard-avatar">${esc(u.avatar || '🧑')}</div>
-      <div class="pcard-name">${esc(u.username)}</div>
-      <div class="pcard-servers">${esc(u.serverCount ?? 0)} servidor(es)</div>
-      <button class="pcard-delete" data-user-id="${esc(u.id)}" title="Eliminar perfil">✕</button>
-    </div>
-  `).join('')
+  subtitle.textContent = T('profiles.select')
+  fill(grid, ...users.map(u => h('div', { class: 'profile-card', id: `pcard-${u.id}`, 'data-user-id': u.id },
+    h('div', { class: 'pcard-avatar', text: u.avatar || '🧑' }),
+    h('div', { class: 'pcard-name', text: u.username }),
+    h('div', { class: 'pcard-servers', text: T('profiles.serverCount', { count: u.serverCount ?? 0 }) }),
+    h('button', { class: 'pcard-delete', 'data-user-id': u.id, title: T('profiles.deleteTitle'), text: '✕' })
+  )))
 }
 
 async function selectProfile(userId) {
-  const users = await run('seleccionar perfil', () => window.api.listUsers(), [])
+  const users = await run(T('run.selectProfile'), () => window.api.listUsers(), [])
   const user = users.find(u => u.id === userId)
   if (!user) return
   onLogin(user)
 }
 
 async function deleteProfile(userId) {
-  const users = await run('eliminar perfil', () => window.api.listUsers(), [])
+  const users = await run(T('run.deleteProfile'), () => window.api.listUsers(), [])
   const user = users.find(u => u.id === userId)
   const name = user ? user.username : ''
-  if (!confirm(`¿Eliminar el perfil "${name}"? Se borrarán todos sus servidores registrados.`)) return
-  const res = await run('eliminar perfil', () => window.api.deleteUser(userId))
+  if (!confirm(T('profiles.deleteConfirm', { name }))) return
+  const res = await run(T('run.deleteProfile'), () => window.api.deleteUser(userId))
   if (res && res.ok === false) { alert(res.error); return }
   loadProfilesGrid()
 }
@@ -390,7 +442,7 @@ async function deleteProfile(userId) {
 async function doCreateProfile() {
   const name = document.getElementById('npf-name').value.trim()
   const err = document.getElementById('npf-error')
-  if (!name) { err.textContent = 'Escribe un nombre para el perfil'; return }
+  if (!name) { err.textContent = T('profiles.nameRequired'); return }
   const selectedAv = document.querySelector('.av-opt.selected')
   const avatar = selectedAv ? selectedAv.dataset.emoji : '🧑'
   err.textContent = ''
@@ -398,9 +450,9 @@ async function doCreateProfile() {
   try {
     res = await window.api.register({ username: name, avatar })
   } catch (e) {
-    console.error('[crear perfil]', e)
+    console.error(`[${T('run.createProfile')}]`, e)
   }
-  if (!res) { err.textContent = 'No se pudo crear el perfil'; return }
+  if (!res) { err.textContent = T('profiles.createError'); return }
   if (!res.ok) { err.textContent = res.error; return }
   document.getElementById('new-profile-form').classList.add('hidden')
   document.getElementById('btn-show-new-profile').classList.remove('hidden')
@@ -419,9 +471,9 @@ function onLogin(user) {
 }
 
 function renderAvatarPicker() {
-  document.getElementById('avatar-picker').innerHTML = AVATARS.map(e =>
-    `<div class="av-opt" data-emoji="${esc(e)}">${e}</div>`
-  ).join('')
+  fill(document.getElementById('avatar-picker'),
+    ...AVATARS.map(e => h('div', { class: 'av-opt', 'data-emoji': e, text: e }))
+  )
   document.querySelector('.av-opt')?.classList.add('selected')
 }
 
@@ -433,29 +485,36 @@ function selectAvatar(el) {
 // ─── Server list ──────────────────────────────────────────────────────────────
 async function refreshServersGrid() {
   if (!state.currentUser) return
-  const servers = await run('cargar servidores', () => window.api.listServers(state.currentUser.id), [])
-  const statusAll = await run('estado de servidores', () => window.api.getStatusAll(), {}) || {}
+  const servers = await run(T('run.loadServers'), () => window.api.listServers(state.currentUser.id), [])
+  const statusAll = await run(T('run.serversStatus'), () => window.api.getStatusAll(), {}) || {}
   state.servers = servers
   const grid = document.getElementById('servers-grid')
   const active = Object.keys(statusAll).length
-  document.getElementById('servers-title').textContent = `Servidores de ${state.currentUser.username}`
-  document.getElementById('servers-sub').textContent = `${state.servers.length} servidor(es) · ${active} activo(s)`
+  document.getElementById('servers-title').textContent = T('servers.titleOf', { user: state.currentUser.username })
+  document.getElementById('servers-sub').textContent = T('servers.sub', { count: state.servers.length, active })
 
   if (!state.servers.length) {
-    grid.innerHTML = '<div class="server-empty"><div class="big-icon">🗂️</div><p>No tienes servidores aún.</p><p class="server-empty-sub">Pulsa "+ Añadir servidor" para empezar.</p></div>'
+    fill(grid,
+      h('div', { class: 'server-empty' },
+        h('div', { class: 'big-icon', text: '🗂️' }),
+        h('p', { text: T('servers.empty') }),
+        h('p', { class: 'server-empty-sub', text: T('servers.emptyHint') })
+      )
+    )
     return
   }
-  grid.innerHTML = state.servers.map(s => {
-    const info = statusAll[s.id]
-    const running = !!info
-    return `
-      <div class="server-card" data-server-id="${esc(s.id)}" data-color="${esc(s.color || SERVER_COLORS[0])}">
-        <div class="server-card-header">
-          <div class="server-card-name">${esc(s.name)}</div>
-          <div class="server-card-status"><span class="dot ${running ? 'on' : 'off'}"></span><span>${running ? 'En línea' : 'Detenido'}</span></div>
-        </div>
-      </div>`
-  }).join('')
+  fill(grid, ...state.servers.map(s => {
+    const running = !!statusAll[s.id]
+    return h('div', { class: 'server-card', 'data-server-id': s.id, 'data-color': s.color || SERVER_COLORS[0] },
+      h('div', { class: 'server-card-header' },
+        h('div', { class: 'server-card-name', text: s.name }),
+        h('div', { class: 'server-card-status' },
+          h('span', { class: `dot ${running ? 'on' : 'off'}` }),
+          h('span', { text: running ? T('status.online') : T('status.stopped') })
+        )
+      )
+    )
+  }))
   grid.querySelectorAll('.server-card').forEach(card => {
     card.style.setProperty('--card-color', safeColor(card.dataset.color))
   })
@@ -463,9 +522,10 @@ async function refreshServersGrid() {
 
 async function openServer(serverId) {
   state.currentServerId = serverId
-  const server = state.servers.find(s => s.id === serverId) || await run('abrir servidor', () => window.api.getServer(serverId))
+  const server = state.servers.find(s => s.id === serverId) || await run(T('run.openServer'), () => window.api.getServer(serverId))
   if (!server) return
   state.currentServerDir = serverDirOf(server)
+  state.currentServer = server
 
   document.getElementById('sbar-server-name').textContent = server.name
   document.getElementById('sbar-server-name').style.color = safeColor(server.color)
@@ -475,10 +535,11 @@ async function openServer(serverId) {
   state.consoleLines = 0
     ; (state.consoleLogs[serverId] || []).slice(-MAX_LINES).forEach(l => appendLog(l.text, l.type))
 
-  const status = await run('estado del servidor', () => window.api.getStatus(serverId), { running: false })
-  updateDetailBar(!!(status && status.running))
+  const status = await run(T('run.serverStatus'), () => window.api.getStatus(serverId), { running: false })
+  state.isRunning = !!(status && status.running)
+  updateDetailBar(state.isRunning)
 
-  const settings = await run('ajustes', () => window.api.getSettings(serverId), {})
+  const settings = await run(T('run.settings'), () => window.api.getSettings(serverId), {})
   loadConfigTab(server, settings || {})
   loadPropertiesTab(server)
   loadListsTab(server)
@@ -502,7 +563,7 @@ function initModal() {
   document.getElementById('btn-new-server').onclick = openServerModal
   document.getElementById('ms-cancel').onclick = () => { document.getElementById('modal-server').classList.add('hidden') }
   document.getElementById('ms-pick-jar').onclick = async () => {
-    const p = await run('seleccionar .jar', () => window.api.openJarDialog())
+    const p = await run(T('run.pickJar'), () => window.api.openJarDialog())
     if (p) document.getElementById('ms-jar').value = p
   }
   document.getElementById('ms-save').onclick = saveNewServer
@@ -512,15 +573,15 @@ function initModal() {
     document.getElementById('modal-close-level2').classList.add('hidden')
   }
   document.getElementById('modal-confirm-proceed').onclick = () => {
-    document.getElementById('modal-close-title').textContent = '¿Seguro que quieres cerrar?'
-    document.getElementById('modal-close-msg').textContent = 'Los servidores se detendrán y los jugadores perderán la conexión.'
+    document.getElementById('modal-close-title').textContent = T('close.sure')
+    document.getElementById('modal-close-msg').textContent = T('close.warnMsg')
     document.getElementById('modal-close-level1').classList.add('hidden')
     document.getElementById('modal-close-level2').classList.remove('hidden')
   }
   document.getElementById('modal-cancel-2').onclick = () => {
-    document.getElementById('modal-close-title').textContent = '¿Cerrar la aplicación?'
     const count = document.getElementById('modal-close').dataset.serverCount || 0
-    document.getElementById('modal-close-msg').textContent = `Hay ${count} servidor(es) en ejecución. Se detendrán antes de cerrar.`
+    document.getElementById('modal-close-title').textContent = T('close.title')
+    document.getElementById('modal-close-msg').textContent = T('close.msgWithCount', { count })
     document.getElementById('modal-close-level1').classList.remove('hidden')
     document.getElementById('modal-close-level2').classList.add('hidden')
   }
@@ -530,12 +591,11 @@ function initModal() {
 function renderColorOptions(containerId, selectedColor) {
   const container = document.getElementById(containerId)
   const selected = selectedColor || SERVER_COLORS[0]
-  container.innerHTML = SERVER_COLORS.map(c =>
-    `<div class="color-opt ${c === selected ? 'selected' : ''}" data-color="${c}"></div>`
-  ).join('')
-  container.querySelectorAll('.color-opt').forEach(el => {
-    el.style.background = el.dataset.color
-  })
+  fill(container, ...SERVER_COLORS.map(c => {
+    const el = h('div', { class: `color-opt ${c === selected ? 'selected' : ''}`, 'data-color': c })
+    el.style.background = c
+    return el
+  }))
 }
 
 function selectColor(el, containerId) {
@@ -544,7 +604,7 @@ function selectColor(el, containerId) {
 }
 
 function openServerModal() {
-  document.getElementById('modal-server-title').textContent = 'Añadir servidor'
+  document.getElementById('modal-server-title').textContent = T('servers.add')
   document.getElementById('ms-name').value = ''
   document.getElementById('ms-jar').value = ''
   document.getElementById('ms-java').value = ''
@@ -559,8 +619,8 @@ async function saveNewServer() {
   const name = document.getElementById('ms-name').value.trim()
   const jarPath = document.getElementById('ms-jar').value.trim()
   const err = document.getElementById('ms-error')
-  if (!name) { err.textContent = 'El nombre es obligatorio'; return }
-  if (!jarPath) { err.textContent = 'Selecciona el archivo .jar'; return }
+  if (!name) { err.textContent = T('modal.nameRequired'); return }
+  if (!jarPath) { err.textContent = T('modal.selectJar'); return }
   const selectedColor = document.querySelector('#ms-color-options .color-opt.selected')
   let res = null
   try {
@@ -572,9 +632,9 @@ async function saveNewServer() {
       color: selectedColor ? selectedColor.dataset.color : SERVER_COLORS[0]
     })
   } catch (e) {
-    console.error('[crear servidor]', e)
+    console.error(`[${T('run.createServer')}]`, e)
   }
-  if (!res) { err.textContent = 'No se pudo crear el servidor'; return }
+  if (!res) { err.textContent = T('servers.createError'); return }
   if (!res.ok) { err.textContent = res.error; return }
   document.getElementById('modal-server').classList.add('hidden')
   refreshServersGrid()
@@ -593,30 +653,43 @@ function initDetailNav() {
 }
 
 function updateDetailBar(running, starting = false) {
+  state.detailBar = [running, starting]
   const dot = document.getElementById('sbar-dot-status')
   const text = document.getElementById('sbar-status-text')
   const start = document.getElementById('detail-btn-start')
   const stop = document.getElementById('detail-btn-stop')
-  if (starting) { dot.className = 'dot starting'; text.textContent = 'Iniciando...'; start.disabled = true; stop.disabled = true }
-  else if (running) { dot.className = 'dot on'; text.textContent = 'En línea'; start.disabled = true; stop.disabled = false }
-  else { dot.className = 'dot off'; text.textContent = 'Detenido'; start.disabled = false; stop.disabled = true }
+  if (starting) { dot.className = 'dot starting'; text.textContent = T('status.starting'); start.disabled = true; stop.disabled = true }
+  else if (running) { dot.className = 'dot on'; text.textContent = T('status.online'); start.disabled = true; stop.disabled = false }
+  else { dot.className = 'dot off'; text.textContent = T('status.stopped'); start.disabled = false; stop.disabled = true }
 }
 
 document.getElementById('detail-btn-start').onclick = async () => {
   const id = state.currentServerId
   if (!id) return
-  const server = await run('iniciar servidor', () => window.api.getServer(id))
-  if (!server) { appendLog('Error: servidor no encontrado', 'error'); return }
+  const server = await run(T('run.startServer'), () => window.api.getServer(id))
+  if (!server) { appendLog(T('log.serverNotFound'), 'error'); return }
   updateDetailBar(false, true)
-  appendLog('Iniciando servidor...', 'info')
+  appendLog(T('log.startingServer'), 'info')
   let res = null
   try {
     res = await window.api.startServer(id)
   } catch (e) {
-    console.error('[iniciar servidor]', e)
+    console.error(`[${T('run.startServer')}]`, e)
   }
-  if (res && res.ok) { updateDetailBar(true); refreshServersGrid() }
-  else { appendLog(`Error: ${res?.error || 'No se pudo iniciar el servidor'}`, 'error'); updateDetailBar(false) }
+  if (res && res.code === 'eula') {
+    // #32: primer arranque requiere aceptar la EULA
+    const ok = confirm(T('log.eulaConfirm'))
+    if (ok) {
+      appendLog(T('log.acceptingEula'), 'info')
+      try { res = await window.api.startServer(id, true) } catch (e) { console.error(`[${T('run.startServer')}]`, e) }
+    } else {
+      appendLog(T('log.eulaCancelled'), 'warn')
+      updateDetailBar(false)
+      return
+    }
+  }
+  if (res && res.ok) { state.isRunning = true; updateDetailBar(true); refreshServersGrid() }
+  else { appendLog(T('log.error', { msg: res?.error || T('log.startFailed') }), 'error'); updateDetailBar(false) }
 }
 
 document.getElementById('detail-btn-stop').onclick = async () => {
@@ -626,12 +699,12 @@ document.getElementById('detail-btn-stop').onclick = async () => {
   try {
     res = await window.api.stopServer(id)
   } catch (e) {
-    console.error('[detener servidor]', e)
+    console.error(`[${T('run.stopServer')}]`, e)
   }
   if (res && res.ok) {
-    appendLog('Deteniendo servidor...', 'warn')
+    appendLog(T('log.stoppingServer'), 'warn')
   } else {
-    appendLog(`Error: ${res?.error || 'No se pudo detener el servidor'}`, 'error')
+    appendLog(T('log.error', { msg: res?.error || T('log.stopFailed') }), 'error')
   }
 }
 
@@ -648,10 +721,10 @@ function initConsole() {
     try {
       res = await window.api.sendCommand(state.currentServerId, val)
     } catch (e) {
-      console.error('[enviar comando]', e)
+      console.error(`[${T('run.sendCommand')}]`, e)
     }
     if (res && res.ok === false) {
-      appendLog(`Error: ${res.error || 'No se pudo enviar el comando'}`, 'error')
+      appendLog(T('log.error', { msg: res.error || T('log.sendFailed') }), 'error')
       return
     }
     if (res) appendLog(`> ${val}`, 'info')
@@ -683,9 +756,9 @@ function initPlayers() {
     try {
       res = await window.api.sendCommand(state.currentServerId, 'list')
     } catch (e) {
-      console.error('[actualizar jugadores]', e)
+      console.error(`[${T('run.refreshPlayers')}]`, e)
     }
-    if (res && res.ok === false) appendLog(`Error: ${res.error}`, 'error')
+    if (res && res.ok === false) appendLog(T('log.error', { msg: res.error }), 'error')
   }
 }
 
@@ -709,14 +782,16 @@ function renderPlayers() {
   if (!grid) return
   const players = state.playersByServer[state.currentServerId]
   if (!players || !players.size) {
-    grid.innerHTML = '<div class="empty-state">No hay jugadores conectados</div>'
+    fill(grid, h('div', { class: 'empty-state', text: T('players.none') }))
     return
   }
-  grid.innerHTML = [...players].map(name => `
-    <div class="player-card">
-      <div class="player-avatar">🧑</div>
-      <div><div class="player-name">${esc(name)}</div><div class="player-status">En línea</div></div>
-    </div>`).join('')
+  fill(grid, ...[...players].map(name => h('div', { class: 'player-card' },
+    h('div', { class: 'player-avatar', text: '🧑' }),
+    h('div', {},
+      h('div', { class: 'player-name', text: name }),
+      h('div', { class: 'player-status', text: T('status.online') })
+    )
+  )))
 }
 
 async function playerAction(action) {
@@ -726,10 +801,10 @@ async function playerAction(action) {
   try {
     res = await window.api.sendCommand(state.currentServerId, `${action} ${target}`)
   } catch (e) {
-    console.error('[acción de jugador]', e)
+    console.error(`[${T('run.playerAction')}]`, e)
   }
   if (res && res.ok === false) {
-    appendLog(`Error: ${res.error}`, 'error')
+    appendLog(T('log.error', { msg: res.error }), 'error')
     return
   }
   if (res) appendLog(`> ${action} ${target}`, 'info')
@@ -753,32 +828,62 @@ function initLists(server) {
     }
     if (res && res.ok === false) {
       e.target.checked = !e.target.checked
-      appendLog(`Error: ${res.error}`, 'error')
+      appendLog(T('log.error', { msg: res.error }), 'error')
     }
   }
   loadListsTab(server)
 }
 
-async function loadListsTab(server) {
-  const serverDir = serverDirOf(server)
+async function reloadLists() {
+  const serverDir = state.currentServerDir
   if (!serverDir) return
-  const wl = await run('leer whitelist', () => window.api.readWhitelist(serverDir), { list: [] })
-  const bl = await run('leer banlist', () => window.api.readBanlist(serverDir), { list: [] })
+  const wl = await run(T('run.readWhitelist'), () => window.api.readWhitelist(serverDir), { list: [] })
+  const bl = await run(T('run.readBanlist'), () => window.api.readBanlist(serverDir), { list: [] })
   renderList('whitelist-ul', (wl && wl.list) || [], 'whitelist')
   renderList('banlist-ul', (bl && bl.list) || [], 'banlist', true)
 }
 
+async function loadListsTab(server) {
+  const serverDir = serverDirOf(server)
+  if (!serverDir) return
+  state.currentServerDir = serverDir
+  await reloadLists()
+}
+
 function renderList(id, list, type, showReason = false) {
   const ul = document.getElementById(id); if (!ul) return
-  if (!list.length) { ul.innerHTML = '<li class="list-empty">Sin entradas</li>'; return }
-  ul.innerHTML = list.map((entry, i) => {
+  if (!list.length) { fill(ul, h('li', { class: 'list-empty', text: T('lists.empty') })); return }
+  fill(ul, ...list.map((entry) => {
     const name = entry.name || entry
     const reason = entry.reason || ''
-    return `<li>
-      <div><div class="list-name">${esc(name)}</div>${showReason && reason ? `<div class="list-sub">${esc(reason)}</div>` : ''}</div>
-      <button class="btn-remove" data-list-type="${type}" data-index="${i}">✕</button>
-    </li>`
-  }).join('')
+    return h('li', {},
+      h('div', {},
+        h('div', { class: 'list-name', text: name }),
+        showReason && reason ? h('div', { class: 'list-sub', text: reason }) : null
+      ),
+      h('button', {
+        class: 'btn-remove',
+        'data-list-type': type,
+        'data-name': String(name),
+        'data-uuid': entry.uuid || '',
+        text: '✕'
+      })
+    )
+  }))
+}
+
+// Vía única de escritura (#8): si el servidor está en marcha manda el comando
+// (vanilla resuelve UUID y persiste); si no, se escribe solo el archivo (el
+// main completa el UUID offline). Nunca ambas a la vez.
+async function listWrite(type, serverDir, list, cmd) {
+  if (state.isRunning && state.currentServerId && cmd) {
+    const res = await run(T('run.list'), () => window.api.sendCommand(state.currentServerId, cmd))
+    if (res && res.ok === false) return res
+    return { ok: true }
+  }
+  return type === 'whitelist'
+    ? window.api.writeWhitelist(serverDir, list)
+    : window.api.writeBanlist(serverDir, list)
 }
 
 async function addToList(type, serverDir) {
@@ -788,54 +893,50 @@ async function addToList(type, serverDir) {
   try {
     if (type === 'whitelist') {
       const { list } = await window.api.readWhitelist(serverDir)
-      if (!list.find(e => (e.name || e) === val)) {
-        list.push({ uuid: '', name: val })
-        await window.api.writeWhitelist(serverDir, list)
-        if (state.currentServerId) window.api.sendCommand(state.currentServerId, `whitelist add ${val}`)
-      }
+      if (list.find(e => (e.name || e) === val)) { document.getElementById(inputId).value = ''; return }
+      list.push({ uuid: '', name: val })
+      const res = await listWrite('whitelist', serverDir, list, `whitelist add ${val}`)
+      if (res && res.ok === false) appendLog(T('log.error', { msg: res.error }), 'error')
     } else {
       const reason = document.getElementById('bl-reason').value.trim() || 'Banned by admin'
       const { list } = await window.api.readBanlist(serverDir)
-      if (!list.find(e => (e.name || e) === val)) {
-        list.push({ uuid: '', name: val, reason, created: new Date().toISOString(), source: 'Minecraft Manager', expires: 'forever' })
-        await window.api.writeBanlist(serverDir, list)
-        if (state.currentServerId) window.api.sendCommand(state.currentServerId, `ban ${val} ${reason}`)
-      }
+      if (list.find(e => (e.name || e) === val)) { document.getElementById(inputId).value = ''; return }
+      list.push({ uuid: '', name: val, reason, created: new Date().toISOString(), source: 'Minecraft Manager', expires: 'forever' })
+      const res = await listWrite('banlist', serverDir, list, `ban ${val} ${reason}`)
+      if (res && res.ok === false) appendLog(T('log.error', { msg: res.error }), 'error')
       document.getElementById('bl-reason').value = ''
     }
     document.getElementById(inputId).value = ''
   } catch (err) {
-    console.error('[añadir a lista]', err)
-    appendLog(`Error: ${err?.message || err}`, 'error')
+    console.error(`[${T('run.addToList')}]`, err)
+    appendLog(T('log.error', { msg: err?.message || err }), 'error')
     return
   }
-  const server = await run('recargar listas', () => window.api.getServer(state.currentServerId))
+  const server = await run(T('run.reloadLists'), () => window.api.getServer(state.currentServerId))
   if (server) loadListsTab(server)
 }
 
-async function removeFromList(type, idx) {
+// Identidad por nombre/uuid, nunca por índice de render (#9)
+async function removeFromList(type, name, uuid) {
   const serverDir = state.currentServerDir
-  if (!serverDir) return
+  if (!serverDir || !name) return
   try {
-    if (type === 'whitelist') {
-      const { list } = await window.api.readWhitelist(serverDir)
-      const name = list[idx]?.name || list[idx]
-      list.splice(idx, 1)
-      await window.api.writeWhitelist(serverDir, list)
-      if (state.currentServerId && name) window.api.sendCommand(state.currentServerId, `whitelist remove ${name}`)
-    } else {
-      const { list } = await window.api.readBanlist(serverDir)
-      const name = list[idx]?.name || list[idx]
-      list.splice(idx, 1)
-      await window.api.writeBanlist(serverDir, list)
-      if (state.currentServerId && name) window.api.sendCommand(state.currentServerId, `pardon ${name}`)
-    }
+    const read = type === 'whitelist' ? window.api.readWhitelist : window.api.readBanlist
+    const { list } = await read(serverDir)
+    let idx = -1
+    if (uuid) idx = list.findIndex(e => e.uuid && e.uuid === uuid)
+    if (idx === -1) idx = list.findIndex(e => (e.name || e) === name)
+    if (idx === -1) { appendLog(T('lists.entryGone'), 'warn'); reloadLists(); return }
+    list.splice(idx, 1)
+    const cmd = type === 'whitelist' ? `whitelist remove ${name}` : `pardon ${name}`
+    const res = await listWrite(type, serverDir, list, cmd)
+    if (res && res.ok === false) appendLog(T('log.error', { msg: res.error }), 'error')
   } catch (err) {
-    console.error('[quitar de lista]', err)
-    appendLog(`Error: ${err?.message || err}`, 'error')
+    console.error(`[${T('run.removeFromList')}]`, err)
+    appendLog(T('log.error', { msg: err?.message || err }), 'error')
     return
   }
-  const server = await run('recargar listas', () => window.api.getServer(state.currentServerId))
+  const server = await run(T('run.reloadLists'), () => window.api.getServer(state.currentServerId))
   if (server) loadListsTab(server)
 }
 
@@ -843,17 +944,21 @@ async function removeFromList(type, idx) {
 async function loadPropertiesTab(server) {
   const serverDir = serverDirOf(server)
   if (!serverDir) return
-  const res = await run('leer properties', () => window.api.readProperties(serverDir))
+  const res = await run(T('run.readProperties'), () => window.api.readProperties(serverDir))
   if (!res || !res.ok) return
   const allKeys = [...new Set([...IMPORTANT_PROPS, ...Object.keys(res.props)])]
-  document.getElementById('props-grid').innerHTML = allKeys.map(key => {
+  fill(document.getElementById('props-grid'), ...allKeys.map(key => {
     const val = res.props[key] ?? ''
     const isBool = val === 'true' || val === 'false'
     const input = isBool
-      ? `<select data-key="${esc(key)}"><option value="true" ${val === 'true' ? 'selected' : ''}>true</option><option value="false" ${val === 'false' ? 'selected' : ''}>false</option></select>`
-      : `<input type="text" data-key="${esc(key)}" value="${esc(val)}" />`
-    return `<div class="prop-item"><label>${esc(key)}</label>${input}</div>`
-  }).join('')
+      ? h('select', { 'data-key': key },
+          h('option', { value: 'true', text: 'true' }),
+          h('option', { value: 'false', text: 'false' })
+        )
+      : h('input', { type: 'text', 'data-key': key, value: val })
+    if (isBool) input.value = val === 'false' ? 'false' : 'true'
+    return h('div', { class: 'prop-item' }, h('label', { text: key }), input)
+  }))
   document.getElementById('btn-save-props').onclick = async () => {
     const props = {}
     document.querySelectorAll('#props-grid [data-key]').forEach(el => { props[el.dataset.key] = el.value })
@@ -861,10 +966,10 @@ async function loadPropertiesTab(server) {
     try {
       out = await window.api.writeProperties(serverDir, props)
     } catch (err) {
-      console.error('[guardar properties]', err)
+      console.error(`[${T('run.saveProperties')}]`, err)
     }
-    if (out && out.ok) appendLog('server.properties guardado. Reinicia para aplicar.', 'success')
-    else appendLog(`Error: ${out?.error || 'No se pudo guardar server.properties'}`, 'error')
+    if (out && out.ok) appendLog(T('properties.saved'), 'success')
+    else appendLog(T('log.error', { msg: out?.error || T('properties.saveFailed') }), 'error')
   }
 }
 
@@ -878,62 +983,67 @@ async function loadBackupsTab(server, settings) {
   const refreshList = async () => {
     const dir = document.getElementById('auto-backup-dir').value
     if (!dir) return
-    const res = await run('listar backups', () => window.api.listBackups(dir), { backups: [] })
+    const res = await run(T('run.listBackups'), () => window.api.listBackups(dir), { backups: [] })
     const backups = (res && res.backups) || []
     const list = document.getElementById('backups-list')
     if (!res || res.ok === false) {
-      list.innerHTML = `<div class="empty-state">${esc(res?.error || 'No se pudo listar la carpeta de backups')}</div>`
+      fill(list, h('div', { class: 'empty-state', text: res?.error || T('backups.listFailed') }))
       return
     }
-    if (!backups.length) { list.innerHTML = '<div class="empty-state">No hay backups todavía</div>'; return }
-    list.innerHTML = backups.map(b => `
-      <div class="backup-item">
-        <div class="backup-info"><div class="bname">${esc(b.name)}</div><div class="bmeta">${esc(new Date(b.date).toLocaleString('es-ES'))} · ${esc((b.size / 1024 / 1024).toFixed(1))} MB</div></div>
-        <div class="backup-actions">
-          <button class="btn-icon" data-path="${esc(b.path)}" title="Abrir carpeta">📁</button>
-          <button class="btn-icon danger" data-path="${esc(b.path)}" title="Eliminar backup">🗑</button>
-        </div>
-      </div>`).join('')
+    if (!backups.length) { fill(list, h('div', { class: 'empty-state', text: T('backups.empty') })); return }
+    fill(list, ...backups.map(b => h('div', { class: 'backup-item' },
+      h('div', { class: 'backup-info' },
+        h('div', { class: 'bname', text: b.name }),
+        h('div', {
+          class: 'bmeta',
+          text: `${new Date(b.date).toLocaleString(I18N.locale())} · ${(b.size / 1024 / 1024).toFixed(1)} MB`
+        })
+      ),
+      h('div', { class: 'backup-actions' },
+        h('button', { class: 'btn-icon', 'data-path': b.path, title: T('backups.openFolder'), text: '📁' }),
+        h('button', { class: 'btn-icon danger', 'data-path': b.path, title: T('backups.deleteBackup'), text: '🗑' })
+      )
+    )))
   }
 
   document.getElementById('btn-backup-dir').onclick = async () => {
-    const p = await run('seleccionar carpeta', () => window.api.openDirDialog())
+    const p = await run(T('run.pickDir'), () => window.api.openDirDialog())
     if (p) { document.getElementById('auto-backup-dir').value = p; refreshList() }
   }
   document.getElementById('btn-backup-now').onclick = async () => {
     if (!serverDir) return
     const dir = document.getElementById('auto-backup-dir').value || serverDir + '/backups'
-    appendLog('Creando backup...', 'info')
+    appendLog(T('backups.creating'), 'info')
     if (state.currentServerId) window.api.sendCommand(state.currentServerId, 'save-all')
     let res = null
     try {
       res = await window.api.createBackup(serverDir, dir)
     } catch (err) {
-      console.error('[crear backup]', err)
+      console.error(`[${T('run.createBackup')}]`, err)
     }
-    if (res && res.ok) { appendLog('Backup completado', 'success'); refreshList() }
-    else appendLog(`Error: ${res?.error || 'No se pudo crear el backup'}`, 'error')
+    if (res && res.ok) { appendLog(T('backups.done'), 'success'); refreshList() }
+    else appendLog(T('log.error', { msg: res?.error || T('backups.createFailed') }), 'error')
   }
   document.getElementById('btn-save-auto').onclick = async () => {
     const data = { autoBackupEnabled: document.getElementById('auto-backup-enabled').checked, autoBackupInterval: document.getElementById('auto-backup-interval').value, autoBackupDir: document.getElementById('auto-backup-dir').value }
-    const res = await run('guardar ajustes de backup', () => window.api.saveSettings(state.currentServerId, { ...settings, ...data }))
-    if (res && res.ok) appendLog('Configuración de backup guardada. El backup automático se reprogramará.', 'success')
-    else appendLog(`Error: ${res?.error || 'No se pudo guardar la configuración'}`, 'error')
+    const res = await run(T('run.saveBackupSettings'), () => window.api.saveSettings(state.currentServerId, { ...settings, ...data }))
+    if (res && res.ok) appendLog(T('backups.settingsSaved'), 'success')
+    else appendLog(T('log.error', { msg: res?.error || T('common.saveSettingsFailed') }), 'error')
   }
   refreshList()
 }
 
 async function openBackupPath(filePath) {
-  const res = await run('abrir backup', () => window.api.openPath(filePath))
-  if (res && res.ok === false) appendLog(`Error: ${res.error}`, 'error')
+  const res = await run(T('run.openBackup'), () => window.api.openPath(filePath))
+  if (res && res.ok === false) appendLog(T('log.error', { msg: res.error }), 'error')
 }
 
 async function deleteBackup(filePath) {
-  const res = await run('eliminar backup', () => window.api.deleteBackup(filePath))
-  if (res && res.ok === false) { appendLog(`Error: ${res.error}`, 'error'); return }
-  const server = await run('recargar backups', () => window.api.getServer(state.currentServerId))
+  const res = await run(T('run.deleteBackup'), () => window.api.deleteBackup(filePath))
+  if (res && res.ok === false) { appendLog(T('log.error', { msg: res.error }), 'error'); return }
+  const server = await run(T('run.reloadBackups'), () => window.api.getServer(state.currentServerId))
   if (server) {
-    const settings = await run('ajustes', () => window.api.getSettings(state.currentServerId), {})
+    const settings = await run(T('run.settings'), () => window.api.getSettings(state.currentServerId), {})
     loadBackupsTab(server, settings || {})
   }
 }
@@ -948,7 +1058,7 @@ function loadConfigTab(server, settings) {
   document.getElementById('cfg-extra').value = server.extraArgs || ''
   renderColorOptions('color-options', server.color)
   document.getElementById('btn-pick-jar').onclick = async () => {
-    const p = await run('seleccionar .jar', () => window.api.openJarDialog())
+    const p = await run(T('run.pickJar'), () => window.api.openJarDialog())
     if (p) document.getElementById('cfg-jar').value = p
   }
   document.getElementById('btn-save-cfg').onclick = async () => {
@@ -958,23 +1068,23 @@ function loadConfigTab(server, settings) {
     try {
       res = await window.api.updateServer({ serverId: server.id, data })
     } catch (err) {
-      console.error('[guardar configuración]', err)
+      console.error(`[${T('run.saveConfig')}]`, err)
     }
     if (res && res.ok) {
       document.getElementById('sbar-server-name').textContent = data.name
       document.getElementById('sbar-server-name').style.color = safeColor(data.color)
-      appendLog('Configuración guardada', 'success')
+      appendLog(T('config.saved'), 'success')
       loadPropertiesTab(res.server)
     } else {
-      appendLog(`Error: ${res?.error || 'No se pudo guardar la configuración'}`, 'error')
+      appendLog(T('log.error', { msg: res?.error || T('common.saveSettingsFailed') }), 'error')
     }
   }
   document.getElementById('btn-delete-server').onclick = async () => {
-    const status = await run('estado del servidor', () => window.api.getStatus(server.id), { running: false })
-    if (status && status.running) { appendLog('Detén el servidor antes de eliminarlo', 'warn'); return }
-    if (confirm(`¿Eliminar "${server.name}"? Solo se elimina de la app, no los archivos del servidor.`)) {
-      const res = await run('eliminar servidor', () => window.api.deleteServer(server.id))
-      if (res && res.ok === false) { appendLog(`Error: ${res.error}`, 'error'); return }
+    const status = await run(T('run.serverStatus'), () => window.api.getStatus(server.id), { running: false })
+    if (status && status.running) { appendLog(T('config.stopBeforeDelete'), 'warn'); return }
+    if (confirm(T('config.deleteConfirm', { name: server.name }))) {
+      const res = await run(T('run.deleteServer'), () => window.api.deleteServer(server.id))
+      if (res && res.ok === false) { appendLog(T('log.error', { msg: res.error }), 'error'); return }
       showScreen('servers')
     }
   }
@@ -982,9 +1092,27 @@ function loadConfigTab(server, settings) {
 
 // ─── Actualizaciones (registro tardío, fuera del banner) ─────────────────────
 window.api.onUpdateAvailable(() => {
-  if (state.currentServerId) appendLog('Hay una actualización disponible, descargando...', 'info')
+  if (state.currentServerId) appendLog(T('update.availableLog'), 'info')
 })
 
 window.api.onUpdateDownloaded(() => {
-  if (state.currentServerId) appendLog('Actualización descargada: usa el banner superior para instalarla.', 'success')
+  if (state.currentServerId) appendLog(T('update.downloadedLog'), 'success')
+})
+
+// ─── Idioma (ES/EN): repinta lo dinámico al cambiar ──────────────────────────
+I18N.onLangChange(() => {
+  updateLangButtons()
+  updateMaxTitle()
+  updateDetailBar(state.detailBar[0], state.detailBar[1])
+  if (state.currentUser) refreshServersGrid()
+  loadProfilesGrid()
+  if (state.updateInfo) renderUpdateStatus(state.updateInfo)
+  if (document.getElementById('screen-diagnostics').classList.contains('active')) loadDiagnostics()
+  if (state.currentServerId) {
+    renderPlayers()
+    if (state.currentServer) loadListsTab(state.currentServer)
+  }
+  const count = document.getElementById('modal-close').dataset.serverCount || 0
+  document.getElementById('modal-close-title').textContent = T('close.title')
+  document.getElementById('modal-close-msg').textContent = T('close.msgWithCount', { count })
 })

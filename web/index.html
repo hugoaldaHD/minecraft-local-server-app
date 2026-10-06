@@ -20,10 +20,22 @@
 <meta property="og:image:height" content="512">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="./icon-512.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
 <style>
+/* Tipografías locales (assets/fonts), sin CDN: mismas familias, pesos y estilos
+   que servía Google Fonts, para que la tipografía no cambie. */
+@font-face{font-family:'Silkscreen';font-style:normal;font-weight:400;font-display:swap;src:url('../assets/fonts/Silkscreen-Regular.woff2') format('woff2')}
+@font-face{font-family:'Silkscreen';font-style:normal;font-weight:700;font-display:swap;src:url('../assets/fonts/Silkscreen-Bold.woff2') format('woff2')}
+@font-face{font-family:'IBM Plex Sans';font-style:normal;font-weight:400;font-display:swap;src:url('../assets/fonts/IBMPlexSans-Regular.woff2') format('woff2')}
+@font-face{font-family:'IBM Plex Sans';font-style:normal;font-weight:500;font-display:swap;src:url('../assets/fonts/IBMPlexSans-Medium.woff2') format('woff2')}
+@font-face{font-family:'IBM Plex Sans';font-style:normal;font-weight:600;font-display:swap;src:url('../assets/fonts/IBMPlexSans-SemiBold.woff2') format('woff2')}
+@font-face{font-family:'IBM Plex Mono';font-style:normal;font-weight:400;font-display:swap;src:url('../assets/fonts/IBMPlexMono-Regular.woff2') format('woff2')}
+/* Tokens de color de la app (src/css/tokens.css): mismos nombres y valores.
+   No se replican --bg/--ink/--mute/--line/--grass/--red/--win: la landing ya
+   define esos nombres con su propia paleta themable (claro/oscuro). */
+:root{--bg0:#0c0f0d;--bg1:#141815;--bg2:#1c211c;--bg3:#26302a;--accent:#6cb43f;--accent2:#8fd14f;--accent3:#4e8f2c;--accent-ink:#10200a;--danger:#c2362b;--danger-deep:#8f231b;--danger-text:#e2685c;--warn:#e5c454;--info:#8fd1ff;--text:#e6eadb;--text2:#97a48f;--text3:#6b7767;--text-inverse:#fff;--line2:#3a463b}
+/* --line de la app (#2c352d, fijo) dentro de la vista previa de la consola,
+   que siempre es oscura: el --line de la landing cambia con el tema. */
+.bar,.meters,.cmd{--line:#2c352d}
 :root{--bg:#efe8d2;--ink:#232a22;--mute:#5d6655;--line:#cfc6a8;--grass:#3f7d24;--grass-ink:#fff;--win:#1c211d;--win-ink:#cfe3c4;--red:#c2362b;--dirt:#7a4e30;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141815;--ink:#e6eadb;--mute:#97a48f;--line:#2c352d;--grass:#6cb43f;--grass-ink:#10200a;--win:#0c0f0d}}
@@ -54,16 +66,16 @@ h1{font:700 clamp(34px,5.4vw,58px)/1.05 "Silkscreen",monospace;margin:0 0 22px;l
 .actions .btn{display:flex;align-items:center}
 .cta .actions{justify-content:center}
 .win{background:var(--win);border-radius:6px;border:1px solid var(--line);box-shadow:8px 8px 0 var(--dirt);overflow:hidden;color:var(--win-ink)}
-.bar{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid #2c352d;font:13px "IBM Plex Sans",sans-serif}
+.bar{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);font:13px "IBM Plex Sans",sans-serif}
 .status{display:flex;align-items:center;gap:8px}
-.dot{width:10px;height:10px;background:#6cb43f;display:inline-block}
-.btn-stop{background:var(--red);color:#fff;font:700 12px "Silkscreen",monospace;padding:5px 10px;border-radius:2px}
-.meters{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:14px;border-bottom:1px solid #2c352d;font-size:12px}
-.meter div{height:8px;background:#26302a;margin-top:6px}
-.meter b{display:block;height:100%;background:#6cb43f;width:30%;transition:width .8s}
+.dot{width:10px;height:10px;background:var(--accent);display:inline-block}
+.btn-stop{background:var(--red);color:var(--text-inverse);font:700 12px "Silkscreen",monospace;padding:5px 10px;border-radius:2px}
+.meters{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:14px;border-bottom:1px solid var(--line);font-size:12px}
+.meter div{height:8px;background:var(--bg3);margin-top:6px}
+.meter b{display:block;height:100%;background:var(--accent);width:30%;transition:width .8s}
 .log{padding:14px;font:13px/1.65 "IBM Plex Mono",monospace;min-height:218px;margin:0;white-space:pre-wrap;word-break:break-word}
-.log .w{color:#e5c454}.log .p{color:#8fd1ff}
-.cmd{display:flex;border-top:1px solid #2c352d;padding:10px 14px;font:13px "IBM Plex Mono",monospace;color:#7d8b76}
+.log .w{color:var(--warn)}.log .p{color:var(--info)}
+.cmd{display:flex;border-top:1px solid var(--line);padding:10px 14px;font:13px "IBM Plex Mono",monospace;color:#7d8b76}
 .linux{margin:20px 0 0;font-size:15px;color:var(--mute)}
 .linux a{font-weight:600;margin-left:14px;text-underline-offset:4px}
 .cta .linux{margin:22px auto 0;max-width:none}

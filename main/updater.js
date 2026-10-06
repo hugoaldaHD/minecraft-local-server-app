@@ -10,6 +10,9 @@ function canAutoUpdate() {
   return true
 }
 
+let updateCheckTimer = null
+let updateCheckInterval = null
+
 function setupAutoUpdater() {
   // Solo funciona en la app compilada, no en desarrollo
   if (!canAutoUpdate()) return
@@ -18,10 +21,10 @@ function setupAutoUpdater() {
   autoUpdater.autoInstallOnAppQuit = true
 
   // Comprueba al arrancar (5s de delay para que cargue la UI primero)
-  setTimeout(() => autoUpdater.checkForUpdates(), 5000)
+  updateCheckTimer = setTimeout(() => autoUpdater.checkForUpdates(), 5000)
 
   // Vuelve a comprobar cada 4 horas
-  setInterval(() => autoUpdater.checkForUpdates(), 4 * 60 * 60 * 1000)
+  updateCheckInterval = setInterval(() => autoUpdater.checkForUpdates(), 4 * 60 * 60 * 1000)
 
   autoUpdater.on('update-available', (info) => {
     getMainWindow()?.webContents.send('update-status', {
@@ -51,6 +54,11 @@ function setupAutoUpdater() {
   })
 }
 
+function stopUpdater() {
+  if (updateCheckTimer) { clearTimeout(updateCheckTimer); updateCheckTimer = null }
+  if (updateCheckInterval) { clearInterval(updateCheckInterval); updateCheckInterval = null }
+}
+
 function registerUpdaterIpc() {
   ipcMain.handle('update:check', () => {
     if (canAutoUpdate()) autoUpdater.checkForUpdates()
@@ -61,4 +69,4 @@ function registerUpdaterIpc() {
   })
 }
 
-module.exports = { canAutoUpdate, setupAutoUpdater, registerUpdaterIpc }
+module.exports = { canAutoUpdate, setupAutoUpdater, stopUpdater, registerUpdaterIpc }

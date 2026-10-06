@@ -1,0 +1,232 @@
+/* ═══ Responsive (#23) ═════════════════════════════════════════════════════
+   La ventana de la app tiene minWidth 1024 (main/window.js), así que estos
+   breakpoints trabajan en el rango 1024–1400. Solo compactan espacios
+   (paddings/gaps y mínimos de columna), sin romper ningún layout. */
+
+/* ── Ventana estrecha (≤1300px): tarjetas y paneles más compactos ── */
+@media (max-width: 1300px) {
+  .servers-header {
+    gap: 14px;
+    padding: 14px 16px;
+  }
+
+  .servers-grid {
+    padding: 16px;
+    gap: 14px;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  }
+
+  .server-card {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .server-bar {
+    padding: 10px 12px;
+    gap: 10px;
+  }
+
+  .panel-header {
+    padding: 14px 16px 12px;
+  }
+
+  .players-grid {
+    padding: 14px 16px;
+    gap: 10px;
+  }
+
+  .quick-actions {
+    padding: 14px 16px;
+  }
+
+  .props-grid {
+    padding: 14px 16px;
+    gap: 12px;
+  }
+
+  .list-panel {
+    padding: 14px 16px;
+  }
+
+  .settings-form {
+    padding: 16px;
+    gap: 14px;
+  }
+
+  .backups-list {
+    padding: 12px 16px;
+  }
+
+  .backup-auto-config {
+    padding: 12px 16px 14px;
+  }
+
+  .console-wrap {
+    padding: 10px 12px 8px;
+  }
+
+  .cmd-bar {
+    padding: 8px 12px;
+  }
+
+  .diag-grid {
+    padding: 16px;
+    gap: 14px;
+  }
+
+  .profiles-bg {
+    padding: 22px 16px;
+  }
+
+  .profiles-grid {
+    gap: 16px;
+  }
+
+  .auth-card {
+    padding: 28px;
+  }
+
+  .modal {
+    padding: 22px;
+  }
+}
+
+/* ── Muy estrecha (≤1100px): compactación adicional ── */
+@media (max-width: 1100px) {
+  .titlebar {
+    padding-left: 10px;
+  }
+
+  .titlebar-center {
+    gap: 10px;
+  }
+
+  .servers-header {
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .servers-header-right {
+    gap: 8px;
+  }
+
+  .servers-grid {
+    padding: 12px;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  }
+
+  .server-card {
+    padding: 14px;
+    gap: 10px;
+  }
+
+  .nav {
+    height: 40px;
+    padding: 0 8px;
+  }
+
+  .nav-item {
+    padding: 0 10px;
+  }
+
+  .panel-header {
+    padding: 12px;
+  }
+
+  .players-grid {
+    padding: 12px;
+    gap: 8px;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  }
+
+  .quick-actions {
+    padding: 12px;
+  }
+
+  .action-row {
+    gap: 6px;
+  }
+
+  .props-grid {
+    padding: 12px;
+    gap: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  }
+
+  .list-panel {
+    padding: 12px;
+  }
+
+  .list-add {
+    gap: 6px;
+  }
+
+  .settings-form {
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .field-row {
+    gap: 8px;
+  }
+
+  .config-actions,
+  .modal-actions,
+  .npf-actions,
+  .consent-btns {
+    gap: 8px;
+  }
+
+  .console-wrap {
+    padding: 8px 10px 6px;
+  }
+
+  .cmd-bar {
+    padding: 8px 10px;
+    gap: 8px;
+  }
+
+  .diag-grid {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .profiles-bg {
+    padding: 18px 12px;
+  }
+
+  .profiles-grid {
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  .profiles-subtitle {
+    margin-bottom: 22px;
+  }
+
+  .profile-card {
+    width: 140px;
+    padding: 18px 14px;
+  }
+
+  .auth-bg {
+    padding: 14px;
+  }
+
+  .auth-card {
+    padding: 22px;
+  }
+
+  .backups-list {
+    padding: 10px 12px;
+  }
+
+  .backup-auto-config {
+    padding: 10px 12px 12px;
+  }
+
+  .auto-backup-row {
+    gap: 8px;
+  }
+}

@@ -4,5 +4,4 @@ build/
 *.log
 .DS_Store
 Thumbs.db
-RELEASE_GUIDE.md
-.gitignore
+MEJORAS.md

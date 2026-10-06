@@ -1,0 +1,47 @@
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg1);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 13px;
+  user-select: none;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Utilidad: mostrar/ocultar sin estilos inline (CSP estricta) */
+.hidden {
+  display: none !important;
+}
+
+/* ── Accesibilidad: foco visible siempre (los `outline: none` de los
+   inputs no deben poder eliminarlo) ── */
+:focus-visible {
+  outline: 3px solid var(--accent) !important;
+  outline-offset: 2px !important;
+}
+
+/* ── Accesibilidad: respetar prefers-reduced-motion ── */
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Anula las animaciones concretas de la app */
+  .dot.on {
+    animation: none !important;
+  }
+
+  .update-bar {
+    transition: none !important;
+  }
+}
+

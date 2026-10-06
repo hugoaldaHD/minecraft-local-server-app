@@ -16,7 +16,8 @@ function getInstallId() {
 }
 
 function trackEvent(event, data = {}) {
-  if (!analyticsStore.get('analyticsEnabled', true)) return
+  // Sin consentimiento explícito no se registra ni se guarda nada
+  if (analyticsStore.get('analyticsEnabled', false) !== true) return
   const payload = {
     installId: getInstallId(),
     appVersion: app.getVersion(),
@@ -68,6 +69,7 @@ function registerAnalyticsIpc() {
   ipcMain.handle('analytics:setConsent', (_, enabled) => {
     analyticsStore.set('analyticsEnabled', !!enabled)
     if (enabled) trackEvent('analytics_enabled')
+    else analyticsStore.delete('events') // declinar purga los eventos locales
     return { ok: true }
   })
   ipcMain.handle('analytics:getEvents', () => analyticsStore.get('events') || [])

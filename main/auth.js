@@ -1,6 +1,9 @@
 const { ipcMain } = require('electron')
+const path = require('path')
+const fs = require('fs')
 const crypto = require('crypto')
-const { getAllServersMap, saveServerMap, getUsers, saveUsers } = require('./stores')
+const { getAllServersMap, saveServerMap, getUsers, saveUsers, settingsStore } = require('./stores')
+const { cancelAutoBackup } = require('./backups')
 const { trackEvent } = require('./analytics')
 const { cleanText, isStr } = require('./validate')
 
@@ -36,9 +39,25 @@ function registerAuthIpc() {
     const [key] = entry
     delete users[key]
     saveUsers(users)
-    // Also delete all servers belonging to this profile
+    // Limpieza en cascada: servidores, settings por servidor, backups automáticos
+    // y la carpeta de backups por defecto (dentro del dir del servidor). Las
+    // carpetas de backup personalizadas se tocan solo si otro perfil no las usa.
     const map = getAllServersMap()
-    Object.keys(map).forEach(sid => { if (map[sid].userId === userId) delete map[sid] })
+    const ownedServers = Object.keys(map).filter(sid => map[sid].userId === userId)
+    for (const sid of ownedServers) {
+      cancelAutoBackup(sid)
+      const cfg = settingsStore.get(`server_${sid}`) || {}
+      settingsStore.delete(`server_${sid}`)
+      try {
+        // Solo la carpeta de backups por defecto (auto-creada dentro del dir del
+        // servidor); las carpetas personalizadas pueden ser compartidas.
+        const defaultDir = path.join(path.dirname(map[sid].jarPath || ''), 'backups')
+        if (!isStr(cfg.autoBackupDir) && map[sid].jarPath && fs.existsSync(defaultDir)) {
+          fs.rmSync(defaultDir, { recursive: true, force: true })
+        }
+      } catch (_) { /* mejor dejar archivos que borrar algo de más */ }
+      delete map[sid]
+    }
     saveServerMap(map)
     return { ok: true }
   })

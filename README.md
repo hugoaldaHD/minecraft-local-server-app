@@ -53,3 +53,128 @@ Download `Minecraft-Local-Server-Manager.exe` and run the installer.
   on Windows and in `~/.config/minecraft-local-server-app` on Linux.
 
 ---
+
+## Development
+
+### Requirements
+
+- Node.js 20 or newer, with npm.
+- Java (JRE 17 or newer) if you want to run servers from a dev build.
+
+### Getting started
+
+```bash
+git clone https://github.com/hugoaldaHD/minecraft-local-server-app.git
+cd minecraft-local-server-app
+npm install
+npm start        # run the app with Electron
+npm run dev      # same, passing the --dev flag
+```
+
+### Linting and formatting
+
+```bash
+npm run lint          # ESLint (flat config in eslint.config.js)
+npm run lint:fix      # auto-fix what can be fixed
+npm run format        # Prettier, writes the files
+npm run format:check  # Prettier, check only
+```
+
+CI runs `npm ci` + `npm run lint` on every push and pull request
+(`.github/workflows/lint.yml`).
+
+### Building
+
+```bash
+npm run build           # Windows x64 NSIS installer -> dist/
+npm run build:portable  # Windows portable build
+npm run build:linux     # AppImage + .deb (Linux only)
+npm run build:ci        # alias of build:win, used by the release workflow
+```
+
+`build:win` and `build:linux` pass `--publish always`, so they are meant for CI.
+Releases are cut with `npm run release`; see [RELEASE_GUIDE.md](RELEASE_GUIDE.md).
+
+### Project structure
+
+| Path                | Description                                                                |
+| ------------------- | -------------------------------------------------------------------------- |
+| `main/index.js`     | Entry point of the main process: IPC registration and app lifecycle        |
+| `main/state.js`     | Shared main-process state (window reference, active servers)               |
+| `main/stores.js`    | `electron-store` instances: users, servers, settings, analytics, crashes   |
+| `main/validate.js`  | Validation of IPC payloads and allow-lists for paths from the renderer     |
+| `main/servers.js`   | Create/start/stop servers, console commands, player management             |
+| `main/properties.js`| `server.properties` and whitelist/banlist/ops editing                      |
+| `main/backups.js`   | Manual and scheduled world backups (`archiver`, `node-schedule`)           |
+| `main/window.js`    | `BrowserWindow` creation, navigation guards, window IPC                    |
+| `main/updater.js`   | Auto-update via `electron-updater` (AppImage only on Linux)                |
+| `main/stats.js`     | CPU/RAM polling (`systeminformation`)                                      |
+| `main/auth.js`      | Local profiles (name, avatar, colour), stored on disk                      |
+| `main/analytics.js` | Consent-gated anonymous usage events (see [Privacy](#privacy))             |
+| `main/crash.js`     | Local log of uncaught errors and unhandled rejections                      |
+| `preload.js`        | `contextBridge` API exposed to the renderer as `window.api`                |
+| `src/`              | Renderer: `index.html` (strict CSP), `renderer.js`, CSS in `src/css/`      |
+| `assets/`           | App icons and fonts used by the builds                                     |
+| `web/`              | Static landing page, deployed separately (not part of the app bundle)      |
+| `scripts/`          | `release.mjs`, the release helper                                          |
+| `.github/workflows/`| Lint and build/release CI                                                  |
+
+### Architecture notes
+
+- The **main process** owns everything that touches the system: files, child
+  processes, windows. The **renderer** only draws the UI and talks over IPC.
+- The window is created with `contextIsolation: true` and
+  `nodeIntegration: false`; `preload.js` exposes a narrow `window.api` surface,
+  so the renderer never gets direct Node.js access.
+- Every IPC payload is validated in the main process (`main/validate.js`):
+  paths are checked against allow-lists, `..` is rejected, and starting a
+  server only uses configuration from the app's own storage.
+- A strict Content Security Policy is set in `src/index.html`
+  (`default-src 'self'`, no `'unsafe-inline'`), and dynamic HTML is escaped
+  with `esc()` in `src/renderer.js`.
+- **The renderer is never trusted.** Treat anything coming from it as
+  untrusted input and validate it again in `main/`.
+
+## Privacy
+
+The app runs entirely locally: servers, backups, console and settings never
+leave your machine. Usage analytics are optional and **off by default**.
+
+### Consent
+
+- No analytics event is recorded, stored or sent until you explicitly opt in.
+  The default value is "not consented", and on first run the app shows a
+  consent screen before you can continue.
+- Declining deletes any locally stored analytics events.
+- You can change your choice at any time from the **Diagnóstico** screen
+  (Diagnostics) with the "Envío de datos anónimos" toggle.
+
+### What is collected after you opt in
+
+- An anonymous installation ID: a random UUID generated on first run, with no
+  personal data attached.
+- App version, platform, architecture and OS release.
+- Technical events: `app_launch`, `profile_created`, `server_created`,
+  `server_started`, `server_stopped`, `backup_created` and
+  `analytics_enabled`.
+- Small technical values attached to some events (for example server startup
+  time, uptime or backup size in MB).
+
+Profile names, server names, IPs, player names, console output and any other
+personal data are never collected.
+
+### Where the data goes
+
+- Events are only sent if an HTTPS endpoint has been configured in the
+  settings store (`analyticsEndpoint`). The request uses a 5 second timeout
+  and failures are ignored silently. The app does not ship with an endpoint,
+  so by default nothing is sent anywhere.
+- With no endpoint configured, events are kept locally in `analytics.json`
+  inside the app data folder, limited to the 500 most recent ones.
+- Crash reports are always written locally to `crashes.json` in the same
+  folder (last 100 entries) and can be cleared from the Diagnostics screen.
+  They are only sent if a separate `crashEndpoint` is configured; the app
+  provides no UI for that setting.
+
+Nothing is sold or shared with third parties: no data leaves your computer
+unless you configure an endpoint yourself.

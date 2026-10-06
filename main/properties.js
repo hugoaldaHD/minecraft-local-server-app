@@ -1,8 +1,9 @@
 const { ipcMain } = require('electron')
 const path = require('path')
 const fs = require('fs')
+const crypto = require('crypto')
 const { logCrash } = require('./crash')
-const { isServerDir, isPlainObject } = require('./validate')
+const { isStr, isServerDir, isPlainObject } = require('./validate')
 
 const MAX_LIST_ENTRIES = 10000
 const MAX_PROP_VALUE = 4096
@@ -25,16 +26,44 @@ function readProperties(serverDir) {
   }
 }
 
+function propValue(v) {
+  return String(v).replace(/[\r\n]/g, '').slice(0, MAX_PROP_VALUE)
+}
+
+// Conserva comentarios, líneas en blanco, orden y claves no editadas del archivo
+// original; solo sustituye los valores que llegan del renderer.
 function writeProperties(serverDir, props) {
   if (!isServerDir(serverDir)) return { ok: false, error: 'Directorio de servidor no válido' }
   if (!isPlainObject(props)) return { ok: false, error: 'Propiedades inválidas' }
   const file = path.join(path.resolve(serverDir), 'server.properties')
   try {
-    let content = '# Minecraft server properties\n# Managed by Minecraft Manager\n'
+    let content = ''
+    if (fs.existsSync(file)) {
+      const original = fs.readFileSync(file, 'utf8').split('\n')
+      const lastLine = original[original.length - 1] === '' ? original.length - 1 : original.length
+      for (let i = 0; i < lastLine; i++) {
+        const line = original[i]
+        const eq = line.indexOf('=')
+        if (eq === -1 || line.trimStart().startsWith('#')) {
+          content += line + '\n'
+          continue
+        }
+        const key = line.slice(0, eq).trim()
+        if (Object.prototype.hasOwnProperty.call(props, key)) {
+          content += `${key}=${propValue(props[key])}\n`
+        } else {
+          content += line + '\n' // clave ajena al editor: se conserva tal cual
+        }
+      }
+    } else {
+      content = '# Minecraft server properties\n# Managed by Minecraft Manager\n'
+    }
+    // Claves nuevas que no estaban en el archivo
     for (const [k, v] of Object.entries(props)) {
       if (!/^[A-Za-z0-9_.-]+$/.test(k)) continue
       if (typeof v !== 'string' && typeof v !== 'number' && typeof v !== 'boolean') continue
-      content += `${k}=${String(v).replace(/[\r\n]/g, '').slice(0, MAX_PROP_VALUE)}\n`
+      if (content.split('\n').some(l => l.startsWith(k + '='))) continue
+      content += `${k}=${propValue(v)}\n`
     }
     fs.writeFileSync(file, content, 'utf8')
     return { ok: true }
@@ -55,6 +84,12 @@ function readJsonList(serverDir, filename) {
   }
 }
 
+// UUID offline de Minecraft (mismo algoritmo que NameUUIDFromBytes("OfflinePlayer:"+name))
+function offlineUuid(name) {
+  const h = crypto.createHash('md5').update('OfflinePlayer:' + name, 'utf8').digest('hex')
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20, 32)}`
+}
+
 function sanitizeList(list) {
   if (!Array.isArray(list)) return null
   if (list.length > MAX_LIST_ENTRIES) return null
@@ -65,6 +100,11 @@ function sanitizeList(list) {
     for (const [k, v] of Object.entries(entry)) {
       if (typeof v === 'string') out[k] = v.replace(/[\u0000-\u001f\u007f]/g, '').slice(0, 256)
       else if (typeof v === 'number' || typeof v === 'boolean') out[k] = v
+    }
+    // Las entradas de whitelist/banlist con uuid vacío no son válidas para
+    // vanilla: se completa con el UUID offline del nombre.
+    if (typeof out.name === 'string' && out.name && (!isStr(out.uuid) || out.uuid === '')) {
+      out.uuid = offlineUuid(out.name)
     }
     return out
   }).filter(Boolean)

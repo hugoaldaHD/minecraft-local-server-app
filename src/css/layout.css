@@ -1,0 +1,180 @@
+/* ═══ Titlebar ══════════════════════════════════════════════════════════ */
+.titlebar {
+  height: 40px;
+  background: var(--bg2);
+  border-bottom: 2px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0 0 16px;
+  -webkit-app-region: drag;
+  flex-shrink: 0;
+}
+
+.titlebar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.app-name {
+  font-family: var(--pixel);
+  font-size: 12px;
+  color: var(--accent);
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bc-sep {
+  color: var(--text3);
+  font-size: 14px;
+}
+
+.bc-btn {
+  background: none;
+  border: none;
+  color: var(--info);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 6px;
+  -webkit-app-region: no-drag;
+}
+
+.bc-btn:hover {
+  color: var(--accent2);
+}
+
+.bc-server-name {
+  font-size: 12px;
+  color: var(--text2);
+}
+
+.titlebar-center {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.tstat {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  font-size: 12px;
+}
+
+.tstat-label {
+  font-family: var(--pixel);
+  font-size: 10px;
+  color: var(--text2);
+  }
+
+.tstat span:last-child {
+  font-family: var(--mono);
+  color: var(--info);
+}
+
+.active-badge {
+  display: flex;
+  align-items: center;
+  background: rgba(108, 180, 63, 0.12);
+  padding: 3px 8px;
+  border: 1px solid rgba(108, 180, 63, 0.35);
+  color: var(--accent) !important;
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+.dot-small {
+  width: 7px;
+  height: 7px;
+  background: var(--accent);
+  display: inline-block;
+  margin-right: 5px;
+}
+
+.titlebar-right {
+  display: flex;
+  align-items: center;
+  -webkit-app-region: no-drag;
+}
+
+.wbtn {
+  width: 46px;
+  height: 40px;
+  background: none;
+  border: none;
+  border-left: 1px solid var(--line);
+  color: var(--text2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s, color 0.12s;
+  font-size: 14px;
+}
+
+.wbtn:hover {
+  background: var(--bg3);
+  color: var(--text);
+}
+
+.wbtn.danger:hover {
+  background: var(--danger);
+  color: var(--text-inverse);
+}
+
+.user-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px 0 6px;
+  border-left: 1px solid var(--line);
+  margin-right: 4px;
+}
+
+.user-avatar-sm {
+  width: 24px;
+  height: 24px;
+  background: var(--bg3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  border: 1px solid var(--line2);
+}
+
+.btn-logout {
+  background: none;
+  border: 1px solid var(--line2);
+  border-bottom-width: 3px;
+  border-radius: var(--radius);
+  color: var(--text2);
+  cursor: pointer;
+  font-family: var(--pixel);
+  font-size: 10px;
+  padding: 5px 9px;
+  margin-left: 6px;
+  transition: background 0.12s, color 0.12s;
+}
+
+.btn-logout:hover {
+  background: var(--bg3);
+  color: var(--text);
+}
+
+/* ═══ Screens ══════════════════════════════════════════════════════════ */
+.screen {
+  display: none;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.screen.active {
+  display: flex;
+}
+

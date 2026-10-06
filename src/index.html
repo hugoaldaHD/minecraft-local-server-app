@@ -6,7 +6,12 @@
   <meta http-equiv="Content-Security-Policy"
     content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self' file: data:; img-src 'self' data:">
   <title>Minecraft Local Server Manager</title>
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/screens.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
 </head>
 
 <body>
@@ -20,31 +25,34 @@
       <span class="tstat"><span class="tstat-label">CPU</span><span id="tstat-cpu">0%</span></span>
       <span class="tstat"><span class="tstat-label">RAM</span><span id="tstat-ram">—</span></span>
       <span class="tstat active-badge hidden" id="tstat-active">
-        <span class="dot-small on"></span><span id="tstat-count">0</span> activo(s)
+        <span class="dot-small on"></span><span id="tstat-count">0</span> <span
+          data-i18n="titlebar.activeCount">activo(s)</span>
       </span>
     </div>
     <div class="titlebar-right">
-      <button class="wbtn update-btn hidden" id="btn-update-notify" title="Actualización disponible">↑
-        Actualizar</button>
+      <button class="wbtn" id="lang-es" title="Español" data-i18n-title="lang.spanish">ES</button>
+      <button class="wbtn" id="lang-en" title="English" data-i18n-title="lang.english">EN</button>
+      <button class="wbtn update-btn hidden" id="btn-update-notify" title="Actualización disponible" data-i18n-title="update.notifyTitle"
+        data-i18n="update.notifyBtn">↑ Actualizar</button>
       <div class="user-chip hidden" id="user-chip">
         <div class="user-avatar-sm" id="user-avatar-sm">?</div>
         <span id="user-chip-name"></span>
       </div>
       <button class="wbtn" id="btn-min">─</button>
-      <button class="wbtn" id="btn-max" title="Maximizar">☐</button>
+      <button class="wbtn" id="btn-max" title="Maximizar" data-i18n-title="win.maximize">☐</button>
       <button class="wbtn danger" id="btn-close">✕</button>
     </div>
   </div>
 
   <!-- ══ UPDATE BANNER ══════════════════════════════════════════════════════════ -->
   <div class="update-banner hidden" id="update-banner">
-    <span id="update-banner-text">Comprobando actualizaciones...</span>
+    <span id="update-banner-text" data-i18n="update.checking">Comprobando actualizaciones...</span>
     <div class="update-progress hidden" id="update-progress">
       <div class="update-bar" id="update-bar"></div>
     </div>
     <div class="update-actions">
-      <button id="btn-update-install" class="hidden">Instalar y reiniciar</button>
-      <button id="btn-update-dismiss" title="Cerrar aviso">✕</button>
+      <button id="btn-update-install" class="hidden" data-i18n="update.install">Instalar y reiniciar</button>
+      <button id="btn-update-dismiss" title="Cerrar aviso" data-i18n-title="update.dismissTitle">✕</button>
     </div>
     <div class="update-notes hidden" id="update-notes"></div>
   </div>
@@ -54,20 +62,20 @@
     <div class="auth-bg">
       <div class="auth-card consent-card">
         <div class="auth-logo">📊</div>
-        <h1 class="auth-title">Ayúdanos a mejorar</h1>
-        <p class="auth-sub">Antes de empezar, ¿aceptas el envío de datos anónimos de uso?</p>
+        <h1 class="auth-title" data-i18n="consent.title">Ayúdanos a mejorar</h1>
+        <p class="auth-sub" data-i18n="consent.question">Antes de empezar, ¿aceptas el envío de datos anónimos de uso?</p>
         <div class="consent-details">
-          <div class="consent-item yes">✅ Versión de la app y SO</div>
-          <div class="consent-item yes">✅ Funciones usadas (sin datos personales)</div>
-          <div class="consent-item yes">✅ Informes de error anónimos</div>
-          <div class="consent-item no">❌ Nunca: nombres, IPs, contraseñas ni datos del servidor</div>
-          <div class="consent-item no">❌ Nunca: se vende ni comparte con terceros</div>
+          <div class="consent-item yes" data-i18n="consent.item1">✅ Versión de la app y SO</div>
+          <div class="consent-item yes" data-i18n="consent.item2">✅ Funciones usadas (sin datos personales)</div>
+          <div class="consent-item yes" data-i18n="consent.item3">✅ Informes de error anónimos</div>
+          <div class="consent-item no" data-i18n="consent.item4">❌ Nunca: nombres, IPs, contraseñas ni datos del servidor</div>
+          <div class="consent-item no" data-i18n="consent.item5">❌ Nunca: se vende ni comparte con terceros</div>
         </div>
-        <p class="consent-note">Puedes cambiar esto en cualquier momento desde
+        <p class="consent-note" data-i18n="consent.note">Puedes cambiar esto en cualquier momento desde
           Diagnóstico</p>
         <div class="consent-btns">
-          <button class="btn-consent-no" id="btn-consent-no">No, gracias</button>
-          <button class="btn-consent-yes" id="btn-consent-yes">Aceptar y continuar</button>
+          <button class="btn-consent-no" id="btn-consent-no" data-i18n="consent.no">No, gracias</button>
+          <button class="btn-consent-yes" id="btn-consent-yes" data-i18n="consent.yes">Aceptar y continuar</button>
         </div>
       </div>
     </div>
@@ -80,26 +88,26 @@
         <h1 class="profiles-title">Minecraft Local Server Manager</h1>
         <p class="profiles-version" id="profiles-version-label"></p>
       </div>
-      <p class="profiles-subtitle">Selecciona un perfil para continuar</p>
+      <p class="profiles-subtitle" data-i18n="profiles.select">Selecciona un perfil para continuar</p>
       <div class="profiles-grid" id="profiles-grid"></div>
       <div class="new-profile-section" id="new-profile-section">
-        <button class="btn-new-profile" id="btn-show-new-profile">Nuevo perfil</button>
+        <button class="btn-new-profile" id="btn-show-new-profile" data-i18n="profiles.new">Nuevo perfil</button>
 
         <div class="new-profile-form hidden" id="new-profile-form">
-          <h3 class="npf-title">Crear perfil</h3>
+          <h3 class="npf-title" data-i18n="profiles.create">Crear perfil</h3>
           <div class="field">
-            <label>Nombre del perfil</label>
-            <input type="text" id="npf-name" placeholder="Nombre del perfil" autocomplete="off"
-              maxlength="24" />
+            <label data-i18n="profiles.nameLabel">Nombre del perfil</label>
+            <input type="text" id="npf-name" placeholder="Nombre del perfil" data-i18n-placeholder="profiles.nameLabel"
+              autocomplete="off" maxlength="24" />
           </div>
           <div class="field">
-            <label>Elige un avatar</label>
+            <label data-i18n="profiles.avatarLabel">Elige un avatar</label>
             <div class="avatar-picker" id="avatar-picker"></div>
           </div>
           <p class="auth-error" id="npf-error"></p>
           <div class="npf-actions">
-            <button class="btn-secondary" id="btn-cancel-npf">Cancelar</button>
-            <button class="btn-auth" id="btn-create-profile">Crear perfil</button>
+            <button class="btn-secondary" id="btn-cancel-npf" data-i18n="common.cancel">Cancelar</button>
+            <button class="btn-auth" id="btn-create-profile" data-i18n="profiles.create">Crear perfil</button>
           </div>
         </div>
       </div>
@@ -109,14 +117,14 @@
   <!-- ══ SCREEN: SERVER LIST ══════════════════════════════════════════════════════════ -->
   <div class="screen" id="screen-servers">
     <div class="servers-header">
-      <button class="btn-back" id="btn-back-profiles">Perfiles</button>
+      <button class="btn-back" id="btn-back-profiles" data-i18n="nav.profiles">Perfiles</button>
       <div class="servers-header-title">
-        <h1 class="servers-title" id="servers-title">Mis servidores</h1>
-        <p class="servers-sub" id="servers-sub">Cargando...</p>
+        <h1 class="servers-title" id="servers-title" data-i18n="servers.title">Mis servidores</h1>
+        <p class="servers-sub" id="servers-sub" data-i18n="common.loading">Cargando...</p>
       </div>
       <div class="servers-header-right">
-        <button class="btn-secondary" id="btn-diagnostics">Diagnóstico</button>
-        <button class="btn-new-server" id="btn-new-server">Añadir servidor</button>
+        <button class="btn-secondary" id="btn-diagnostics" data-i18n="nav.diagnostics">Diagnóstico</button>
+        <button class="btn-new-server" id="btn-new-server" data-i18n="servers.add">Añadir servidor</button>
       </div>
     </div>
     <div class="servers-grid" id="servers-grid"></div>
@@ -125,26 +133,26 @@
   <!-- ══ SCREEN: SERVER DETAIL ════════════════════════════════════════════════ -->
   <div class="screen" id="screen-detail">
     <div class="server-bar" id="server-bar">
-      <button class="btn-back" id="btn-back-servers">Servidores</button>
+      <button class="btn-back" id="btn-back-servers" data-i18n="nav.servers">Servidores</button>
       <div class="server-bar-left">
         <span class="server-name-display" id="sbar-server-name"></span>
         <div class="status-pill">
           <span class="dot off" id="sbar-dot-status"></span>
-          <span id="sbar-status-text">Detenido</span>
+          <span id="sbar-status-text" data-i18n="status.stopped">Detenido</span>
         </div>
       </div>
       <div class="server-bar-right">
-        <button class="btn-start" id="detail-btn-start">Iniciar</button>
-        <button class="btn-stop" id="detail-btn-stop" disabled>Detener</button>
+        <button class="btn-start" id="detail-btn-start" data-i18n="status.startAction">Iniciar</button>
+        <button class="btn-stop" id="detail-btn-stop" data-i18n="status.stopAction" disabled>Detener</button>
       </div>
     </div>
     <nav class="nav" id="detail-nav">
-      <button class="nav-item active" data-tab="console">Consola</button>
-      <button class="nav-item" data-tab="players">Jugadores</button>
-      <button class="nav-item" data-tab="lists">Listas</button>
-      <button class="nav-item" data-tab="properties">Propiedades</button>
-      <button class="nav-item" data-tab="backups">Backups</button>
-      <button class="nav-item" data-tab="config">Ajustes</button>
+      <button class="nav-item active" data-tab="console" data-i18n="tab.console">Consola</button>
+      <button class="nav-item" data-tab="players" data-i18n="tab.players">Jugadores</button>
+      <button class="nav-item" data-tab="lists" data-i18n="tab.lists">Listas</button>
+      <button class="nav-item" data-tab="properties" data-i18n="tab.properties">Propiedades</button>
+      <button class="nav-item" data-tab="backups" data-i18n="tab.backups">Backups</button>
+      <button class="nav-item" data-tab="config" data-i18n="tab.config">Ajustes</button>
     </nav>
 
     <div class="tab active" id="tab-console">
@@ -153,21 +161,22 @@
       </div>
       <div class="cmd-bar">
         <span class="cmd-prefix">›</span>
-        <input type="text" id="cmd-input" placeholder="Escribe un comando de Minecraft..." autocomplete="off"
-          spellcheck="false" />
-        <button id="cmd-send">Enviar</button>
+        <input type="text" id="cmd-input" placeholder="Escribe un comando de Minecraft..."
+          data-i18n-placeholder="console.placeholder" autocomplete="off" spellcheck="false" />
+        <button id="cmd-send" data-i18n="console.send">Enviar</button>
       </div>
     </div>
 
     <div class="tab" id="tab-players">
       <div class="panel-header">
-        <h2>Jugadores conectados</h2><button class="btn-secondary" id="btn-refresh-players">Actualizar</button>
+        <h2 data-i18n="players.connected">Jugadores conectados</h2><button class="btn-secondary" id="btn-refresh-players"
+          data-i18n="common.refresh">Actualizar</button>
       </div>
       <div class="players-grid" id="players-grid"></div>
       <div class="quick-actions">
-        <h3>Acciones rápidas</h3>
+        <h3 data-i18n="players.quickActions">Acciones rápidas</h3>
         <div class="action-row">
-          <input type="text" id="player-target" placeholder="Nombre del jugador" />
+          <input type="text" id="player-target" placeholder="Nombre del jugador" data-i18n-placeholder="common.playerName" />
           <button class="btn-action" data-action="kick">Kick</button>
           <button class="btn-action danger" data-action="ban">Ban</button>
           <button class="btn-action" data-action="op">OP</button>
@@ -183,10 +192,10 @@
         <div class="list-panel">
           <div class="list-header">
             <h2>Whitelist</h2><label class="toggle-wrap"><input type="checkbox"
-                id="whitelist-toggle" /><span>Activa</span></label>
+                id="whitelist-toggle" /><span data-i18n="lists.active">Activa</span></label>
           </div>
-          <div class="list-add"><input type="text" id="wl-input" placeholder="Nombre del jugador" /><button
-              id="wl-add">Añadir</button></div>
+          <div class="list-add"><input type="text" id="wl-input" placeholder="Nombre del jugador"
+              data-i18n-placeholder="common.playerName" /><button id="wl-add" data-i18n="common.add">Añadir</button></div>
           <ul class="player-list" id="whitelist-ul"></ul>
         </div>
         <div class="list-panel">
@@ -194,9 +203,9 @@
             <h2>Banlist</h2>
           </div>
           <div class="list-add">
-            <input type="text" id="bl-input" placeholder="Nombre del jugador" />
-            <input type="text" id="bl-reason" placeholder="Motivo (opcional)" />
-            <button id="bl-add">Banear</button>
+            <input type="text" id="bl-input" placeholder="Nombre del jugador" data-i18n-placeholder="common.playerName" />
+            <input type="text" id="bl-reason" placeholder="Motivo (opcional)" data-i18n-placeholder="lists.reasonOptional" />
+            <button id="bl-add" data-i18n="lists.ban">Banear</button>
           </div>
           <ul class="player-list" id="banlist-ul"></ul>
         </div>
@@ -205,30 +214,33 @@
 
     <div class="tab" id="tab-properties">
       <div class="panel-header">
-        <h2>server.properties</h2><button class="btn-primary" id="btn-save-props">Guardar</button>
+        <h2>server.properties</h2><button class="btn-primary" id="btn-save-props" data-i18n="common.save">Guardar</button>
       </div>
       <div class="props-grid" id="props-grid">
-        <div class="empty-state">Guarda la configuración del servidor primero.</div>
+        <div class="empty-state" data-i18n="properties.needSave">Guarda la configuración del servidor primero.</div>
       </div>
     </div>
 
     <div class="tab" id="tab-backups">
       <div class="panel-header">
-        <h2>Backups del mundo</h2><button class="btn-primary" id="btn-backup-now">Crear backup ahora</button>
+        <h2 data-i18n="backups.title">Backups del mundo</h2><button class="btn-primary" id="btn-backup-now"
+          data-i18n="backups.createNow">Crear backup ahora</button>
       </div>
       <div class="backup-auto-config">
-        <h3>Backup automático</h3>
+        <h3 data-i18n="backups.auto">Backup automático</h3>
         <div class="auto-backup-row">
-          <label class="toggle-wrap"><input type="checkbox" id="auto-backup-enabled" /><span>Activar</span></label>
+          <label class="toggle-wrap"><input type="checkbox" id="auto-backup-enabled" /><span
+              data-i18n="backups.enable">Activar</span></label>
           <select id="auto-backup-interval">
-            <option value="1h">Cada hora</option>
-            <option value="6h" selected>Cada 6 horas</option>
-            <option value="12h">Cada 12 horas</option>
-            <option value="24h">Una vez al día</option>
+            <option value="1h" data-i18n="backups.everyHour">Cada hora</option>
+            <option value="6h" selected data-i18n="backups.every6h">Cada 6 horas</option>
+            <option value="12h" data-i18n="backups.every12h">Cada 12 horas</option>
+            <option value="24h" data-i18n="backups.daily">Una vez al día</option>
           </select>
-          <input type="text" id="auto-backup-dir" placeholder="Carpeta de backups" readonly />
+          <input type="text" id="auto-backup-dir" placeholder="Carpeta de backups" data-i18n-placeholder="backups.dirPlaceholder"
+            readonly />
           <button id="btn-backup-dir">📁</button>
-          <button class="btn-primary" id="btn-save-auto">Guardar</button>
+          <button class="btn-primary" id="btn-save-auto" data-i18n="common.save">Guardar</button>
         </div>
       </div>
       <div class="backups-list" id="backups-list"></div>
@@ -236,33 +248,33 @@
 
     <div class="tab" id="tab-config">
       <div class="settings-form">
-        <h2>Configuración del servidor</h2>
+        <h2 data-i18n="config.title">Configuración del servidor</h2>
         <div class="field-group">
-          <label>Nombre del servidor</label>
+          <label data-i18n="config.nameLabel">Nombre del servidor</label>
           <div class="name-color-row">
-            <input type="text" id="cfg-name" placeholder="Mi servidor" />
+            <input type="text" id="cfg-name" placeholder="Mi servidor" data-i18n-placeholder="config.namePlaceholder" />
             <div class="color-options" id="color-options"></div>
           </div>
         </div>
         <div class="field-group">
-          <label>Archivo JAR</label>
+          <label data-i18n="config.jarLabel">Archivo JAR</label>
           <div class="field-row"><input type="text" id="cfg-jar" placeholder="C:\servers\server.jar" readonly /><button
-              id="btn-pick-jar">Buscar</button></div>
-          <p class="field-hint">Compatible con Vanilla, Paper, Spigot, Bukkit, Fabric y Forge</p>
+              id="btn-pick-jar" data-i18n="config.browse">Buscar</button></div>
+          <p class="field-hint" data-i18n="config.jarHint">Compatible con Vanilla, Paper, Spigot, Bukkit, Fabric y Forge</p>
         </div>
-        <div class="field-group"><label>Ruta de Java (opcional)</label><input type="text" id="cfg-java"
-            placeholder="java" /></div>
+        <div class="field-group"><label data-i18n="config.javaLabel">Ruta de Java (opcional)</label><input type="text"
+            id="cfg-java" placeholder="java" /></div>
         <div class="field-row">
-          <div class="field-group flex1"><label>RAM mínima (MB)</label><input type="number" id="cfg-min-ram"
-              value="1024" min="512" step="256" /></div>
-          <div class="field-group flex1"><label>RAM máxima (MB)</label><input type="number" id="cfg-max-ram"
-              value="4096" min="1024" step="256" /></div>
+          <div class="field-group flex1"><label data-i18n="config.ramMin">RAM mínima (MB)</label><input type="number"
+              id="cfg-min-ram" value="1024" min="512" step="256" /></div>
+          <div class="field-group flex1"><label data-i18n="config.ramMax">RAM máxima (MB)</label><input type="number"
+              id="cfg-max-ram" value="4096" min="1024" step="256" /></div>
         </div>
-        <div class="field-group"><label>Argumentos JVM adicionales</label><input type="text" id="cfg-extra"
-            placeholder="-XX:+UseG1GC" /></div>
+        <div class="field-group"><label data-i18n="config.jvmArgs">Argumentos JVM adicionales</label><input type="text"
+            id="cfg-extra" placeholder="-XX:+UseG1GC" /></div>
         <div class="config-actions">
-          <button class="btn-primary" id="btn-save-cfg">Guardar configuración</button>
-          <button class="btn-danger" id="btn-delete-server">Eliminar servidor</button>
+          <button class="btn-primary" id="btn-save-cfg" data-i18n="config.save">Guardar configuración</button>
+          <button class="btn-danger" id="btn-delete-server" data-i18n="config.delete">Eliminar servidor</button>
         </div>
       </div>
     </div>
@@ -271,28 +283,29 @@
   <!-- ══ SCREEN: DIAGNOSTICS ════════════════════════════════════════════════════ -->
   <div class="screen" id="screen-diagnostics">
     <div class="servers-header">
-      <button class="btn-back" id="btn-diag-back-servers">Servidores</button>
+      <button class="btn-back" id="btn-diag-back-servers" data-i18n="nav.servers">Servidores</button>
       <div class="servers-header-title">
-        <h1 class="servers-title">Diagnóstico</h1>
-        <p class="servers-sub">Estado de la aplicación, errores y analytics</p>
+        <h1 class="servers-title" data-i18n="diag.title">Diagnóstico</h1>
+        <p class="servers-sub" data-i18n="diag.subtitle">Estado de la aplicación, errores y analytics</p>
       </div>
-      <button class="btn-secondary" id="btn-clear-crashes">Limpiar errores</button>
+      <button class="btn-secondary" id="btn-clear-crashes" data-i18n="diag.clearErrors">Limpiar errores</button>
     </div>
     <div class="diag-grid">
       <div class="diag-card">
-        <h3>Información</h3>
+        <h3 data-i18n="diag.info">Información</h3>
         <div class="diag-rows" id="diag-info"></div>
       </div>
       <div class="diag-card">
-        <h3>Analytics anónimos</h3>
+        <h3 data-i18n="diag.analytics">Analytics anónimos</h3>
         <div class="diag-analytics-toggle">
-          <label class="toggle-wrap"><input type="checkbox" id="diag-analytics-toggle" /><span>Envío de datos
+          <label class="toggle-wrap"><input type="checkbox" id="diag-analytics-toggle" /><span
+              data-i18n="diag.sendData">Envío de datos
               anónimos</span></label>
         </div>
         <div class="diag-rows" id="diag-analytics"></div>
       </div>
       <div class="diag-card diag-card-wide">
-        <h3>Últimos errores</h3>
+        <h3 data-i18n="diag.recentErrors">Últimos errores</h3>
         <div id="diag-crashes"></div>
       </div>
     </div>
@@ -301,46 +314,48 @@
   <!-- ══ MODAL: new server ════════════════════════════════════════════════════ -->
   <div class="modal-backdrop hidden" id="modal-server">
     <div class="modal modal-wide">
-      <h3 id="modal-server-title">Añadir servidor</h3>
-      <div class="field-group"><label>Nombre</label><input type="text" id="ms-name"
-          placeholder="Mi servidor survival" /></div>
-      <div class="field-group"><label>Color identificador</label>
+      <h3 id="modal-server-title" data-i18n="servers.add">Añadir servidor</h3>
+      <div class="field-group"><label data-i18n="modal.name">Nombre</label><input type="text" id="ms-name"
+          placeholder="Mi servidor survival" data-i18n-placeholder="modal.namePlaceholder" /></div>
+      <div class="field-group"><label data-i18n="modal.colorLabel">Color identificador</label>
         <div class="color-options" id="ms-color-options"></div>
       </div>
       <div class="field-group">
-        <label>Archivo JAR</label>
-        <div class="field-row"><input type="text" id="ms-jar" placeholder="Ruta al .jar del servidor" readonly /><button
-            id="ms-pick-jar">📁</button></div>
+        <label data-i18n="config.jarLabel">Archivo JAR</label>
+        <div class="field-row"><input type="text" id="ms-jar" placeholder="Ruta al .jar del servidor"
+            data-i18n-placeholder="modal.jarPlaceholder" readonly /><button id="ms-pick-jar">📁</button></div>
       </div>
       <div class="field-row">
-        <div class="field-group flex1"><label>RAM mín (MB)</label><input type="number" id="ms-min-ram" value="1024"
-            min="512" step="256" /></div>
-        <div class="field-group flex1"><label>RAM máx (MB)</label><input type="number" id="ms-max-ram" value="4096"
-            min="1024" step="256" /></div>
+        <div class="field-group flex1"><label data-i18n="modal.ramMin">RAM mín (MB)</label><input type="number"
+            id="ms-min-ram" value="1024" min="512" step="256" /></div>
+        <div class="field-group flex1"><label data-i18n="modal.ramMax">RAM máx (MB)</label><input type="number"
+            id="ms-max-ram" value="4096" min="1024" step="256" /></div>
       </div>
-      <div class="field-group"><label>Java (opcional)</label><input type="text" id="ms-java" placeholder="java" /></div>
+      <div class="field-group"><label data-i18n="modal.javaLabel">Java (opcional)</label><input type="text" id="ms-java"
+          placeholder="java" /></div>
       <p class="auth-error" id="ms-error"></p>
-      <div class="modal-actions"><button id="ms-cancel">Cancelar</button><button class="btn-primary"
-          id="ms-save">Guardar</button></div>
+      <div class="modal-actions"><button id="ms-cancel" data-i18n="common.cancel">Cancelar</button><button
+          class="btn-primary" id="ms-save" data-i18n="common.save">Guardar</button></div>
     </div>
   </div>
 
   <!-- ══ MODAL: confirm close ══════════════════════════════════════════════════════════════════ -->
   <div class="modal-backdrop hidden" id="modal-close">
     <div class="modal">
-      <h3 id="modal-close-title">¿Cerrar la aplicación?</h3>
-      <p id="modal-close-msg">Hay servidores en ejecución. Se detendrán antes de cerrar.</p>
+      <h3 id="modal-close-title" data-i18n="close.title">¿Cerrar la aplicación?</h3>
+      <p id="modal-close-msg" data-i18n="close.msg">Hay servidores en ejecución. Se detendrán antes de cerrar.</p>
       <div id="modal-close-level1" class="modal-actions">
-        <button id="modal-cancel">Cancelar</button>
-        <button id="modal-confirm-proceed">Continuar</button>
+        <button id="modal-cancel" data-i18n="common.cancel">Cancelar</button>
+        <button id="modal-confirm-proceed" data-i18n="close.continue">Continuar</button>
       </div>
       <div id="modal-close-level2" class="modal-actions hidden">
-        <button id="modal-cancel-2">Volver</button>
-        <button class="danger" id="modal-confirm">Cerrar y detener todo</button>
+        <button id="modal-cancel-2" data-i18n="close.back">Volver</button>
+        <button class="danger" id="modal-confirm" data-i18n="close.confirmStopAll">Cerrar y detener todo</button>
       </div>
     </div>
   </div>
 
+  <script src="i18n.js"></script>
   <script src="renderer.js"></script>
 </body>
 
