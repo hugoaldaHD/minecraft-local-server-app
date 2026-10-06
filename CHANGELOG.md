@@ -3,6 +3,10 @@
 Historial de versiones de **Minecraft Local Server Manager**, reconstruido a partir
 de los tags y commits del repositorio. Formato de [Keep a Changelog](https://keepachangelog.com/es/1.1.0/).
 
+## v1.5.1 - Nuevo Icono (2026-10-06)
+
+- Nuevo icono para la aplicación.
+
 ## v1.5.0 - Mejoras de Errores y Sintáxis (2026-10-06)
 
 - `server.properties` pierde comentarios y orden al guardar | `writeProperties` fusiona con el archivo original: preserva comentarios/orden/claves desconocidas y solo sustituye valores o añade nuevas (`main/properties.js`).
