@@ -3,6 +3,13 @@
 Historial de versiones de **Minecraft Local Server Manager**, reconstruido a partir
 de los tags y commits del repositorio. Formato de [Keep a Changelog](https://keepachangelog.com/es/1.1.0/).
 
+## v1.6.1 - Re-styling Config (2026-10-07)
+
+- Ajustes como 4 tarjetas sueltas en una rejilla de 2 columnas | Raíl lateral con 6 secciones (General, Apariencia, Copias de seguridad, Servidores, Privacidad y datos, Acerca de) + panel derecho con filas `label` + pista + control (`.settings-layout`, `.set-nav`, `.set-panel`); un solo panel visible por vez (`data-set-section`/`data-set-panel`) (`src/index.html`, `src/renderer.js:initSettings`).
+- Control segmentado del tema/idioma a ancho de columna | Compacto al ancho de su contenido y alineado a la derecha de la fila (`.seg-options { width: fit-content }`, `.set-row-control`); carpeta de backups en su propia fila con input + 📁 (`src/css/components.css`, `src/css/screens.css`).
+- Sin mapa de ajustes futuros ni sitio para ellos | Filas atenuadas con píldora «Próximamente» (carpeta de servidores, cerrar en bandeja, inicio con el sistema, escala de interfaz, retención/compresión de copias, RAM/Java/JVM/EULA por defecto, borrar eventos); filas reales nuevas: **Buscar actualizaciones** (`update:check`) y **Limpiar errores** movido de la cabecera a Acerca de; recuento de eventos y toggle de analytics en Privacidad.
+- Ajustes sin comportamiento responsive propio | ≤1300px: raíl más estrecho y paneles con menos padding; ≤1100px: el raíl pasa a barra horizontal con scroll, filas apiladas e input de carpeta a ancho completo (reglas `.diag-grid` muertas sustituidas en `src/css/responsive.css`).
+
 ## v1.6.0 - Config Implementation (2026-10-07)
 
 - Perfiles locales para una sola cuenta (pantalla de selección + `main/auth.js`) | Eliminados: `#screen-profiles`, `main/auth.js` y los canales `users:*`/`auth:*`; arranque directo a consentimiento o servidores; `servers:list`/`servers:create` dejan de recibir `userId`; evento `profile_created` retirado (cierra también el ítem 38, `deleteUser` en cascada, ya sin sujeto).
