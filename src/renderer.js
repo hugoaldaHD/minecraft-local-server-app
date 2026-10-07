@@ -11,7 +11,7 @@ const state = {
   consoleLogs: {},
   consoleLines: 0,
   isRunning: false,
-  updateInfo: null,
+  update: { status: 'idle', hasUpdate: false, version: null, notes: null, percent: 0, lastChecked: null },
   detailBar: [false, false],
   maximized: false
 }
@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initDelegates()
   initModal()
   renderColorOptions('ms-color-options', null)
-  initUpdateBanner()
+  initUpdates()
   initSettings()
 
   // First run: check analytics consent
@@ -96,70 +96,183 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (consent === null) showScreen('consent')
   else showScreen('servers')
 
-  // ─── Update banner ────────────────────────────────────────────────────────────
-  function initUpdateBanner() {
-    document.getElementById('btn-update-dismiss').onclick = () => {
-      document.getElementById('update-banner').classList.add('hidden')
-    }
-    document.getElementById('btn-update-install').onclick = () => {
-      window.api.installUpdate()
+  // ─── Actualizaciones ────────────────────────────────────────────────────────
+  function initUpdates() {
+    document.getElementById('btn-check-update').onclick = checkForUpdates
+    document.getElementById('btn-update-download').onclick = () => run(T('run.settings'), () => window.api.downloadUpdate())
+    document.getElementById('btn-update-install').onclick = () => window.api.installUpdate()
+    // El icono ⬇ de la titlebar lleva directo a Ajustes → Actualizaciones
+    document.getElementById('btn-update-notify').onclick = () => {
+      showScreen('settings')
+      setSettingsSection('updates')
     }
 
-    window.api.onUpdateStatus((info) => {
-      state.updateInfo = info
-      renderUpdateStatus(info)
-    })
+    window.api.onUpdateStatus((info) => applyUpdateStatus(info))
   }
 
 })
 
-function renderUpdateStatus(info) {
-  const banner = document.getElementById('update-banner')
-  const text = document.getElementById('update-banner-text')
-  const progress = document.getElementById('update-progress')
-  const bar = document.getElementById('update-bar')
-  const installBtn = document.getElementById('btn-update-install')
+const UPDATE_STATE_KEYS = {
+  idle: 'upd.state.idle',
+  checking: 'upd.state.checking',
+  latest: 'upd.state.latest',
+  available: 'upd.state.available',
+  downloading: 'upd.state.downloading',
+  ready: 'upd.state.ready',
+  error: 'upd.state.error',
+  dev: 'upd.state.dev'
+}
 
-  banner.classList.remove('hidden')
+const UPDATE_STATE_CLASS = {
+  idle: 'is-idle',
+  checking: 'is-busy',
+  latest: 'is-ok',
+  available: 'is-warn',
+  downloading: 'is-busy',
+  ready: 'is-ok',
+  error: 'is-err',
+  dev: 'is-idle'
+}
 
+const UPDATE_PILL_KEYS = {
+  available: 'upd.pill.available',
+  downloading: 'upd.pill.downloading',
+  ready: 'upd.pill.ready',
+  error: 'upd.pill.error'
+}
+
+let updateCheckTimeout = null
+
+function applyUpdateStatus(info) {
+  const u = state.update
   if (info.status === 'available') {
-    text.textContent = T('update.available', { version: info.version })
-    if (info.releaseNotes) renderUpdateNotes(info.releaseNotes)
+    u.status = 'available'
+    u.hasUpdate = true
+    u.version = info.version || u.version
+    u.notes = info.releaseNotes || u.notes
+    u.lastChecked = new Date()
+  } else if (info.status === 'latest') {
+    u.status = 'latest'
+    u.hasUpdate = false
+    u.version = info.version || u.version
+    u.notes = null
+    u.lastChecked = new Date()
+  } else if (info.status === 'downloading') {
+    u.status = 'downloading'
+    u.percent = info.percent || 0
+  } else if (info.status === 'ready') {
+    u.status = 'ready'
+    u.version = info.version || u.version
+    u.percent = 100
+  } else if (info.status === 'error') {
+    // Solo nos interesa el error si había una comprobación o descarga en marcha
+    if (u.status === 'checking' || u.status === 'downloading' || u.hasUpdate) u.status = 'error'
+  } else {
+    u.status = info.status
   }
-  if (info.status === 'downloading') {
-    text.textContent = T('update.downloading', { percent: info.percent })
-    progress.classList.remove('hidden')
-    bar.style.width = info.percent + '%'
-  }
-  if (info.status === 'ready') {
-    text.textContent = T('update.ready', { version: info.version })
-    progress.classList.add('hidden')
-    installBtn.classList.remove('hidden')
+  renderUpdateState()
+}
+
+async function checkForUpdates() {
+  clearTimeout(updateCheckTimeout)
+  state.update.status = 'checking'
+  renderUpdateState()
+  const res = await run(T('run.settings'), () => window.api.checkUpdate(), {})
+  if (res && res.status === 'dev') {
+    state.update.status = 'dev'
+    renderUpdateState()
+  } else if (res && res.status === 'checking') {
+    // Si la comprobación no contesta en 20s, mostramos error
+    updateCheckTimeout = setTimeout(() => {
+      if (state.update.status === 'checking') applyUpdateStatus({ status: 'error' })
+    }, 20000)
   }
 }
 
+function renderUpdateState() {
+  const u = state.update
+  document.getElementById('btn-update-notify').classList.toggle('hidden', !u.hasUpdate)
+
+  const stateEl = document.getElementById('upd-state')
+  stateEl.textContent = T(UPDATE_STATE_KEYS[u.status] || UPDATE_STATE_KEYS.idle, { version: u.version || '', percent: u.percent || 0 })
+  stateEl.className = 'set-row-hint upd-state ' + (UPDATE_STATE_CLASS[u.status] || '')
+
+  const lastEl = document.getElementById('upd-lastcheck')
+  if (u.lastChecked instanceof Date) {
+    lastEl.removeAttribute('data-i18n')
+    lastEl.textContent = u.lastChecked.toLocaleDateString() + ' ' + u.lastChecked.toLocaleTimeString()
+  } else {
+    lastEl.setAttribute('data-i18n', 'upd.never')
+    lastEl.textContent = T('upd.never')
+  }
+
+  const card = document.getElementById('upd-card')
+  card.classList.toggle('hidden', !u.hasUpdate)
+  if (!u.hasUpdate) return
+
+  document.getElementById('upd-newversion').textContent = T('upd.newVersion', { version: u.version || '?' })
+
+  const pill = document.getElementById('upd-pill')
+  pill.className = 'upd-pill ' + (UPDATE_STATE_CLASS[u.status] || 'is-idle')
+  pill.textContent = T(UPDATE_PILL_KEYS[u.status] || 'upd.pill.available', { percent: u.percent || 0 })
+
+  document.getElementById('upd-hint').textContent = T('upd.hint.' + (['available', 'downloading', 'ready', 'error'].includes(u.status) ? u.status : 'available'))
+
+  const downloading = u.status === 'downloading'
+  const progress = document.getElementById('upd-progress')
+  progress.classList.toggle('hidden', !downloading)
+  if (downloading) document.getElementById('upd-bar').style.width = (u.percent || 0) + '%'
+
+  document.getElementById('btn-update-download').classList.toggle('hidden', u.status === 'ready' || downloading)
+  document.getElementById('btn-update-install').classList.toggle('hidden', u.status !== 'ready')
+
+  renderUpdateNotes(u.notes)
+}
+
 function renderUpdateNotes(raw) {
+  const wrap = document.getElementById('upd-notes')
   const box = document.getElementById('update-notes')
-  const lines = String(raw).split('\n').map(l => l.trim()).filter(Boolean)
+  box.textContent = ''
+
+  let lines = []
+  if (Array.isArray(raw)) {
+    // electron-updater puede devolver [{ version, note }]
+    raw.forEach((r, i) => {
+      if (typeof r === 'string') lines.push(...r.split('\n'))
+      else if (r && r.note) {
+        if (raw.length > 1 && r.version) lines.push(`## ${r.version}`)
+        lines.push(...String(r.note).split('\n'))
+      }
+      if (i === 0 && !lines.length) lines.push('')
+    })
+  } else if (raw) {
+    lines = String(raw).split('\n')
+  }
+  lines = lines.map(l => l.trim()).filter(Boolean)
+
   const heading = lines.find(l => l.startsWith('#'))
   const items = lines.filter(l => !l.startsWith('#')).map(l => l.replace(/^[-*]\s*/, ''))
-  box.textContent = ''
-  if (heading) {
-    const title = document.createElement('div')
-    title.className = 'update-notes-title'
-    title.textContent = heading.replace(/^#+\s*/, '')
-    box.appendChild(title)
+
+  if (!heading && !items.length) {
+    box.textContent = T('upd.noNotes')
+  } else {
+    if (heading) {
+      const title = document.createElement('div')
+      title.className = 'update-notes-title'
+      title.textContent = heading.replace(/^#+\s*/, '')
+      box.appendChild(title)
+    }
+    if (items.length) {
+      const ul = document.createElement('ul')
+      items.forEach(item => {
+        const li = document.createElement('li')
+        li.textContent = item
+        ul.appendChild(li)
+      })
+      box.appendChild(ul)
+    }
   }
-  if (items.length) {
-    const ul = document.createElement('ul')
-    items.forEach(item => {
-      const li = document.createElement('li')
-      li.textContent = item
-      ul.appendChild(li)
-    })
-    box.appendChild(ul)
-  }
-  box.classList.remove('hidden')
+  wrap.classList.remove('hidden')
 }
 
 // ─── Titlebar ─────────────────────────────────────────────────────────────────
@@ -252,17 +365,20 @@ function initSettings() {
     const opt = e.target.closest('.seg-opt')
     if (opt) I18N.setLang(opt.dataset.langValue)
   })
-  document.getElementById('btn-check-update').onclick = () => run(T('run.settings'), () => window.api.checkUpdate())
   // Raíl de secciones: muestra solo el panel elegido
   document.getElementById('set-nav').addEventListener('click', (e) => {
     const item = e.target.closest('.set-nav-item')
-    if (!item) return
-    const section = item.dataset.setSection
-    document.querySelectorAll('#set-nav .set-nav-item').forEach(b => b.classList.toggle('active', b === item))
-    document.querySelectorAll('.set-panel').forEach(p => p.classList.toggle('active', p.dataset.setPanel === section))
-    const panels = document.querySelector('.set-panels')
-    if (panels) panels.scrollTop = 0
+    if (item) setSettingsSection(item.dataset.setSection)
   })
+}
+
+// Muestra una sección de Ajustes (la usan el raíl y el icono ⬇ de la titlebar)
+function setSettingsSection(section) {
+  document.querySelectorAll('#set-nav .set-nav-item').forEach(b => b.classList.toggle('active', b.dataset.setSection === section))
+  document.querySelectorAll('.set-panel').forEach(p => p.classList.toggle('active', p.dataset.setPanel === section))
+  const panels = document.querySelector('.set-panels')
+  if (panels) panels.scrollTop = 0
+  if (section === 'updates') renderUpdateState()
 }
 
 function setTheme(theme) {
@@ -293,6 +409,7 @@ async function loadSettings() {
   const java = await run(T('run.diagnostics'), () => window.api.javaCheck(), null)
 
   document.getElementById('diag-analytics-toggle').checked = !!consent
+  document.getElementById('upd-installed').textContent = version ? `v${version}` : '—'
 
   const diagRow = (label, value) => h('div', { class: 'diag-row' },
     h('span', { class: 'diag-row-label', text: label }),
@@ -329,8 +446,10 @@ async function loadSettings() {
       h('div', { class: 'crash-type', text: c.type }),
       h('div', { class: 'crash-msg', text: c.message }),
       h('div', { class: 'crash-meta', text: `v${c.appVersion} · ${new Date(c.timestamp).toLocaleString(I18N.locale())}` })
-    )))
+      )))
   }
+
+  renderUpdateState()
 }
 
 function showScreen(name) {
@@ -1005,7 +1124,7 @@ I18N.onLangChange(() => {
   updateMaxTitle()
   updateDetailBar(state.detailBar[0], state.detailBar[1])
   if (document.getElementById('screen-servers').classList.contains('active')) refreshServersGrid()
-  if (state.updateInfo) renderUpdateStatus(state.updateInfo)
+  renderUpdateState()
   if (document.getElementById('screen-settings').classList.contains('active')) loadSettings()
   if (state.currentServerId) {
     renderPlayers()

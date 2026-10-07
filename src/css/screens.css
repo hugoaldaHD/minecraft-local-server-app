@@ -1099,94 +1099,150 @@ code {
   background: var(--line2);
 }
 
-/* ═══ Banner de actualización ════════════════════════════════════════ */
-.update-banner {
+/* ═══ Actualizaciones ══════════════════════════════════════════════════════ */
+/* Icono ⬇ de la titlebar: solo visible cuando hay versión nueva */
+.update-btn {
+  position: relative;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.update-btn::after {
+  content: '';
   position: absolute;
-  top: 40px;
-  left: 0;
-  right: 0;
-  z-index: 100;
-  padding: 8px 16px;
+  top: 4px;
+  right: 4px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent2);
+  border: 1px solid var(--bg1);
+  animation: update-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes update-pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.4;
+    transform: scale(0.75);
+  }
+}
+
+/* Panel: filas de estado */
+.upd-version {
+  font-family: var(--pixel);
+  font-size: 10px;
+  color: var(--text2);
+}
+
+.upd-state.is-idle {
+  color: var(--text3);
+}
+
+.upd-state.is-busy {
+  color: var(--info);
+}
+
+.upd-state.is-ok {
+  color: var(--accent);
+}
+
+.upd-state.is-warn {
+  color: var(--warn);
+}
+
+.upd-state.is-err {
+  color: var(--danger-text);
+}
+
+/* Panel: tarjeta de la versión nueva */
+.upd-card {
+  border-left: 3px solid var(--accent);
+}
+
+.upd-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
-  font-size: 13px;
-  -webkit-app-region: no-drag;
-  background: rgba(108, 180, 63, 0.14);
-  border-bottom: 2px solid rgba(108, 180, 63, 0.4);
-  color: var(--text);
-  flex-shrink: 0;
-}
-
-.update-actions {
-  display: flex;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
-.update-banner span {
-  flex: 1;
+.upd-newversion {
+  font-family: var(--pixel);
+  font-size: 13px;
   color: var(--text);
-  font-size: 12px;
 }
 
-.update-progress {
-  flex: 1;
-  margin: 0 16px;
-  height: 8px;
+.upd-pill {
+  font-family: var(--pixel);
+  font-size: 9px;
+  line-height: 1;
+  padding: 5px 8px;
+  border: 2px solid var(--line2);
+  border-radius: var(--radius);
+  background: var(--bg0);
+  color: var(--text2);
+  white-space: nowrap;
+}
+
+.upd-pill.is-ok {
+  border-color: var(--accent3);
+  color: var(--accent);
+}
+
+.upd-pill.is-busy {
+  border-color: var(--info);
+  color: var(--info);
+}
+
+.upd-pill.is-warn {
+  border-color: var(--warn);
+  color: var(--warn);
+}
+
+.upd-pill.is-err {
+  border-color: var(--danger);
+  color: var(--danger-text);
+}
+
+.upd-progress {
+  height: 10px;
   background: var(--bg0);
   border: 1px solid var(--line2);
   overflow: hidden;
 }
 
-.update-bar {
+.upd-bar {
   height: 100%;
   width: 0%;
   background: var(--accent);
   transition: width 0.3s;
 }
 
-.update-banner button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 12px;
-  color: var(--text);
+.upd-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
-#btn-update-install {
+.upd-notes-title {
   font-family: var(--pixel);
   font-size: 10px;
-  line-height: 1;
-  background: var(--accent);
-  color: var(--accent-ink);
-  border: 2px solid var(--accent2);
-  border-bottom: 4px solid var(--accent3);
-  border-radius: var(--radius);
-  padding: 7px 12px;
-  cursor: pointer;
-}
-
-#btn-update-install:hover {
-  filter: brightness(1.12);
-}
-
-#btn-update-dismiss {
-      font-family: var(--font);
-      font-size: 14px;
-      color: var(--text2);
-      }
-
-#btn-update-dismiss:hover {
-  color: var(--text);
+  margin-bottom: 6px;
+  color: var(--text2);
 }
 
 .update-notes {
-  flex-basis: 100%;
-  margin-top: 8px;
   padding-top: 8px;
   border-top: 1px solid var(--line);
-  max-height: 120px;
+  max-height: 200px;
   overflow-y: auto;
   font-size: 12px;
   color: var(--text);

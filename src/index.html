@@ -30,26 +30,12 @@
       </span>
     </div>
     <div class="titlebar-right">
-      <button class="wbtn update-btn hidden" id="btn-update-notify" title="Actualización disponible" data-i18n-title="update.notifyTitle"
-        data-i18n="update.notifyBtn">↑ Actualizar</button>
+      <button class="wbtn update-btn hidden" id="btn-update-notify" aria-label="Actualización disponible">⬇</button>
       <button class="wbtn" id="btn-settings" title="Ajustes" data-i18n-title="settings.title">⚙</button>
       <button class="wbtn" id="btn-min">─</button>
       <button class="wbtn" id="btn-max" title="Maximizar" data-i18n-title="win.maximize">☐</button>
       <button class="wbtn danger" id="btn-close">✕</button>
     </div>
-  </div>
-
-  <!-- ══ UPDATE BANNER ══════════════════════════════════════════════════════════ -->
-  <div class="update-banner hidden" id="update-banner">
-    <span id="update-banner-text" data-i18n="update.checking">Comprobando actualizaciones...</span>
-    <div class="update-progress hidden" id="update-progress">
-      <div class="update-bar" id="update-bar"></div>
-    </div>
-    <div class="update-actions">
-      <button id="btn-update-install" class="hidden" data-i18n="update.install">Instalar y reiniciar</button>
-      <button id="btn-update-dismiss" title="Cerrar aviso" data-i18n-title="update.dismissTitle">✕</button>
-    </div>
-    <div class="update-notes hidden" id="update-notes"></div>
   </div>
 
   <!-- ══ SCREEN: ANALYTICS CONSENT ════════════════════════════════════════════════ -->
@@ -261,6 +247,8 @@
             data-i18n="settings.servers">Servidores</span></button>
         <button class="set-nav-item" data-set-section="privacy">🔒 <span
             data-i18n="settings.privacy">Privacidad y datos</span></button>
+        <button class="set-nav-item" data-set-section="updates">⬇ <span
+            data-i18n="settings.updates">Actualizaciones</span></button>
         <button class="set-nav-item" data-set-section="about">ℹ <span
             data-i18n="settings.about">Acerca de</span></button>
       </nav>
@@ -450,13 +438,24 @@
           </div>
         </section>
 
-        <!-- Acerca de -->
-        <section class="set-panel" data-set-panel="about">
-          <h3 data-i18n="settings.about">Acerca de</h3>
+        <!-- Actualizaciones -->
+        <section class="set-panel" data-set-panel="updates">
+          <h3 data-i18n="settings.updates">Actualizaciones</h3>
+
           <div class="set-group">
-            <div class="diag-rows" id="diag-info"></div>
-          </div>
-          <div class="set-group">
+            <div class="set-row">
+              <div class="set-row-text">
+                <span class="set-row-label" data-i18n="upd.installed">Versión instalada</span>
+              </div>
+              <div class="set-row-control"><span class="upd-version" id="upd-installed">—</span></div>
+            </div>
+            <div class="set-row">
+              <div class="set-row-text">
+                <span class="set-row-label" data-i18n="upd.lastCheck">Última comprobación</span>
+              </div>
+              <div class="set-row-control"><span class="upd-version" id="upd-lastcheck"
+                  data-i18n="upd.never">Nunca</span></div>
+            </div>
             <div class="set-row">
               <div class="set-row-text">
                 <span class="set-row-label" data-i18n="settings.checkUpdates">Buscar actualizaciones</span>
@@ -468,6 +467,43 @@
                   actualizaciones</button>
               </div>
             </div>
+            <div class="set-row">
+              <div class="set-row-text">
+                <span class="set-row-label" data-i18n="upd.state">Estado</span>
+                <p class="set-row-hint" id="upd-state" data-i18n="upd.state.idle">Sin comprobar</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Nueva versión detectada -->
+          <div class="set-group upd-card hidden" id="upd-card">
+            <div class="upd-head">
+              <span class="upd-newversion" id="upd-newversion"></span>
+              <span class="upd-pill" id="upd-pill"></span>
+            </div>
+            <p class="set-row-hint" id="upd-hint"></p>
+            <div class="upd-progress hidden" id="upd-progress">
+              <div class="upd-bar" id="upd-bar"></div>
+            </div>
+            <div class="upd-actions">
+              <button class="btn-secondary" id="btn-update-download" data-i18n="upd.download">Descargar</button>
+              <button class="btn-primary" id="btn-update-install" data-i18n="update.install">Instalar y
+                reiniciar</button>
+            </div>
+            <div class="upd-notes" id="upd-notes">
+              <div class="upd-notes-title" data-i18n="upd.notes">Novedades de la versión</div>
+              <div class="update-notes" id="update-notes"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Acerca de -->
+        <section class="set-panel" data-set-panel="about">
+          <h3 data-i18n="settings.about">Acerca de</h3>
+          <div class="set-group">
+            <div class="diag-rows" id="diag-info"></div>
+          </div>
+          <div class="set-group">
             <div class="set-row">
               <div class="set-row-text">
                 <span class="set-row-label" data-i18n="diag.clearErrors">Limpiar errores</span>

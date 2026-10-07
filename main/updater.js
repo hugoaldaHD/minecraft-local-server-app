@@ -12,13 +12,16 @@ function canAutoUpdate() {
 
 let updateCheckTimer = null
 let updateCheckInterval = null
+let hasUpdate = false     // ya hemos detectado una versión nueva
+let manualCheck = false   // hay una comprobación pedida por el usuario en curso
 
 function setupAutoUpdater() {
   // Solo funciona en la app compilada, no en desarrollo
   if (!canAutoUpdate()) return
 
-  autoUpdater.autoDownload = true
-  autoUpdater.autoInstallOnAppQuit = true
+  // Descarga manual: solo avisamos y dejamos que el usuario la pida
+  autoUpdater.autoDownload = false
+  autoUpdater.autoInstallOnAppQuit = false
 
   // Comprueba al arrancar (5s de delay para que cargue la UI primero)
   updateCheckTimer = setTimeout(() => autoUpdater.checkForUpdates(), 5000)
@@ -27,10 +30,21 @@ function setupAutoUpdater() {
   updateCheckInterval = setInterval(() => autoUpdater.checkForUpdates(), 4 * 60 * 60 * 1000)
 
   autoUpdater.on('update-available', (info) => {
+    hasUpdate = true
+    manualCheck = false
     getMainWindow()?.webContents.send('update-status', {
       status: 'available',
       version: info.version,
       releaseNotes: info.releaseNotes || null
+    })
+  })
+
+  autoUpdater.on('update-not-available', (info) => {
+    hasUpdate = false
+    manualCheck = false
+    getMainWindow()?.webContents.send('update-status', {
+      status: 'latest',
+      version: info?.version || app.getVersion()
     })
   })
 
@@ -49,8 +63,13 @@ function setupAutoUpdater() {
   })
 
   autoUpdater.on('error', (err) => {
-    // silencioso — no molestamos al usuario si falla la comprobación
     console.error('AutoUpdater error:', err.message)
+    // Solo avisamos si el usuario pidió la comprobación o ya sabemos que hay
+    // actualización: una comprobación rutinaria fallida no debe borrar ese estado.
+    if (manualCheck || hasUpdate) {
+      manualCheck = false
+      getMainWindow()?.webContents.send('update-status', { status: 'error' })
+    }
   })
 }
 
@@ -61,11 +80,20 @@ function stopUpdater() {
 
 function registerUpdaterIpc() {
   ipcMain.handle('update:check', () => {
-    if (canAutoUpdate()) autoUpdater.checkForUpdates()
+    if (!canAutoUpdate()) return { ok: true, status: 'dev' }
+    manualCheck = true
+    autoUpdater.checkForUpdates().catch(() => {})
+    return { ok: true, status: 'checking' }
+  })
+  ipcMain.handle('update:download', () => {
+    if (!canAutoUpdate()) return { ok: false, error: 'dev' }
+    autoUpdater.downloadUpdate().catch(() => {})
     return { ok: true }
   })
   ipcMain.handle('update:install', () => {
+    if (!canAutoUpdate()) return { ok: false, error: 'dev' }
     autoUpdater.quitAndInstall(true, true)
+    return { ok: true }
   })
 }
 
