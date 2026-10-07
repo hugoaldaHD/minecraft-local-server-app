@@ -1110,14 +1110,18 @@ code {
 .update-btn::after {
   content: '';
   position: absolute;
-  top: 4px;
-  right: 4px;
+  top: 10px;
+  right: 10px;
   width: 7px;
   height: 7px;
   border-radius: 50%;
   background: var(--accent2);
   border: 1px solid var(--bg1);
   animation: update-pulse 1.4s ease-in-out infinite;
+}
+
+.update-btn:hover {
+  color: var(--accent2);
 }
 
 @keyframes update-pulse {
@@ -1519,12 +1523,29 @@ code {
 }
 
 .set-row-counts {
-  max-width: 50%;
+  max-width: 55%;
 }
 
+/* Recuento de eventos: caja propia con aire en vez de texto pegado */
 .set-row-counts .diag-rows {
+  min-width: 250px;
+  max-width: 100%;
   max-height: 170px;
   overflow-y: auto;
+  gap: 4px;
+  background: var(--bg0);
+  border: 2px solid var(--line);
+  border-radius: var(--radius);
+  padding: 6px 12px;
+}
+
+.set-row-counts .diag-row {
+  padding: 5px 0;
+  gap: 12px;
+}
+
+.set-row-counts .diag-note {
+  padding: 4px 0;
 }
 
 /* Bloques de contenido dentro de un panel */
