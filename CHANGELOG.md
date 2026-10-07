@@ -3,6 +3,10 @@
 Historial de versiones de **Minecraft Local Server Manager**, reconstruido a partir
 de los tags y commits del repositorio. Formato de [Keep a Changelog](https://keepachangelog.com/es/1.1.0/).
 
+## v1.6.6 - Language fixed (2026-10-07)
+
+- Language moved into general settings.
+
 ## v1.6.5 - Analytics styles fixed (2026-10-07)
 
 - .set-row-data → flex-direction: column con gap: 12px: el bloque de analytics queda debajo del título «Analytics anónimos», no a la derecha pegado.
