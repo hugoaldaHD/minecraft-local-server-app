@@ -3,6 +3,10 @@
 Historial de versiones de **Minecraft Local Server Manager**, reconstruido a partir
 de los tags y commits del repositorio. Formato de [Keep a Changelog](https://keepachangelog.com/es/1.1.0/).
 
+## v1.6.4 - Styles fixed (2026-10-07)
+
+- Margenes de tanto el botón de descargar actualización como instalarla ajustados.
+
 ## v1.6.3 - Navigation fixed (2026-10-07)
 
 - Pestaña de Actualizaciones. Verificación: ESLint 0 errores, `npm run build` (instalador NSIS), paridad i18n (0 claves usadas sin definir, 0 `upd.*` sin usar, es/en idénticos) y smoke por CDP: sin banner, badge ⬇ con punto de 7 px y animación `update-pulse`, estados simulados (available → downloading 42% → ready → latest) con botones/progreso/notas correctos, clic en el badge abre Ajustes → Actualizaciones, sin `<missing:>` ni excepciones; métricas en oscuro y claro sin desbordamiento y con los tokens de color correctos.
