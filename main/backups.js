@@ -3,7 +3,7 @@ const path = require('path')
 const fs = require('fs')
 const archiver = require('archiver')
 const schedule = require('node-schedule')
-const { getAllServersMap, getServerSettings } = require('./stores')
+const { getAllServersMap, getServerSettings, getGlobalBackupDir } = require('./stores')
 const { getMainWindow, activeServers } = require('./state')
 const { trackEvent } = require('./analytics')
 const { logCrash } = require('./crash')
@@ -74,6 +74,18 @@ function deleteBackupFile(filePath) {
 // ─── Backup automático (node-schedule) ───────────────────────────────────────
 function intervalToMs(interval) { return AUTO_INTERVALS[interval] || AUTO_INTERVALS['6h'] }
 
+// Carpeta de destino resuelta: preferencia por servidor (legado) → ajuste
+// global → <carpeta del servidor>/backups
+function resolveBackupDir(serverId) {
+  const settings = getServerSettings(serverId)
+  if (isStr(settings.autoBackupDir) && settings.autoBackupDir) return settings.autoBackupDir
+  const global = getGlobalBackupDir()
+  if (global) return global
+  const server = getAllServersMap()[serverId]
+  if (server && isStr(server.jarPath)) return path.join(path.dirname(path.resolve(server.jarPath)), 'backups')
+  return ''
+}
+
 function cancelAutoBackup(serverId) {
   const job = autoBackupJobs[serverId]
   if (job) { job.cancel(); delete autoBackupJobs[serverId] }
@@ -89,7 +101,7 @@ function scheduleAutoBackup(serverId) {
 
   const ms = intervalToMs(settings.autoBackupInterval)
   const serverDir = path.dirname(path.resolve(server.jarPath))
-  const backupDir = isStr(settings.autoBackupDir) ? settings.autoBackupDir : path.join(serverDir, 'backups')
+  const backupDir = resolveBackupDir(serverId)
 
   const run = async () => {
     try {
@@ -122,6 +134,7 @@ function registerBackupsIpc() {
   ipcMain.handle('backup:create', (_, { serverDir, backupDir } = {}) => createBackup(serverDir, backupDir))
   ipcMain.handle('backup:list', (_, backupDir) => listBackups(backupDir))
   ipcMain.handle('backup:delete', (_, filePath) => deleteBackupFile(filePath))
+  ipcMain.handle('backup:dir', (_, serverId) => resolveBackupDir(serverId))
 }
 
-module.exports = { registerBackupsIpc, createBackup, scheduleAutoBackup, cancelAutoBackup, initAutoBackups }
+module.exports = { registerBackupsIpc, createBackup, scheduleAutoBackup, cancelAutoBackup, initAutoBackups, resolveBackupDir }

@@ -3,6 +3,16 @@ const path = require('path')
 const { activeServers, setMainWindow, getMainWindow } = require('./state')
 const { stopAllServers } = require('./servers')
 const { canOpenPath, rememberPickedDir } = require('./validate')
+const { settingsStore } = require('./stores')
+
+// Fondo nativo según el tema elegido en Ajustes (evita el flash blanco/negro)
+const THEME_BG = { dark: '#141815', light: '#efe8d2' }
+function currentBackgroundColor() {
+  return THEME_BG[settingsStore.get('theme')] || THEME_BG.dark
+}
+function applyWindowTheme() {
+  getMainWindow()?.setBackgroundColor(currentBackgroundColor())
+}
 
 let forceClosing = false
 
@@ -30,7 +40,7 @@ function createWindow() {
     width: 1280, height: 800, minWidth: 1024, minHeight: 640,
     title: 'Minecraft Manager',
     icon: path.join(__dirname, '..', 'assets', process.platform === 'win32' ? 'icon.ico' : 'icon.png'),
-    backgroundColor: '#141815',
+    backgroundColor: currentBackgroundColor(),
     webPreferences: {
       preload: path.join(__dirname, '..', 'preload.js'),
       contextIsolation: true, nodeIntegration: false
@@ -88,4 +98,4 @@ function registerWindowIpc() {
   })
 }
 
-module.exports = { createWindow, registerWindowIpc, quitWhenServersStopped }
+module.exports = { createWindow, registerWindowIpc, quitWhenServersStopped, applyWindowTheme }

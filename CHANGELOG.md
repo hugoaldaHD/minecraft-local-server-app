@@ -3,6 +3,14 @@
 Historial de versiones de **Minecraft Local Server Manager**, reconstruido a partir
 de los tags y commits del repositorio. Formato de [Keep a Changelog](https://keepachangelog.com/es/1.1.0/).
 
+## Sin publicar (2026-10-07)
+
+- Perfiles locales eliminados | pantalla de perfiles, `main/auth.js` y los canales `users:*`/`auth:*` fuera del proyecto; `servers:list`/`servers:create` dejan de recibir `userId`; evento `profile_created` retirado (`src/index.html`, `src/renderer.js`, `preload.js`, `main/`).
+- Diagnóstico como pantalla propia | sección de **Ajustes** (información, analytics, errores y "Limpiar errores") con acceso desde ⚙ en la titlebar; el selector ES/EN deja la titlebar y pasa a Ajustes (`src/index.html`, `src/renderer.js`).
+- Carpeta de backups por servidor → global | clave `backupDir` en `settingsStore` con IPC `prefs:get`/`prefs:set` (allowlist `backupDir`/`theme`) y migración en el arranque de la primera `autoBackupDir` existente; `resolveBackupDir` resuelve `autoBackupDir` → global → `<jar>/backups` y la pestaña Copias solo la muestra (`main/index.js`, `main/backups.js`, `src/renderer.js`).
+- Tema fijo oscuro | tema claro/oscuro con `:root[data-theme='light']` en `tokens.css`, persistido en `localStorage['app-theme']` y reflejado en el fondo de la ventana (`applyWindowTheme`) (`src/css/tokens.css`, `main/window.js`).
+- CSS/i18n huérfanos de perfiles y Diagnóstico | selectores, claves y estilos de respaldo retirados; `users.json` de datos antiguos deja de leerse.
+
 ## v1.5.3 - Logo Fixed (2026-10-07)
 
 - New logo fixed.

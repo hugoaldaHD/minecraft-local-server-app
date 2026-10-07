@@ -215,20 +215,16 @@ function sanitizeServerFields(input) {
 }
 
 function registerServersIpc() {
-  ipcMain.handle('servers:list', (_, userId) => {
-    if (!isStr(userId)) return []
-    return Object.values(getAllServersMap()).filter(s => s.userId === userId)
-  })
+  ipcMain.handle('servers:list', () => Object.values(getAllServersMap()))
 
   ipcMain.handle('servers:create', (_, input) => {
-    if (!isPlainObject(input) || !isStr(input.userId)) return { ok: false, error: 'Datos inválidos' }
+    if (!isPlainObject(input)) return { ok: false, error: 'Datos inválidos' }
     const fields = sanitizeServerFields(input)
     if (!isStr(fields.jarPath)) return { ok: false, error: 'Selecciona el archivo .jar' }
     const map = getAllServersMap()
     const id = crypto.randomUUID()
     map[id] = {
       id,
-      userId: input.userId,
       name: fields.name || 'Servidor',
       jarPath: fields.jarPath,
       javaPath: fields.javaPath ?? null,
@@ -247,7 +243,7 @@ function registerServersIpc() {
     if (!isStr(serverId) || !isPlainObject(data)) return { ok: false, error: 'Datos inválidos' }
     const map = getAllServersMap()
     if (!map[serverId]) return { ok: false, error: 'Servidor no encontrado' }
-    // Solo campos editables: id/userId/createdAt no se pueden sobrescribir
+    // Solo campos editables: id/createdAt no se pueden sobrescribir
     map[serverId] = { ...map[serverId], ...sanitizeServerFields(data) }
     saveServerMap(map)
     return { ok: true, server: map[serverId] }

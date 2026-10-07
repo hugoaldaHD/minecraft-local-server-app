@@ -101,7 +101,7 @@ Releases are cut with `npm run release`; see [RELEASE_GUIDE.md](RELEASE_GUIDE.md
 | ------------------- | -------------------------------------------------------------------------- |
 | `main/index.js`     | Entry point of the main process: IPC registration and app lifecycle        |
 | `main/state.js`     | Shared main-process state (window reference, active servers)               |
-| `main/stores.js`    | `electron-store` instances: users, servers, settings, analytics, crashes   |
+| `main/stores.js`    | `electron-store` instances: servers, settings, analytics, crashes          |
 | `main/validate.js`  | Validation of IPC payloads and allow-lists for paths from the renderer     |
 | `main/servers.js`   | Create/start/stop servers, console commands, player management             |
 | `main/properties.js`| `server.properties` and whitelist/banlist/ops editing                      |
@@ -109,7 +109,6 @@ Releases are cut with `npm run release`; see [RELEASE_GUIDE.md](RELEASE_GUIDE.md
 | `main/window.js`    | `BrowserWindow` creation, navigation guards, window IPC                    |
 | `main/updater.js`   | Auto-update via `electron-updater` (AppImage only on Linux)                |
 | `main/stats.js`     | CPU/RAM polling (`systeminformation`)                                      |
-| `main/auth.js`      | Local profiles (name, avatar, colour), stored on disk                      |
 | `main/analytics.js` | Consent-gated anonymous usage events (see [Privacy](#privacy))             |
 | `main/crash.js`     | Local log of uncaught errors and unhandled rejections                      |
 | `preload.js`        | `contextBridge` API exposed to the renderer as `window.api`                |
@@ -146,22 +145,21 @@ leave your machine. Usage analytics are optional and **off by default**.
   The default value is "not consented", and on first run the app shows a
   consent screen before you can continue.
 - Declining deletes any locally stored analytics events.
-- You can change your choice at any time from the **Diagnóstico** screen
-  (Diagnostics) with the "Envío de datos anónimos" toggle.
+- You can change your choice at any time from the **Ajustes** (Settings)
+  screen with the "Envío de datos anónimos" toggle.
 
 ### What is collected after you opt in
 
 - An anonymous installation ID: a random UUID generated on first run, with no
   personal data attached.
 - App version, platform, architecture and OS release.
-- Technical events: `app_launch`, `profile_created`, `server_created`,
-  `server_started`, `server_stopped`, `backup_created` and
-  `analytics_enabled`.
+- Technical events: `app_launch`, `server_created`, `server_started`,
+  `server_stopped`, `backup_created` and `analytics_enabled`.
 - Small technical values attached to some events (for example server startup
   time, uptime or backup size in MB).
 
-Profile names, server names, IPs, player names, console output and any other
-personal data are never collected.
+Server names, IPs, player names, console output and any other personal data
+are never collected.
 
 ### Where the data goes
 
@@ -172,7 +170,7 @@ personal data are never collected.
 - With no endpoint configured, events are kept locally in `analytics.json`
   inside the app data folder, limited to the 500 most recent ones.
 - Crash reports are always written locally to `crashes.json` in the same
-  folder (last 100 entries) and can be cleared from the Diagnostics screen.
+  folder (last 100 entries) and can be cleared from the Settings screen.
   They are only sent if a separate `crashEndpoint` is configured; the app
   provides no UI for that setting.
 

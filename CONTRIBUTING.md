@@ -9,11 +9,11 @@ fixes, small features and documentation.
 Open an issue on the [issue tracker](https://github.com/hugoaldaHD/minecraft-local-server-app/issues)
 and include:
 
-- App version (shown on the profiles screen, or in the release tag you use).
+- App version (shown under **Ajustes** → Información, or in the release tag you use).
 - OS and version (Windows 10/11, distro and kernel on Linux) and Java version.
 - Steps to reproduce, expected behaviour and actual behaviour.
-- Any error text. Crash reports are listed in the app under **Diagnóstico**
-  (Diagnostics) and stored in `crashes.json` inside the app data folder —
+- Any error text. Crash reports are listed in the app under **Ajustes**
+  (Settings) and stored in `crashes.json` inside the app data folder —
   paste the relevant message or stack trace.
 
 Search the existing issues first, and use the latest release if you can.

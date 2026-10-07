@@ -1,13 +1,8 @@
 const { contextBridge, ipcRenderer } = require('electron')
 
 contextBridge.exposeInMainWorld('api', {
-  // Auth
-  register: (d) => ipcRenderer.invoke('auth:register', d),
-  listUsers: () => ipcRenderer.invoke('auth:listUsers'),
-  deleteUser: (d) => ipcRenderer.invoke('auth:deleteUser', d),
-
   // Servers CRUD
-  listServers: (userId) => ipcRenderer.invoke('servers:list', userId),
+  listServers: () => ipcRenderer.invoke('servers:list'),
   createServer: (d) => ipcRenderer.invoke('servers:create', d),
   updateServer: (d) => ipcRenderer.invoke('servers:update', d),
   deleteServer: (id) => ipcRenderer.invoke('servers:delete', id),
@@ -31,10 +26,15 @@ contextBridge.exposeInMainWorld('api', {
   createBackup: (sd, bd) => ipcRenderer.invoke('backup:create', { serverDir: sd, backupDir: bd }),
   listBackups: (bd) => ipcRenderer.invoke('backup:list', bd),
   deleteBackup: (p) => ipcRenderer.invoke('backup:delete', p),
+  getBackupDir: (serverId) => ipcRenderer.invoke('backup:dir', serverId),
 
   // Settings
   getSettings: (serverId) => ipcRenderer.invoke('settings:get', serverId),
   saveSettings: (serverId, data) => ipcRenderer.invoke('settings:set', { serverId, data }),
+
+  // Preferencias globales (Ajustes)
+  getPref: (key) => ipcRenderer.invoke('prefs:get', key),
+  setPref: (key, value) => ipcRenderer.invoke('prefs:set', { key, value }),
 
   // Auto-updater
   checkUpdate: () => ipcRenderer.invoke('update:check'),

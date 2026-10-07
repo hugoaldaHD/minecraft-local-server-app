@@ -30,14 +30,9 @@
       </span>
     </div>
     <div class="titlebar-right">
-      <button class="wbtn" id="lang-es" title="Español" data-i18n-title="lang.spanish">ES</button>
-      <button class="wbtn" id="lang-en" title="English" data-i18n-title="lang.english">EN</button>
       <button class="wbtn update-btn hidden" id="btn-update-notify" title="Actualización disponible" data-i18n-title="update.notifyTitle"
         data-i18n="update.notifyBtn">↑ Actualizar</button>
-      <div class="user-chip hidden" id="user-chip">
-        <div class="user-avatar-sm" id="user-avatar-sm">?</div>
-        <span id="user-chip-name"></span>
-      </div>
+      <button class="wbtn" id="btn-settings" title="Ajustes" data-i18n-title="settings.title">⚙</button>
       <button class="wbtn" id="btn-min">─</button>
       <button class="wbtn" id="btn-max" title="Maximizar" data-i18n-title="win.maximize">☐</button>
       <button class="wbtn danger" id="btn-close">✕</button>
@@ -81,49 +76,14 @@
     </div>
   </div>
 
-  <!-- ══ SCREEN: PROFILES ══════════════════════════════════════════════════════════ -->
-  <div class="screen" id="screen-profiles">
-    <div class="profiles-bg">
-      <div class="profiles-header">
-        <h1 class="profiles-title">Minecraft Local Server Manager</h1>
-        <p class="profiles-version" id="profiles-version-label"></p>
-      </div>
-      <p class="profiles-subtitle" data-i18n="profiles.select">Selecciona un perfil para continuar</p>
-      <div class="profiles-grid" id="profiles-grid"></div>
-      <div class="new-profile-section" id="new-profile-section">
-        <button class="btn-new-profile" id="btn-show-new-profile" data-i18n="profiles.new">Nuevo perfil</button>
-
-        <div class="new-profile-form hidden" id="new-profile-form">
-          <h3 class="npf-title" data-i18n="profiles.create">Crear perfil</h3>
-          <div class="field">
-            <label data-i18n="profiles.nameLabel">Nombre del perfil</label>
-            <input type="text" id="npf-name" placeholder="Nombre del perfil" data-i18n-placeholder="profiles.nameLabel"
-              autocomplete="off" maxlength="24" />
-          </div>
-          <div class="field">
-            <label data-i18n="profiles.avatarLabel">Elige un avatar</label>
-            <div class="avatar-picker" id="avatar-picker"></div>
-          </div>
-          <p class="auth-error" id="npf-error"></p>
-          <div class="npf-actions">
-            <button class="btn-secondary" id="btn-cancel-npf" data-i18n="common.cancel">Cancelar</button>
-            <button class="btn-auth" id="btn-create-profile" data-i18n="profiles.create">Crear perfil</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- ══ SCREEN: SERVER LIST ══════════════════════════════════════════════════════════ -->
   <div class="screen" id="screen-servers">
     <div class="servers-header">
-      <button class="btn-back" id="btn-back-profiles" data-i18n="nav.profiles">Perfiles</button>
       <div class="servers-header-title">
         <h1 class="servers-title" id="servers-title" data-i18n="servers.title">Mis servidores</h1>
         <p class="servers-sub" id="servers-sub" data-i18n="common.loading">Cargando...</p>
       </div>
       <div class="servers-header-right">
-        <button class="btn-secondary" id="btn-diagnostics" data-i18n="nav.diagnostics">Diagnóstico</button>
         <button class="btn-new-server" id="btn-new-server" data-i18n="servers.add">Añadir servidor</button>
       </div>
     </div>
@@ -228,6 +188,7 @@
       </div>
       <div class="backup-auto-config">
         <h3 data-i18n="backups.auto">Backup automático</h3>
+        <p class="field-hint" data-i18n="backups.dirHint">La carpeta de destino se configura en Ajustes.</p>
         <div class="auto-backup-row">
           <label class="toggle-wrap"><input type="checkbox" id="auto-backup-enabled" /><span
               data-i18n="backups.enable">Activar</span></label>
@@ -237,9 +198,6 @@
             <option value="12h" data-i18n="backups.every12h">Cada 12 horas</option>
             <option value="24h" data-i18n="backups.daily">Una vez al día</option>
           </select>
-          <input type="text" id="auto-backup-dir" placeholder="Carpeta de backups" data-i18n-placeholder="backups.dirPlaceholder"
-            readonly />
-          <button id="btn-backup-dir">📁</button>
           <button class="btn-primary" id="btn-save-auto" data-i18n="common.save">Guardar</button>
         </div>
       </div>
@@ -280,17 +238,45 @@
     </div>
   </div>
 
-  <!-- ══ SCREEN: DIAGNOSTICS ════════════════════════════════════════════════════ -->
-  <div class="screen" id="screen-diagnostics">
+  <!-- ══ SCREEN: SETTINGS ════════════════════════════════════════════════════ -->
+  <div class="screen" id="screen-settings">
     <div class="servers-header">
-      <button class="btn-back" id="btn-diag-back-servers" data-i18n="nav.servers">Servidores</button>
+      <button class="btn-back" id="btn-settings-back" data-i18n="nav.servers">Servidores</button>
       <div class="servers-header-title">
-        <h1 class="servers-title" data-i18n="diag.title">Diagnóstico</h1>
-        <p class="servers-sub" data-i18n="diag.subtitle">Estado de la aplicación, errores y analytics</p>
+        <h1 class="servers-title" data-i18n="settings.title">Ajustes</h1>
+        <p class="servers-sub" data-i18n="settings.subtitle">Preferencias de la aplicación</p>
       </div>
-      <button class="btn-secondary" id="btn-clear-crashes" data-i18n="diag.clearErrors">Limpiar errores</button>
+      <div class="servers-header-right">
+        <button class="btn-secondary" id="btn-clear-crashes" data-i18n="diag.clearErrors">Limpiar errores</button>
+      </div>
     </div>
     <div class="diag-grid">
+      <div class="diag-card diag-card-wide">
+        <h3 data-i18n="settings.general">General</h3>
+        <div class="field-group">
+          <label data-i18n="settings.backupsDir">Carpeta de backups</label>
+          <div class="field-row">
+            <input type="text" id="set-backup-dir" readonly placeholder="Carpeta de backups"
+              data-i18n-placeholder="backups.dirPlaceholder" />
+            <button id="btn-set-backup-dir">📁</button>
+          </div>
+          <p class="field-hint" data-i18n="settings.backupsDirHint">Se usa en todos los servidores.</p>
+        </div>
+        <div class="field-group">
+          <label data-i18n="settings.theme">Tema</label>
+          <div class="seg-options" id="theme-options">
+            <button class="seg-opt" data-theme-value="dark" data-i18n="settings.themeDark">Oscuro</button>
+            <button class="seg-opt" data-theme-value="light" data-i18n="settings.themeLight">Claro</button>
+          </div>
+        </div>
+        <div class="field-group">
+          <label data-i18n="settings.language">Idioma</label>
+          <div class="seg-options" id="lang-options">
+            <button class="seg-opt" data-lang-value="es">Español</button>
+            <button class="seg-opt" data-lang-value="en">English</button>
+          </div>
+        </div>
+      </div>
       <div class="diag-card">
         <h3 data-i18n="diag.info">Información</h3>
         <div class="diag-rows" id="diag-info"></div>

@@ -4,7 +4,6 @@
 const T = (k, v) => I18N.t(k, v)
 
 const state = {
-  currentUser: null,
   currentServerId: null,
   currentServerDir: null,
   servers: [],
@@ -19,7 +18,6 @@ const state = {
 
 const MAX_LINES = 2000
 const SERVER_COLORS = ['#6cb43f', '#8fd14f', '#e5c454', '#e2685c', '#8fd1ff', '#3f7d24', '#cfc6a8', '#97a48f']
-const AVATARS = ['🧑', '👨‍💻', '🧙', '⚔️', '🏹', '🛡️', '🐉', '🦄', '🌋', '🌊', '🔥', '⭐']
 const IMPORTANT_PROPS = ['server-port', 'max-players', 'level-name', 'gamemode', 'difficulty', 'pvp', 'online-mode', 'white-list', 'motd', 'view-distance', 'simulation-distance', 'allow-flight', 'enable-command-block', 'level-seed', 'spawn-protection', 'level-type', 'op-permission-level']
 
 function safeColor(c) {
@@ -72,29 +70,31 @@ window.addEventListener('unhandledrejection', (e) => {
   console.error(T('log.unhandledRejection'), e.reason)
 })
 
+// ─── Tema (claro/oscuro): se aplica antes del primer pintado ─────────────────
+const THEME_KEY = 'app-theme'
+function currentTheme() {
+  const saved = localStorage.getItem(THEME_KEY)
+  return saved === 'light' ? 'light' : 'dark'
+}
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme
+  localStorage.setItem(THEME_KEY, theme)
+}
+applyTheme(currentTheme())
+
 document.addEventListener('DOMContentLoaded', async () => {
   initTitlebar()
   initEvents()
   initDelegates()
   initModal()
-  renderAvatarPicker()
   renderColorOptions('ms-color-options', null)
   initUpdateBanner()
-  initDiagnostics()
-
-  // Show version on profiles screen
-  const ver = await run(T('run.version'), () => window.api.getVersion(), '')
-  const lbl = document.getElementById('profiles-version-label')
-  if (lbl && ver) lbl.textContent = `v${ver}`
+  initSettings()
 
   // First run: check analytics consent
   const consent = await run(T('run.consent'), () => window.api.getAnalyticsConsent(), undefined)
-  if (consent === null) {
-    showScreen('consent')
-  } else {
-    initProfiles()
-    showScreen('profiles')
-  }
+  if (consent === null) showScreen('consent')
+  else showScreen('servers')
 
   // ─── Update banner ────────────────────────────────────────────────────────────
   function initUpdateBanner() {
@@ -167,11 +167,8 @@ function initTitlebar() {
   document.getElementById('btn-min').onclick = () => window.api.minimize()
   document.getElementById('btn-max').onclick = () => window.api.maximize()
   document.getElementById('btn-close').onclick = () => window.api.close()
-  document.getElementById('btn-back-profiles').onclick = () => showScreen('profiles')
+  document.getElementById('btn-settings').onclick = () => showScreen('settings')
   document.getElementById('btn-back-servers').onclick = () => showScreen('servers')
-  document.getElementById('lang-es').onclick = () => I18N.setLang('es')
-  document.getElementById('lang-en').onclick = () => I18N.setLang('en')
-  updateLangButtons()
   window.api.onMaximized((isMaximized) => {
     state.maximized = isMaximized
     document.getElementById('btn-max').textContent = isMaximized ? '🗗' : '☐'
@@ -184,32 +181,8 @@ function updateMaxTitle() {
   document.getElementById('btn-max').title = state.maximized ? T('win.restore') : T('win.maximize')
 }
 
-function updateLangButtons() {
-  const active = I18N.getLang()
-  const codes = ['es', 'en']
-  codes.forEach(code => {
-    const btn = document.getElementById(`lang-${code}`)
-    if (!btn) return
-    const on = code === active
-    btn.style.color = on ? 'var(--accent)' : ''
-    btn.setAttribute('aria-pressed', on ? 'true' : 'false')
-  })
-}
-
 // ─── Delegación de eventos (sin onclick inline: requerido por la CSP) ────────
 function initDelegates() {
-  document.getElementById('profiles-grid').addEventListener('click', (e) => {
-    const card = e.target.closest('.profile-card')
-    if (!card) return
-    if (e.target.closest('.pcard-delete')) deleteProfile(card.dataset.userId)
-    else selectProfile(card.dataset.userId)
-  })
-
-  document.getElementById('avatar-picker').addEventListener('click', (e) => {
-    const opt = e.target.closest('.av-opt')
-    if (opt) selectAvatar(opt)
-  })
-
   document.querySelectorAll('.color-options').forEach(container => {
     container.addEventListener('click', (e) => {
       const opt = e.target.closest('.color-opt')
@@ -247,29 +220,61 @@ function initDelegates() {
 // ─── Analytics consent ────────────────────────────────────────────────────────
 document.getElementById('btn-consent-yes').onclick = async () => {
   await run(T('run.consent'), () => window.api.setAnalyticsConsent(true))
-  initProfiles()
-  showScreen('profiles')
+  showScreen('servers')
 }
 document.getElementById('btn-consent-no').onclick = async () => {
   await run(T('run.consent'), () => window.api.setAnalyticsConsent(false))
-  initProfiles()
-  showScreen('profiles')
+  showScreen('servers')
 }
 
-// ─── Diagnostics ──────────────────────────────────────────────────────────────
-function initDiagnostics() {
-  document.getElementById('btn-diagnostics').onclick = () => showScreen('diagnostics')
-  document.getElementById('btn-diag-back-servers').onclick = () => showScreen('servers')
+// ─── Ajustes ─────────────────────────────────────────────────────────────────
+function initSettings() {
+  document.getElementById('btn-settings-back').onclick = () => showScreen('servers')
   document.getElementById('btn-clear-crashes').onclick = async () => {
     await run(T('run.clearErrors'), () => window.api.clearCrashes())
-    loadDiagnostics()
+    loadSettings()
   }
   document.getElementById('diag-analytics-toggle').onchange = async (e) => {
     await run(T('run.consent'), () => window.api.setAnalyticsConsent(e.target.checked))
+    loadSettings()
   }
+  document.getElementById('btn-set-backup-dir').onclick = async () => {
+    const p = await run(T('run.pickDir'), () => window.api.openDirDialog())
+    if (!p) return
+    const res = await run(T('run.saveBackupSettings'), () => window.api.setPref('backupDir', p))
+    if (res && res.ok) document.getElementById('set-backup-dir').value = p
+  }
+  document.getElementById('theme-options').addEventListener('click', (e) => {
+    const opt = e.target.closest('.seg-opt')
+    if (opt) setTheme(opt.dataset.themeValue)
+  })
+  document.getElementById('lang-options').addEventListener('click', (e) => {
+    const opt = e.target.closest('.seg-opt')
+    if (opt) I18N.setLang(opt.dataset.langValue)
+  })
 }
 
-async function loadDiagnostics() {
+function setTheme(theme) {
+  if (theme !== 'light' && theme !== 'dark') return
+  if (currentTheme() === theme) return
+  applyTheme(theme)
+  updateSettingsSeg()
+  run(T('run.settings'), () => window.api.setPref('theme', theme))
+}
+
+function updateSettingsSeg() {
+  const theme = currentTheme()
+  document.querySelectorAll('#theme-options .seg-opt').forEach(b => b.classList.toggle('selected', b.dataset.themeValue === theme))
+  const lang = I18N.getLang()
+  document.querySelectorAll('#lang-options .seg-opt').forEach(b => b.classList.toggle('selected', b.dataset.langValue === lang))
+}
+
+async function loadSettings() {
+  updateSettingsSeg()
+
+  const prefDir = await run(T('run.settings'), () => window.api.getPref('backupDir'), '')
+  document.getElementById('set-backup-dir').value = prefDir || ''
+
   const stats = await run(T('run.diagnostics'), () => window.api.getAnalyticsStats(), {})
   const crashes = await run(T('run.diagnostics'), () => window.api.getCrashes(), [])
   const version = await run(T('run.diagnostics'), () => window.api.getVersion(), '')
@@ -322,19 +327,12 @@ function showScreen(name) {
   document.getElementById(`screen-${name}`).classList.add('active')
 
   const stats = document.getElementById('titlebar-stats')
-  const userChip = document.getElementById('user-chip')
+  if (name === 'consent' || name === 'settings') stats.classList.add('hidden')
+  else stats.classList.remove('hidden')
 
-  if (name === 'profiles' || name === 'consent') {
-    stats.classList.add('hidden')
-    userChip.classList.add('hidden')
-  } else if (name === 'servers' || name === 'diagnostics') {
-    stats.classList.remove('hidden')
-    state.currentServerId = null
-    if (name === 'servers') refreshServersGrid()
-    if (name === 'diagnostics') loadDiagnostics()
-  } else if (name === 'detail') {
-    stats.classList.remove('hidden')
-  }
+  if (name === 'servers' || name === 'settings') state.currentServerId = null
+  if (name === 'servers') refreshServersGrid()
+  if (name === 'settings') loadSettings()
 }
 
 // ─── Events from main ─────────────────────────────────────────────────────────
@@ -379,118 +377,14 @@ function initEvents() {
   })
 }
 
-// ─── Profiles ─────────────────────────────────────────────────────────────────
-function initProfiles() {
-  renderAvatarPicker()
-
-  document.getElementById('btn-show-new-profile').onclick = () => {
-    document.getElementById('btn-show-new-profile').classList.add('hidden')
-    document.getElementById('new-profile-form').classList.remove('hidden')
-    document.getElementById('npf-name').focus()
-  }
-
-  document.getElementById('btn-cancel-npf').onclick = () => {
-    document.getElementById('new-profile-form').classList.add('hidden')
-    document.getElementById('btn-show-new-profile').classList.remove('hidden')
-    document.getElementById('npf-name').value = ''
-    document.getElementById('npf-error').textContent = ''
-  }
-
-  document.getElementById('btn-create-profile').onclick = doCreateProfile
-  document.getElementById('npf-name').onkeydown = e => { if (e.key === 'Enter') doCreateProfile() }
-
-  loadProfilesGrid()
-}
-
-async function loadProfilesGrid() {
-  const users = await run(T('run.loadProfiles'), () => window.api.listUsers(), [])
-  const grid = document.getElementById('profiles-grid')
-  const subtitle = document.querySelector('.profiles-subtitle')
-
-  if (!users.length) {
-    grid.textContent = ''
-    subtitle.textContent = T('profiles.createFirst')
-    return
-  }
-
-  subtitle.textContent = T('profiles.select')
-  fill(grid, ...users.map(u => h('div', { class: 'profile-card', id: `pcard-${u.id}`, 'data-user-id': u.id },
-    h('div', { class: 'pcard-avatar', text: u.avatar || '🧑' }),
-    h('div', { class: 'pcard-name', text: u.username }),
-    h('div', { class: 'pcard-servers', text: T('profiles.serverCount', { count: u.serverCount ?? 0 }) }),
-    h('button', { class: 'pcard-delete', 'data-user-id': u.id, title: T('profiles.deleteTitle'), text: '✕' })
-  )))
-}
-
-async function selectProfile(userId) {
-  const users = await run(T('run.selectProfile'), () => window.api.listUsers(), [])
-  const user = users.find(u => u.id === userId)
-  if (!user) return
-  onLogin(user)
-}
-
-async function deleteProfile(userId) {
-  const users = await run(T('run.deleteProfile'), () => window.api.listUsers(), [])
-  const user = users.find(u => u.id === userId)
-  const name = user ? user.username : ''
-  if (!confirm(T('profiles.deleteConfirm', { name }))) return
-  const res = await run(T('run.deleteProfile'), () => window.api.deleteUser(userId))
-  if (res && res.ok === false) { alert(res.error); return }
-  loadProfilesGrid()
-}
-
-async function doCreateProfile() {
-  const name = document.getElementById('npf-name').value.trim()
-  const err = document.getElementById('npf-error')
-  if (!name) { err.textContent = T('profiles.nameRequired'); return }
-  const selectedAv = document.querySelector('.av-opt.selected')
-  const avatar = selectedAv ? selectedAv.dataset.emoji : '🧑'
-  err.textContent = ''
-  let res = null
-  try {
-    res = await window.api.register({ username: name, avatar })
-  } catch (e) {
-    console.error(`[${T('run.createProfile')}]`, e)
-  }
-  if (!res) { err.textContent = T('profiles.createError'); return }
-  if (!res.ok) { err.textContent = res.error; return }
-  document.getElementById('new-profile-form').classList.add('hidden')
-  document.getElementById('btn-show-new-profile').classList.remove('hidden')
-  document.getElementById('npf-name').value = ''
-  document.querySelector('.av-opt.selected')?.classList.remove('selected')
-  document.querySelector('.av-opt')?.classList.add('selected')
-  onLogin(res.user)
-}
-
-function onLogin(user) {
-  state.currentUser = user
-  document.getElementById('user-chip').classList.remove('hidden')
-  document.getElementById('user-avatar-sm').textContent = user.avatar || '🧑'
-  document.getElementById('user-chip-name').textContent = user.username
-  showScreen('servers')
-}
-
-function renderAvatarPicker() {
-  fill(document.getElementById('avatar-picker'),
-    ...AVATARS.map(e => h('div', { class: 'av-opt', 'data-emoji': e, text: e }))
-  )
-  document.querySelector('.av-opt')?.classList.add('selected')
-}
-
-function selectAvatar(el) {
-  document.querySelectorAll('.av-opt').forEach(a => a.classList.remove('selected'))
-  el.classList.add('selected')
-}
-
 // ─── Server list ──────────────────────────────────────────────────────────────
 async function refreshServersGrid() {
-  if (!state.currentUser) return
-  const servers = await run(T('run.loadServers'), () => window.api.listServers(state.currentUser.id), [])
+  const servers = await run(T('run.loadServers'), () => window.api.listServers(), [])
   const statusAll = await run(T('run.serversStatus'), () => window.api.getStatusAll(), {}) || {}
   state.servers = servers
   const grid = document.getElementById('servers-grid')
   const active = Object.keys(statusAll).length
-  document.getElementById('servers-title').textContent = T('servers.titleOf', { user: state.currentUser.username })
+  document.getElementById('servers-title').textContent = T('servers.title')
   document.getElementById('servers-sub').textContent = T('servers.sub', { count: state.servers.length, active })
 
   if (!state.servers.length) {
@@ -625,7 +519,7 @@ async function saveNewServer() {
   let res = null
   try {
     res = await window.api.createServer({
-      userId: state.currentUser.id, name, jarPath,
+      name, jarPath,
       javaPath: document.getElementById('ms-java').value.trim() || null,
       minRam: parseInt(document.getElementById('ms-min-ram').value) || 1024,
       maxRam: parseInt(document.getElementById('ms-max-ram').value) || 4096,
@@ -976,12 +870,13 @@ async function loadPropertiesTab(server) {
 // ─── Backups ──────────────────────────────────────────────────────────────────
 async function loadBackupsTab(server, settings) {
   const serverDir = serverDirOf(server)
-  if (settings.autoBackupDir) document.getElementById('auto-backup-dir').value = settings.autoBackupDir
   if (settings.autoBackupInterval) document.getElementById('auto-backup-interval').value = settings.autoBackupInterval
   document.getElementById('auto-backup-enabled').checked = !!settings.autoBackupEnabled
 
+  // Carpeta resuelta por main: preferencia global (Ajustes) o <servidor>/backups
+  const dir = await run(T('run.settings'), () => window.api.getBackupDir(state.currentServerId), '') || (serverDir ? serverDir + '/backups' : '')
+
   const refreshList = async () => {
-    const dir = document.getElementById('auto-backup-dir').value
     if (!dir) return
     const res = await run(T('run.listBackups'), () => window.api.listBackups(dir), { backups: [] })
     const backups = (res && res.backups) || []
@@ -1006,13 +901,8 @@ async function loadBackupsTab(server, settings) {
     )))
   }
 
-  document.getElementById('btn-backup-dir').onclick = async () => {
-    const p = await run(T('run.pickDir'), () => window.api.openDirDialog())
-    if (p) { document.getElementById('auto-backup-dir').value = p; refreshList() }
-  }
   document.getElementById('btn-backup-now').onclick = async () => {
-    if (!serverDir) return
-    const dir = document.getElementById('auto-backup-dir').value || serverDir + '/backups'
+    if (!serverDir || !dir) return
     appendLog(T('backups.creating'), 'info')
     if (state.currentServerId) window.api.sendCommand(state.currentServerId, 'save-all')
     let res = null
@@ -1025,7 +915,7 @@ async function loadBackupsTab(server, settings) {
     else appendLog(T('log.error', { msg: res?.error || T('backups.createFailed') }), 'error')
   }
   document.getElementById('btn-save-auto').onclick = async () => {
-    const data = { autoBackupEnabled: document.getElementById('auto-backup-enabled').checked, autoBackupInterval: document.getElementById('auto-backup-interval').value, autoBackupDir: document.getElementById('auto-backup-dir').value }
+    const data = { autoBackupEnabled: document.getElementById('auto-backup-enabled').checked, autoBackupInterval: document.getElementById('auto-backup-interval').value }
     const res = await run(T('run.saveBackupSettings'), () => window.api.saveSettings(state.currentServerId, { ...settings, ...data }))
     if (res && res.ok) appendLog(T('backups.settingsSaved'), 'success')
     else appendLog(T('log.error', { msg: res?.error || T('common.saveSettingsFailed') }), 'error')
@@ -1101,13 +991,11 @@ window.api.onUpdateDownloaded(() => {
 
 // ─── Idioma (ES/EN): repinta lo dinámico al cambiar ──────────────────────────
 I18N.onLangChange(() => {
-  updateLangButtons()
   updateMaxTitle()
   updateDetailBar(state.detailBar[0], state.detailBar[1])
-  if (state.currentUser) refreshServersGrid()
-  loadProfilesGrid()
+  if (document.getElementById('screen-servers').classList.contains('active')) refreshServersGrid()
   if (state.updateInfo) renderUpdateStatus(state.updateInfo)
-  if (document.getElementById('screen-diagnostics').classList.contains('active')) loadDiagnostics()
+  if (document.getElementById('screen-settings').classList.contains('active')) loadSettings()
   if (state.currentServerId) {
     renderPlayers()
     if (state.currentServer) loadListsTab(state.currentServer)

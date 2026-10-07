@@ -1,7 +1,7 @@
 // Validación de payloads y rutas que llegan desde el renderer.
 // Toda operación de FS/proc sobre rutas del renderer pasa por aquí.
 const path = require('path')
-const { getAllServersMap, getServerSettings } = require('./stores')
+const { getAllServersMap, getServerSettings, getGlobalBackupDir } = require('./stores')
 
 const pickedBackupDirs = new Set()
 
@@ -38,10 +38,13 @@ function isServerDir(dir) {
   return getServerDirs().some(d => samePath(n, d))
 }
 
-// Carpetas de backup permitidas: las guardadas en settings, <serverDir>/backups
-// y las elegidas explícitamente mediante el diálogo en esta sesión.
+// Carpetas de backup permitidas: la carpeta global (Ajustes), las guardadas en
+// settings por servidor, <serverDir>/backups y las elegidas explícitamente
+// mediante el diálogo en esta sesión.
 function getBackupDirs() {
   const dirs = []
+  const globalDir = normalize(getGlobalBackupDir())
+  if (globalDir) dirs.push(globalDir)
   Object.values(getAllServersMap()).forEach(s => {
     if (!s) return
     const st = getServerSettings(s.id)

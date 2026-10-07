@@ -116,3 +116,41 @@
   --shadow-lg: 8px 8px 0 var(--dirt);
 }
 
+/* ── Tema claro: misma paleta de la web (pergamino/tierra/hierba) ── */
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  /* Fondos */
+  --bg0: #efe8d2;
+  --bg1: #e8e0c7;
+  --bg2: #f6f1e2;
+  --bg3: #ded5b8;
+
+  /* Acento (verde hierba) */
+  --accent: #3f7d24;
+  --accent2: #4e9130;
+  --accent3: #2f5c19;
+  --accent-ink: #f4fbe9;
+
+  /* Semánticos */
+  --danger: #b8351f;
+  --danger-deep: #8a2413;
+  --danger-text: #a02c19;
+  --warn: #9a7b12;
+  --info: #1f6fb8;
+
+  /* Texto */
+  --text: #232a22;
+  --text2: #5d6655;
+  --text3: #7b8474;
+  --text-inverse: #fff;
+  --win-ink: #2a3127;
+
+  /* Líneas */
+  --line: #cfc6a8;
+  --line2: #b8ac8c;
+
+  /* Tierra: sombra de bloque */
+  --dirt: #c4b48c;
+}
+
