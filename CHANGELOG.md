@@ -3,6 +3,13 @@
 Historial de versiones de **Minecraft Local Server Manager**, reconstruido a partir
 de los tags y commits del repositorio. Formato de [Keep a Changelog](https://keepachangelog.com/es/1.1.0/).
 
+## v1.6.5 - Analytics styles fixed (2026-10-07)
+
+- .set-row-data → flex-direction: column con gap: 12px: el bloque de analytics queda debajo del título «Analytics anónimos», no a la derecha pegado.
+- .set-row-text dentro de esa fila → flex: 0 0 auto (si no, la flex-basis: 240px le daba 240 px de alto en columna y la fila medía 388 px; ahora 185).
+- .set-row-counts → width: 100%; max-width: 100%; margin-left: 0, y la caja .diag-rows a todo el ancho del contenedor (1012 px = 1044 − 2×16 de padding de fila), sin desbordes (huecos de 16/14 px iguales al del resto de filas).
+- Los eventos pasan a rejilla auto-fill minmax(230px, 1fr) → 3 columnas de 308 px en vez de filas de 974 px con la cifra pegada al borde derecho; con scroll a 200 px.
+
 ## v1.6.4 - Styles fixed (2026-10-07)
 
 - Margenes de tanto el botón de descargar actualización como instalarla ajustados.
