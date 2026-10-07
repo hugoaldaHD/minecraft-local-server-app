@@ -23,11 +23,13 @@ function setupAutoUpdater() {
   autoUpdater.autoDownload = false
   autoUpdater.autoInstallOnAppQuit = false
 
-  // Comprueba al arrancar (5s de delay para que cargue la UI primero)
-  updateCheckTimer = setTimeout(() => autoUpdater.checkForUpdates(), 5000)
+  // Comprueba al arrancar (5s de delay para que cargue la UI primero).
+  // El .catch evita que un 404 (release aún sin publicar) acabe como
+  // unhandledRejection en los informes de error.
+  updateCheckTimer = setTimeout(() => autoUpdater.checkForUpdates().catch(() => {}), 5000)
 
   // Vuelve a comprobar cada 4 horas
-  updateCheckInterval = setInterval(() => autoUpdater.checkForUpdates(), 4 * 60 * 60 * 1000)
+  updateCheckInterval = setInterval(() => autoUpdater.checkForUpdates().catch(() => {}), 4 * 60 * 60 * 1000)
 
   autoUpdater.on('update-available', (info) => {
     hasUpdate = true
