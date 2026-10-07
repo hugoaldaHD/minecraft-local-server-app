@@ -1479,26 +1479,6 @@ code {
   gap: 8px;
 }
 
-/* Filas de ajustes aún no implementados */
-.set-row.soon {
-  opacity: 0.62;
-}
-
-.set-row.soon .set-row-label {
-  color: var(--text2);
-}
-
-.set-soon {
-  font-family: var(--pixel);
-  font-size: 9px;
-  line-height: 1;
-  color: var(--text3);
-  border: 1px dashed var(--line2);
-  border-radius: var(--radius);
-  padding: 6px 8px;
-  white-space: nowrap;
-}
-
 /* Carpeta de backups dentro de su fila */
 .set-row-dir input {
   width: 300px;
@@ -1517,47 +1497,33 @@ code {
   border-color: var(--accent);
 }
 
-/* Recuento de eventos de analytics dentro de su fila */
-/* Fila de recuento: el bloque va debajo del título, a todo el ancho */
-.set-row-data {
-  flex-direction: column;
-  align-items: stretch;
-  gap: 12px;
-}
-
-/* En columna, el bloque de texto no debe ocupar su flex-basis de 240px */
-.set-row-data .set-row-text {
-  flex: 0 0 auto;
-}
-
-.set-row-counts {
-  margin-left: 0;
-  width: 100%;
-  max-width: 100%;
-}
-
-/* Recuento de eventos: caja propia con aire en vez de texto pegado */
-.set-row-counts .diag-rows {
-  width: 100%;
-  min-width: 0;
-  max-height: 200px;
-  overflow-y: auto;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-  gap: 4px 28px;
+/* Inputs de texto/número dentro de sus filas (Ajustes → Servidores) */
+.set-row-input input {
   background: var(--bg0);
   border: 2px solid var(--line);
   border-radius: var(--radius);
-  padding: 8px 14px;
+  color: var(--text);
+  padding: 9px 12px;
+  font-family: var(--mono);
+  font-size: 12px;
+  outline: none;
 }
 
-.set-row-counts .diag-row {
-  padding: 5px 0;
-  gap: 12px;
+.set-row-input input:focus {
+  border-color: var(--accent);
 }
 
-.set-row-counts .diag-note {
-  padding: 4px 0;
+#set-default-ram {
+  width: 120px;
+}
+
+#set-default-java {
+  width: 240px;
+}
+
+#set-default-jvm {
+  width: 320px;
+  max-width: 48vw;
 }
 
 /* Bloques de contenido dentro de un panel */
@@ -1631,9 +1597,4 @@ code {
   font-size: 13px;
   text-align: center;
   padding: 24px 0;
-}
-
-.diag-note {
-  color: var(--text2);
-  font-size: 12px;
 }

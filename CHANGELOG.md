@@ -52,6 +52,15 @@ de los tags y commits del repositorio. Formato de [Keep a Changelog](https://kee
 - Descarga automática sin control del usuario | `autoDownload=false`: al detectar la versión nueva solo se avisa con sus notas → botón **Descargar** (IPC `update:download`) → barra de progreso → **Instalar y reiniciar**; si no hay nada nuevo, "Estás en la última versión" (`main/updater.js`, `src/renderer.js`).
 - Comprobaciones opacas (dev / sin novedad / error) | `update:check` devuelve `status:'dev'` en desarrollo, el nuevo listener `update-not-available` envía `latest`, los errores solo se notifican si había una comprobación o descarga en curso, y la comprobación manual tiene timeout de 20 s; las notas admiten string y `[{version, note}]`; i18n es/en con 24 claves `upd.*` nuevas (+ `settings.updates`) y las claves del banner retiradas (`main/updater.js`, `src/i18n.js`).
 
+## Sin publicar (2026-10-07) — Ajustes completos
+
+- **General**: idioma movido a su fila (segmented ES/EN persistido y usado por el menú de bandeja); carpetas de servidores por defecto (`defaultServerDir`, `defaultPath` del diálogo de selección del .jar); cerrar en bandeja (`closeToTray`: ✕ siempre esconde a la bandeja en vez de salir, sin avisos, se sale desde «Salir» del menú); inicio con el sistema (`startOnBoot`, solo registra cuando la app está empaquetada). `main/tray.js` nuevo (icono, menú Abrir/Salir, clic restaura la ventana, `syncTray`/`updateTrayLang`); `window:close` → `win.hide()` (`main/window.js`, `src/index.html`, `src/renderer.js`).
+- **Apariencia**: escala de interfaz 100/125/150 % (`uiScale`, `webContents.setZoomFactor` aplicado al guardar y en `did-finish-load`) con segmented `#uiscale-options`.
+- **Copias de seguridad**: retención «Sin límite»/5/10/20/50 y compresión Rápida/Normal/Máxima (`backupKeep`/`backupLevel`); `pruneOldBackups` borra solo los `backup-*.zip` globales al terminar cada copia y el nivel va a `archiver('zip', {zlib:{level}})` (`main/backups.js`).
+- **Servidores**: RAM por defecto (256-65536 MB) y Java/JVM/EULA por defecto (precargados en el modal de servidor; `servers:create` usa los fallbacks si el modal no envía valor); `autoEula` escribe `eula.txt` directo al arrancar (`main/servers.js`, `main/validate.js`).
+- **Privacidad y datos**: se eliminan los recuentos analíticos y el bloque `.set-row-data`; botón **Borrar eventos de uso** (IPC `analytics:clearEvents` → `analyticsStore.delete('events')`, conserva el consentimiento).
+- **Información**: «Acerca de» → «Información» (es/en); la sección muestra solo Versión, Java y Plataforma (sin Analytics, eventos registrados, ID de instalación ni primer uso); retirados los IPC/API `getAnalyticsStats`/`getAnalyticsEvents` y las claves i18n huérfanas.
+
 ## v1.5.3 - Logo Fixed (2026-10-07)
 
 - New logo fixed.

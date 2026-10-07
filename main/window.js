@@ -2,7 +2,7 @@ const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron')
 const path = require('path')
 const { activeServers, setMainWindow, getMainWindow } = require('./state')
 const { stopAllServers } = require('./servers')
-const { canOpenPath, rememberPickedDir } = require('./validate')
+const { canOpenPath, rememberPickedDir, isStr } = require('./validate')
 const { settingsStore } = require('./stores')
 
 // Fondo nativo según el tema elegido en Ajustes (evita el flash blanco/negro)
@@ -51,6 +51,13 @@ function createWindow() {
   mainWindow.loadFile(path.join(__dirname, '..', 'src', 'index.html'))
   mainWindow.on('close', (e) => {
     if (forceClosing) return
+    // «Cerrar en vez de minimizar»: la ✕ oculta la ventana en la bandeja y
+    // los servidores siguen corriendo; se sale desde el menú de bandeja.
+    if (settingsStore.get('closeToTray') === true) {
+      e.preventDefault()
+      mainWindow.hide()
+      return
+    }
     const running = Object.keys(activeServers)
     if (running.length > 0) {
       e.preventDefault()
@@ -62,6 +69,9 @@ function createWindow() {
   mainWindow.on('unmaximize', () => { getMainWindow()?.webContents.send('window:maximized', false) })
   mainWindow.webContents.on('did-finish-load', () => {
     getMainWindow()?.webContents.send('window:maximized', mainWindow.isMaximized())
+    // Tamaño de la interfaz guardado en Ajustes → Apariencia
+    const zoom = settingsStore.get('uiScale')
+    if ([1, 1.25, 1.5].includes(zoom)) mainWindow.webContents.setZoomFactor(zoom)
   })
   // Guardas de navegación: nada fuera del bundle de la app
   mainWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
@@ -76,11 +86,27 @@ function registerWindowIpc() {
     if (!win) return
     if (win.isMaximized()) win.unmaximize(); else win.maximize()
   })
-  ipcMain.handle('window:close', () => quitWhenServersStopped())
+  // La ✕ de la titlebar: con «Cerrar en vez de minimizar» la ventana se
+  // oculta en la bandeja (los servidores siguen corriendo); si no, se sale.
+  ipcMain.handle('window:close', () => {
+    const win = getMainWindow()
+    if (settingsStore.get('closeToTray') === true && win) {
+      win.hide()
+      return
+    }
+    quitWhenServersStopped()
+  })
 
   ipcMain.handle('dialog:openJar', async () => {
-    const r = await dialog.showOpenDialog(getMainWindow(), { title: 'Selecciona el .jar', filters: [{ name: 'JAR', extensions: ['jar'] }], properties: ['openFile'] })
-    return r.canceled ? null : r.filePaths[0]
+    // Carpeta por defecto configurada en Ajustes → General
+    const startDir = settingsStore.get('defaultServerDir')
+    const r = await dialog.showOpenDialog(getMainWindow(), {
+      title: 'Selecciona el .jar',
+      filters: [{ name: 'JAR', extensions: ['jar'] }],
+      properties: ['openFile'],
+      ...(isStr(startDir) && startDir ? { defaultPath: startDir } : {})
+    })
+    return r.canceled ? null : r.filePath[0]
   })
   ipcMain.handle('dialog:openDir', async () => {
     const r = await dialog.showOpenDialog(getMainWindow(), { title: 'Selecciona carpeta', properties: ['openDirectory'] })

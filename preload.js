@@ -48,8 +48,7 @@ contextBridge.exposeInMainWorld('api', {
   // Analytics
   getAnalyticsConsent: () => ipcRenderer.invoke('analytics:getConsent'),
   setAnalyticsConsent: (enabled) => ipcRenderer.invoke('analytics:setConsent', enabled),
-  getAnalyticsStats: () => ipcRenderer.invoke('analytics:getStats'),
-  getAnalyticsEvents: () => ipcRenderer.invoke('analytics:getEvents'),
+  clearAnalyticsEvents: () => ipcRenderer.invoke('analytics:clearEvents'),
 
   // Crash reports
   getCrashes: () => ipcRenderer.invoke('crashes:list'),

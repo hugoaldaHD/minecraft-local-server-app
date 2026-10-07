@@ -272,30 +272,40 @@
                 </div>
               </div>
             </div>
-            <div class="set-row soon">
+            <div class="set-row">
               <div class="set-row-text">
                 <span class="set-row-label" data-i18n="settings.defaultServerDir">Carpeta por defecto de
                   servidores</span>
                 <p class="set-row-hint" data-i18n="settings.defaultServerDirHint">Dónde se crean los mundos de los
                   servidores nuevos.</p>
               </div>
-              <div class="set-row-control"><span class="set-soon" data-i18n="settings.soon">Próximamente</span></div>
+              <div class="set-row-control set-row-dir">
+                <input type="text" id="set-server-dir" readonly placeholder="Carpeta de servidores"
+                  data-i18n-placeholder="settings.serverDirPlaceholder" />
+                <button id="btn-set-server-dir">📁</button>
+              </div>
             </div>
-            <div class="set-row soon">
+            <div class="set-row">
               <div class="set-row-text">
                 <span class="set-row-label" data-i18n="settings.closeToTray">Cerrar en vez de minimizar</span>
                 <p class="set-row-hint" data-i18n="settings.closeToTrayHint">Al pulsar ✕ la app queda en la bandeja
                   del sistema.</p>
               </div>
-              <div class="set-row-control"><span class="set-soon" data-i18n="settings.soon">Próximamente</span></div>
+              <div class="set-row-control">
+                <label class="toggle-wrap"><input type="checkbox" id="set-close-to-tray" /><span
+                    data-i18n="lists.active">Activa</span></label>
+              </div>
             </div>
-            <div class="set-row soon">
+            <div class="set-row">
               <div class="set-row-text">
                 <span class="set-row-label" data-i18n="settings.startOnBoot">Iniciar con el sistema</span>
                 <p class="set-row-hint" data-i18n="settings.startOnBootHint">Arranca automáticamente al encender el
                   equipo.</p>
               </div>
-              <div class="set-row-control"><span class="set-soon" data-i18n="settings.soon">Próximamente</span></div>
+              <div class="set-row-control">
+                <label class="toggle-wrap"><input type="checkbox" id="set-start-on-boot" /><span
+                    data-i18n="lists.active">Activa</span></label>
+              </div>
             </div>
           </div>
         </section>
@@ -316,13 +326,19 @@
                 </div>
               </div>
             </div>
-            <div class="set-row soon">
+            <div class="set-row">
               <div class="set-row-text">
                 <span class="set-row-label" data-i18n="settings.uiScale">Tamaño de la interfaz</span>
                 <p class="set-row-hint" data-i18n="settings.uiScaleHint">Escala de los textos y controles: 100 %, 125
                   % o 150 %.</p>
               </div>
-              <div class="set-row-control"><span class="set-soon" data-i18n="settings.soon">Próximamente</span></div>
+              <div class="set-row-control">
+                <div class="seg-options" id="uiscale-options">
+                  <button class="seg-opt" data-scale-value="100">100 %</button>
+                  <button class="seg-opt" data-scale-value="125">125 %</button>
+                  <button class="seg-opt" data-scale-value="150">150 %</button>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -343,22 +359,36 @@
                 <button id="btn-set-backup-dir">📁</button>
               </div>
             </div>
-            <div class="set-row soon">
+            <div class="set-row">
               <div class="set-row-text">
                 <span class="set-row-label" data-i18n="settings.keepLastBackups">Conservar solo las últimas
                   copias</span>
                 <p class="set-row-hint" data-i18n="settings.keepLastBackupsHint">Borra las copias antiguas al crear
                   una nueva.</p>
               </div>
-              <div class="set-row-control"><span class="set-soon" data-i18n="settings.soon">Próximamente</span></div>
+              <div class="set-row-control">
+                <div class="seg-options" id="backup-keep-options">
+                  <button class="seg-opt" data-keep-value="0" data-i18n="settings.noLimit">Sin límite</button>
+                  <button class="seg-opt" data-keep-value="5">5</button>
+                  <button class="seg-opt" data-keep-value="10">10</button>
+                  <button class="seg-opt" data-keep-value="20">20</button>
+                  <button class="seg-opt" data-keep-value="50">50</button>
+                </div>
+              </div>
             </div>
-            <div class="set-row soon">
+            <div class="set-row">
               <div class="set-row-text">
                 <span class="set-row-label" data-i18n="settings.backupCompression">Nivel de compresión</span>
                 <p class="set-row-hint" data-i18n="settings.backupCompressionHint">Más compresión = archivo más
                   pequeño y proceso más lento.</p>
               </div>
-              <div class="set-row-control"><span class="set-soon" data-i18n="settings.soon">Próximamente</span></div>
+              <div class="set-row-control">
+                <div class="seg-options" id="backup-level-options">
+                  <button class="seg-opt" data-level-value="1" data-i18n="settings.compressionFast">Rápida</button>
+                  <button class="seg-opt" data-level-value="6" data-i18n="settings.compressionNormal">Normal</button>
+                  <button class="seg-opt" data-level-value="9" data-i18n="settings.compressionMax">Máxima</button>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -367,37 +397,46 @@
         <section class="set-panel" data-set-panel="servers">
           <h3 data-i18n="settings.servers">Servidores</h3>
           <div class="set-group">
-            <div class="set-row soon">
+            <div class="set-row">
               <div class="set-row-text">
                 <span class="set-row-label" data-i18n="settings.defaultRam">RAM por defecto (MB)</span>
                 <p class="set-row-hint" data-i18n="settings.defaultRamHint">Memoria asignada a los servidores
                   nuevos.</p>
               </div>
-              <div class="set-row-control"><span class="set-soon" data-i18n="settings.soon">Próximamente</span></div>
+              <div class="set-row-control set-row-input">
+                <input type="number" id="set-default-ram" min="512" max="65536" step="256" placeholder="4096" />
+              </div>
             </div>
-            <div class="set-row soon">
+            <div class="set-row">
               <div class="set-row-text">
                 <span class="set-row-label" data-i18n="settings.defaultJava">Java por defecto</span>
                 <p class="set-row-hint" data-i18n="settings.defaultJavaHint">Ruta de Java para servidores sin ruta
                   propia.</p>
               </div>
-              <div class="set-row-control"><span class="set-soon" data-i18n="settings.soon">Próximamente</span></div>
+              <div class="set-row-control set-row-input">
+                <input type="text" id="set-default-java" placeholder="java" />
+              </div>
             </div>
-            <div class="set-row soon">
+            <div class="set-row">
               <div class="set-row-text">
                 <span class="set-row-label" data-i18n="settings.defaultJvmArgs">Argumentos JVM por defecto</span>
                 <p class="set-row-hint" data-i18n="settings.defaultJvmArgsHint">Se aplican a los servidores sin
                   argumentos propios.</p>
               </div>
-              <div class="set-row-control"><span class="set-soon" data-i18n="settings.soon">Próximamente</span></div>
+              <div class="set-row-control set-row-input">
+                <input type="text" id="set-default-jvm" placeholder="-XX:+UseG1GC" />
+              </div>
             </div>
-            <div class="set-row soon">
+            <div class="set-row">
               <div class="set-row-text">
                 <span class="set-row-label" data-i18n="settings.autoEula">Aceptar la EULA automáticamente</span>
                 <p class="set-row-hint" data-i18n="settings.autoEulaHint">Crea eula.txt en el primer arranque del
                   servidor.</p>
               </div>
-              <div class="set-row-control"><span class="set-soon" data-i18n="settings.soon">Próximamente</span></div>
+              <div class="set-row-control">
+                <label class="toggle-wrap"><input type="checkbox" id="set-auto-eula" /><span
+                    data-i18n="lists.active">Activa</span></label>
+              </div>
             </div>
           </div>
         </section>
@@ -417,23 +456,16 @@
                     data-i18n="lists.active">Activa</span></label>
               </div>
             </div>
-            <div class="set-row set-row-data">
-              <div class="set-row-text">
-                <span class="set-row-label" data-i18n="diag.analytics">Analytics anónimos</span>
-                <p class="set-row-hint" data-i18n="settings.eventsHint">Eventos guardados localmente en esta
-                  máquina.</p>
-              </div>
-              <div class="set-row-control set-row-counts">
-                <div class="diag-rows" id="diag-analytics"></div>
-              </div>
-            </div>
-            <div class="set-row soon">
+            <div class="set-row">
               <div class="set-row-text">
                 <span class="set-row-label" data-i18n="settings.clearAnalytics">Borrar eventos de uso</span>
                 <p class="set-row-hint" data-i18n="settings.clearAnalyticsHint">Elimina los eventos guardados sin
                   desactivar el envío.</p>
               </div>
-              <div class="set-row-control"><span class="set-soon" data-i18n="settings.soon">Próximamente</span></div>
+              <div class="set-row-control">
+                <button class="btn-secondary" id="btn-clear-events" data-i18n="settings.clearAnalytics">Borrar
+                  eventos de uso</button>
+              </div>
             </div>
           </div>
         </section>
@@ -497,7 +529,7 @@
           </div>
         </section>
 
-        <!-- Acerca de -->
+        <!-- Información -->
         <section class="set-panel" data-set-panel="about">
           <h3 data-i18n="settings.about">Acerca de</h3>
           <div class="set-group">

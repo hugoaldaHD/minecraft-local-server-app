@@ -351,6 +351,10 @@ function initSettings() {
     await run(T('run.clearErrors'), () => window.api.clearCrashes())
     loadSettings()
   }
+  document.getElementById('btn-clear-events').onclick = async () => {
+    await run(T('run.settings'), () => window.api.clearAnalyticsEvents())
+    loadSettings()
+  }
   document.getElementById('diag-analytics-toggle').onchange = async (e) => {
     await run(T('run.consent'), () => window.api.setAnalyticsConsent(e.target.checked))
     loadSettings()
@@ -361,14 +365,61 @@ function initSettings() {
     const res = await run(T('run.saveBackupSettings'), () => window.api.setPref('backupDir', p))
     if (res && res.ok) document.getElementById('set-backup-dir').value = p
   }
+  document.getElementById('btn-set-server-dir').onclick = async () => {
+    const p = await run(T('run.pickDir'), () => window.api.openDirDialog())
+    if (!p) return
+    const res = await run(T('run.settings'), () => window.api.setPref('defaultServerDir', p))
+    if (res && res.ok) document.getElementById('set-server-dir').value = p
+  }
+  document.getElementById('set-close-to-tray').onchange = (e) => {
+    run(T('run.settings'), () => window.api.setPref('closeToTray', e.target.checked))
+  }
+  document.getElementById('set-start-on-boot').onchange = (e) => {
+    run(T('run.settings'), () => window.api.setPref('startOnBoot', e.target.checked))
+  }
   document.getElementById('theme-options').addEventListener('click', (e) => {
     const opt = e.target.closest('.seg-opt')
     if (opt) setTheme(opt.dataset.themeValue)
   })
   document.getElementById('lang-options').addEventListener('click', (e) => {
     const opt = e.target.closest('.seg-opt')
-    if (opt) I18N.setLang(opt.dataset.langValue)
+    if (!opt) return
+    I18N.setLang(opt.dataset.langValue)
+    // El idioma también se guarda en main para el menú de la bandeja
+    window.api.setPref('lang', opt.dataset.langValue)
   })
+  document.getElementById('uiscale-options').addEventListener('click', (e) => {
+    const opt = e.target.closest('.seg-opt')
+    if (!opt) return
+    selectUiScale(opt.dataset.scaleValue)
+    run(T('run.settings'), () => window.api.setPref('uiScale', Number(opt.dataset.scaleValue) / 100))
+  })
+  document.getElementById('backup-keep-options').addEventListener('click', (e) => {
+    const opt = e.target.closest('.seg-opt')
+    if (!opt) return
+    selectSegOpt('backup-keep-options', 'keepValue', opt.dataset.keepValue)
+    run(T('run.saveBackupSettings'), () => window.api.setPref('backupKeep', Number(opt.dataset.keepValue)))
+  })
+  document.getElementById('backup-level-options').addEventListener('click', (e) => {
+    const opt = e.target.closest('.seg-opt')
+    if (!opt) return
+    selectSegOpt('backup-level-options', 'levelValue', opt.dataset.levelValue)
+    run(T('run.saveBackupSettings'), () => window.api.setPref('backupLevel', Number(opt.dataset.levelValue)))
+  })
+  document.getElementById('set-default-ram').addEventListener('change', async (e) => {
+    const ok = await saveSettingsPref('defaultRam', parseInt(e.target.value, 10))
+    if (!ok) loadSettings() // valor fuera de rango: recupera el guardado
+  })
+  document.getElementById('set-default-java').addEventListener('change', (e) => {
+    saveSettingsPref('defaultJava', e.target.value.trim() || null)
+  })
+  document.getElementById('set-default-jvm').addEventListener('change', (e) => {
+    saveSettingsPref('defaultJvmArgs', e.target.value.trim() || null)
+  })
+  document.getElementById('set-auto-eula').onchange = async (e) => {
+    const ok = await saveSettingsPref('autoEula', e.target.checked)
+    if (!ok) loadSettings()
+  }
   // Raíl de secciones: muestra solo el panel elegido
   document.getElementById('set-nav').addEventListener('click', (e) => {
     const item = e.target.closest('.set-nav-item')
@@ -400,13 +451,49 @@ function updateSettingsSeg() {
   document.querySelectorAll('#lang-options .seg-opt').forEach(b => b.classList.toggle('selected', b.dataset.langValue === lang))
 }
 
+// Marca la escala activa en el segmento de Tamaño de la interfaz (en %)
+function selectUiScale(pct) {
+  selectSegOpt('uiscale-options', 'scaleValue', String(pct))
+}
+
+// Marca la opción activa de cualquier segmento de Ajustes
+function selectSegOpt(id, datasetKey, value) {
+  document.querySelectorAll(`#${id} .seg-opt`).forEach(b => b.classList.toggle('selected', b.dataset[datasetKey] === value))
+}
+
+// Guarda una preferencia y devuelve si el main la aceptó
+async function saveSettingsPref(key, value) {
+  const res = await run(T('run.settings'), () => window.api.setPref(key, value))
+  return !!(res && res.ok)
+}
+
 async function loadSettings() {
   updateSettingsSeg()
 
   const prefDir = await run(T('run.settings'), () => window.api.getPref('backupDir'), '')
   document.getElementById('set-backup-dir').value = prefDir || ''
 
-  const stats = await run(T('run.diagnostics'), () => window.api.getAnalyticsStats(), {})
+  const prefServerDir = await run(T('run.settings'), () => window.api.getPref('defaultServerDir'), '')
+  const closeToTray = await run(T('run.settings'), () => window.api.getPref('closeToTray'), false)
+  const startOnBoot = await run(T('run.settings'), () => window.api.getPref('startOnBoot'), false)
+  const uiScale = await run(T('run.settings'), () => window.api.getPref('uiScale'), 1)
+  const backupKeep = await run(T('run.saveBackupSettings'), () => window.api.getPref('backupKeep'), 0)
+  const backupLevel = await run(T('run.saveBackupSettings'), () => window.api.getPref('backupLevel'), 6)
+  const defaultRam = await run(T('run.settings'), () => window.api.getPref('defaultRam'), null)
+  const defaultJava = await run(T('run.settings'), () => window.api.getPref('defaultJava'), '')
+  const defaultJvmArgs = await run(T('run.settings'), () => window.api.getPref('defaultJvmArgs'), '')
+  const autoEula = await run(T('run.settings'), () => window.api.getPref('autoEula'), false)
+  document.getElementById('set-server-dir').value = prefServerDir || ''
+  document.getElementById('set-close-to-tray').checked = closeToTray === true
+  document.getElementById('set-start-on-boot').checked = startOnBoot === true
+  document.getElementById('set-default-ram').value = Number.isInteger(defaultRam) ? defaultRam : ''
+  document.getElementById('set-default-java').value = defaultJava || ''
+  document.getElementById('set-default-jvm').value = defaultJvmArgs || ''
+  document.getElementById('set-auto-eula').checked = autoEula === true
+  selectUiScale(Math.round((typeof uiScale === 'number' && uiScale > 0 ? uiScale : 1) * 100))
+  selectSegOpt('backup-keep-options', 'keepValue', String([0, 5, 10, 20, 50].includes(backupKeep) ? backupKeep : 0))
+  selectSegOpt('backup-level-options', 'levelValue', String(Number.isInteger(backupLevel) && backupLevel >= 1 && backupLevel <= 9 ? backupLevel : 6))
+
   const crashes = await run(T('run.diagnostics'), () => window.api.getCrashes(), [])
   const version = await run(T('run.diagnostics'), () => window.api.getVersion(), '')
   const consent = await run(T('run.diagnostics'), () => window.api.getAnalyticsConsent(), null)
@@ -420,26 +507,13 @@ async function loadSettings() {
     h('span', { class: 'diag-row-val', text: String(value) })
   )
 
-  // Info panel
+  // Información: solo datos del equipo instalado (sin analytics)
   const infoRows = [
     [T('diag.version'), `v${version}`],
     ['Java', java && java.ok ? (java.raw || `Java ${java.major}`) : T('diag.javaNotDetected')],
-    [T('diag.installId'), (stats.installId ? stats.installId.slice(0, 16) + '...' : '—')],
-    [T('diag.firstSeen'), stats.firstSeen ? new Date(stats.firstSeen).toLocaleDateString(I18N.locale()) : '—'],
-    [T('diag.platform'), navigator.platform],
-    ['Analytics', consent ? T('diag.enabled') : T('diag.disabled')],
-    [T('diag.totalEvents'), stats.totalEvents || 0]
+    [T('diag.platform'), navigator.platform]
   ]
   fill(document.getElementById('diag-info'), ...infoRows.map(([l, v]) => diagRow(l, v)))
-
-  // Analytics panel
-  const counts = stats.counts || {}
-  const entries = Object.entries(counts)
-  fill(document.getElementById('diag-analytics'),
-    entries.length
-      ? entries.map(([event, count]) => diagRow(event, count))
-      : h('div', { class: 'diag-note', text: T('diag.noEvents') })
-  )
 
   // Crashes panel
   const crashesEl = document.getElementById('diag-crashes')
@@ -631,7 +705,7 @@ function selectColor(el, containerId) {
   el.classList.add('selected')
 }
 
-function openServerModal() {
+async function openServerModal() {
   document.getElementById('modal-server-title').textContent = T('servers.add')
   document.getElementById('ms-name').value = ''
   document.getElementById('ms-jar').value = ''
@@ -641,6 +715,14 @@ function openServerModal() {
   document.getElementById('ms-error').textContent = ''
   renderColorOptions('ms-color-options', null)
   document.getElementById('modal-server').classList.remove('hidden')
+  // Valores por defecto de Ajustes → Servidores
+  const pref = await run(T('run.settings'), () => Promise.all([
+    window.api.getPref('defaultRam'),
+    window.api.getPref('defaultJava')
+  ]), [null, null])
+  const [ram, java] = Array.isArray(pref) ? pref : [null, null]
+  if (Number.isInteger(ram) && ram >= 512 && ram <= 65536) document.getElementById('ms-max-ram').value = ram
+  document.getElementById('ms-java').value = java || ''
 }
 
 async function saveNewServer() {

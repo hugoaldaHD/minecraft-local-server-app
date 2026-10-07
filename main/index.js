@@ -1,14 +1,16 @@
 const { app, ipcMain } = require('electron')
 const { settingsStore, getAllServersMap } = require('./stores')
+const { getMainWindow } = require('./state')
 const { trackEvent, registerAnalyticsIpc } = require('./analytics')
 const { setupCrashReporter, registerCrashIpc } = require('./crash')
 const { createWindow, registerWindowIpc, applyWindowTheme } = require('./window')
+const { syncTray, updateTrayLang } = require('./tray')
 const { registerServersIpc, stopAllServers } = require('./servers')
 const { registerPropertiesIpc } = require('./properties')
 const { registerBackupsIpc, scheduleAutoBackup, initAutoBackups } = require('./backups')
 const { setupAutoUpdater, stopUpdater, registerUpdaterIpc } = require('./updater')
 const { startStatsPolling, stopStatsPolling } = require('./stats')
-const { isPlainObject, isStr } = require('./validate')
+const { isPlainObject, isStr, cleanText } = require('./validate')
 
 // ─── Registro de IPC ────────────────────────────────────────────────────────
 registerServersIpc()
@@ -22,7 +24,8 @@ registerUpdaterIpc()
 ipcMain.handle('app:version', () => app.getVersion())
 
 // ─── Preferencias globales (Ajustes) ────────────────────────────────────────
-const PREF_KEYS = ['backupDir', 'theme']
+const PREF_KEYS = ['backupDir', 'backupKeep', 'backupLevel', 'theme', 'lang', 'defaultServerDir', 'closeToTray', 'startOnBoot', 'uiScale',
+  'defaultRam', 'defaultJava', 'defaultJvmArgs', 'autoEula']
 
 ipcMain.handle('prefs:get', (_, key) => (PREF_KEYS.includes(key) ? settingsStore.get(key, null) : null))
 ipcMain.handle('prefs:set', (_, { key, value } = {}) => {
@@ -31,6 +34,64 @@ ipcMain.handle('prefs:set', (_, { key, value } = {}) => {
     if (value !== 'dark' && value !== 'light') return { ok: false, error: 'Tema no válido' }
     settingsStore.set('theme', value)
     applyWindowTheme()
+    return { ok: true }
+  }
+  if (key === 'lang') {
+    if (value !== 'es' && value !== 'en') return { ok: false, error: 'Idioma no válido' }
+    settingsStore.set('lang', value)
+    updateTrayLang() // el menú de bandeja se traduce con el idioma guardado
+    return { ok: true }
+  }
+  if (key === 'closeToTray' || key === 'startOnBoot') {
+    if (typeof value !== 'boolean') return { ok: false, error: 'Valor no válido' }
+    settingsStore.set(key, value)
+    if (key === 'closeToTray') syncTray() // crea o elimina el icono de bandeja
+    else if (app.isPackaged) app.setLoginItemSettings({ openAtLogin: value, path: process.execPath })
+    // En desarrollo el ejecutable es electron.exe: no se registra nada
+    return { ok: true, ...(key === 'startOnBoot' ? { applied: app.isPackaged } : {}) }
+  }
+  if (key === 'backupKeep') {
+    // 0 = sin límite
+    if (![0, 5, 10, 20, 50].includes(value)) return { ok: false, error: 'Valor no válido' }
+    settingsStore.set('backupKeep', value)
+    return { ok: true }
+  }
+  if (key === 'backupLevel') {
+    if (!Number.isInteger(value) || value < 1 || value > 9) return { ok: false, error: 'Nivel no válido' }
+    settingsStore.set('backupLevel', value)
+    return { ok: true }
+  }
+  if (key === 'defaultRam') {
+    const n = Number.parseInt(value, 10)
+    if (!Number.isFinite(n) || n < 512 || n > 65536) return { ok: false, error: 'RAM no válida' }
+    settingsStore.set('defaultRam', n)
+    return { ok: true }
+  }
+  if (key === 'defaultJava') {
+    if (value !== null && !isStr(value)) return { ok: false, error: 'Ruta no válida' }
+    settingsStore.set('defaultJava', value || '')
+    return { ok: true }
+  }
+  if (key === 'defaultJvmArgs') {
+    if (value !== null && !isStr(value)) return { ok: false, error: 'Argumentos no válidos' }
+    settingsStore.set('defaultJvmArgs', cleanText(value || '', 512))
+    return { ok: true }
+  }
+  if (key === 'autoEula') {
+    if (typeof value !== 'boolean') return { ok: false, error: 'Valor no válido' }
+    settingsStore.set('autoEula', value)
+    return { ok: true }
+  }
+  if (key === 'uiScale') {
+    if (![1, 1.25, 1.5].includes(value)) return { ok: false, error: 'Escala no válida' }
+    settingsStore.set('uiScale', value)
+    getMainWindow()?.webContents.setZoomFactor(value)
+    return { ok: true }
+  }
+  if (key === 'defaultServerDir') {
+    // backupDir y defaultServerDir solo admiten texto (o vacío)
+    if (value !== null && !isStr(value)) return { ok: false, error: 'Ruta no válida' }
+    settingsStore.set('defaultServerDir', value || '')
     return { ok: true }
   }
   // backupDir
@@ -80,6 +141,7 @@ setupCrashReporter()
 app.whenReady().then(() => {
   migrateGlobalBackupDir()
   createWindow()
+  syncTray()
   startStatsPolling()
   setupAutoUpdater()
   initAutoBackups()

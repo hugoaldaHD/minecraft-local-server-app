@@ -3,7 +3,7 @@ const path = require('path')
 const fs = require('fs')
 const { spawn } = require('child_process')
 const crypto = require('crypto')
-const { getAllServersMap, saveServerMap } = require('./stores')
+const { getAllServersMap, saveServerMap, settingsStore } = require('./stores')
 const { getMainWindow, activeServers } = require('./state')
 const { trackEvent } = require('./analytics')
 const { logCrash } = require('./crash')
@@ -93,10 +93,12 @@ async function startServer(serverId, acceptEula = false) {
   if (!ver) return { ok: false, error: `No se pudo ejecutar "${java} -version". Instala Java 17+ o corrige la ruta de Java.` }
   if (ver.major < 17) return { ok: false, error: `Se requiere Java 17+ (detectado Java ${ver.major}). Cambia la ruta de Java en la configuración del servidor.` }
 
-  // eula.txt: el primer arranque necesita aceptación explícita del usuario
+  // eula.txt: el primer arranque necesita aceptación explícita del usuario,
+  // salvo que «Aceptar la EULA automáticamente» esté activo en Ajustes.
   const eulaFile = path.join(serverDir, 'eula.txt')
   if (!fs.existsSync(eulaFile)) {
-    if (!acceptEula) return { ok: false, code: 'eula', error: 'Falta aceptar la EULA de Minecraft (eula.txt)' }
+    const autoEula = settingsStore.get('autoEula') === true
+    if (!acceptEula && !autoEula) return { ok: false, code: 'eula', error: 'Falta aceptar la EULA de Minecraft (eula.txt)' }
     try {
       fs.writeFileSync(eulaFile, '# Aceptación de la EULA de Minecraft (https://aka.ms/MinecraftEULA)\n# Generado por Minecraft Local Server Manager\neula=true\n', 'utf8')
     } catch (err) {
@@ -223,14 +225,19 @@ function registerServersIpc() {
     if (!isStr(fields.jarPath)) return { ok: false, error: 'Selecciona el archivo .jar' }
     const map = getAllServersMap()
     const id = crypto.randomUUID()
+    // Valores por defecto de Ajustes → Servidores cuando el formulario no
+    // trae un valor explícito (el modal no envía extraArgs).
+    const prefRam = Number(settingsStore.get('defaultRam'))
+    const prefJava = settingsStore.get('defaultJava')
+    const prefJvmArgs = settingsStore.get('defaultJvmArgs')
     map[id] = {
       id,
       name: fields.name || 'Servidor',
       jarPath: fields.jarPath,
-      javaPath: fields.javaPath ?? null,
+      javaPath: fields.javaPath ?? (isValidJavaPath(prefJava) ? prefJava || null : null),
       minRam: fields.minRam ?? 1024,
-      maxRam: fields.maxRam ?? 4096,
-      extraArgs: fields.extraArgs ?? '',
+      maxRam: fields.maxRam ?? (Number.isInteger(prefRam) && prefRam >= 256 && prefRam <= 131072 ? prefRam : 4096),
+      extraArgs: fields.extraArgs ?? cleanText(String(prefJvmArgs || ''), 512),
       color: fields.color || '#4ade80',
       createdAt: Date.now()
     }

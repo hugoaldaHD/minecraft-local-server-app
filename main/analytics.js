@@ -72,13 +72,10 @@ function registerAnalyticsIpc() {
     else analyticsStore.delete('events') // declinar purga los eventos locales
     return { ok: true }
   })
-  ipcMain.handle('analytics:getEvents', () => analyticsStore.get('events') || [])
-  ipcMain.handle('analytics:getStats', () => {
-    const events = analyticsStore.get('events') || []
-    const firstSeen = analyticsStore.get('firstSeen')
-    const counts = {}
-    events.forEach(e => { counts[e.event] = (counts[e.event] || 0) + 1 })
-    return { installId: getInstallId(), firstSeen, totalEvents: events.length, counts, appVersion: app.getVersion() }
+  // Ajustes → Privacidad y datos: purga los eventos locales guardados
+  ipcMain.handle('analytics:clearEvents', () => {
+    analyticsStore.delete('events')
+    return { ok: true }
   })
 }
 

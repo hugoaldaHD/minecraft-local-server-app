@@ -3,7 +3,7 @@ const path = require('path')
 const fs = require('fs')
 const archiver = require('archiver')
 const schedule = require('node-schedule')
-const { getAllServersMap, getServerSettings, getGlobalBackupDir } = require('./stores')
+const { getAllServersMap, getServerSettings, getGlobalBackupDir, settingsStore } = require('./stores')
 const { getMainWindow, activeServers } = require('./state')
 const { trackEvent } = require('./analytics')
 const { logCrash } = require('./crash')
@@ -13,6 +13,27 @@ const AUTO_INTERVALS = { '1h': 3600e3, '6h': 6 * 3600e3, '12h': 12 * 3600e3, '24
 const autoBackupJobs = {}
 
 // ─── Backup manual ───────────────────────────────────────────────────────────
+// Nivel de compresión guardado en Ajustes → Copias de seguridad (1–9)
+function compressionLevel() {
+  const level = Number(settingsStore.get('backupLevel'))
+  return Number.isInteger(level) && level >= 1 && level <= 9 ? level : 6
+}
+
+// «Conservar solo las últimas copias»: borra las más antiguas de la carpeta
+// dejando backupKeep. Solo toca los .zip generados por la app (patrón propio).
+function pruneOldBackups(outDir) {
+  const keep = Number(settingsStore.get('backupKeep'))
+  if (!Number.isFinite(keep) || keep <= 0) return
+  try {
+    const files = fs.readdirSync(outDir)
+      .filter(f => /^backup-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}\.zip$/.test(f))
+      .sort().reverse() // el nombre lleva la fecha: orden lexicográfico = cronológico
+    files.slice(keep).forEach(f => {
+      try { fs.unlinkSync(path.join(outDir, f)) } catch (_) { /* sin permisos: se queda */ }
+    })
+  } catch (_) { /* si falla el listado, no se borra nada */ }
+}
+
 async function createBackup(serverDir, backupDir) {
   if (!isServerDir(serverDir)) return { ok: false, error: 'Directorio de servidor no válido' }
   if (!isAllowedBackupDir(backupDir)) return { ok: false, error: 'Carpeta de backups no permitida' }
@@ -28,8 +49,9 @@ async function createBackup(serverDir, backupDir) {
   }
   return new Promise((resolve) => {
     const output = fs.createWriteStream(outFile)
-    const archive = archiver('zip', { zlib: { level: 6 } })
+    const archive = archiver('zip', { zlib: { level: compressionLevel() } })
     output.on('close', () => {
+      pruneOldBackups(outDir)
       trackEvent('backup_created', { sizeMb: Math.round(archive.pointer() / 1024 / 1024) })
       resolve({ ok: true, file: outFile, size: archive.pointer() })
     })
