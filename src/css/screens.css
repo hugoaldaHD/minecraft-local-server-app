@@ -1518,25 +1518,37 @@ code {
 }
 
 /* Recuento de eventos de analytics dentro de su fila */
+/* Fila de recuento: el bloque va debajo del título, a todo el ancho */
 .set-row-data {
-  align-items: flex-start;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+
+/* En columna, el bloque de texto no debe ocupar su flex-basis de 240px */
+.set-row-data .set-row-text {
+  flex: 0 0 auto;
 }
 
 .set-row-counts {
-  max-width: 55%;
+  margin-left: 0;
+  width: 100%;
+  max-width: 100%;
 }
 
 /* Recuento de eventos: caja propia con aire en vez de texto pegado */
 .set-row-counts .diag-rows {
-  min-width: 250px;
-  max-width: 100%;
-  max-height: 170px;
+  width: 100%;
+  min-width: 0;
+  max-height: 200px;
   overflow-y: auto;
-  gap: 4px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 4px 28px;
   background: var(--bg0);
   border: 2px solid var(--line);
   border-radius: var(--radius);
-  padding: 6px 12px;
+  padding: 8px 14px;
 }
 
 .set-row-counts .diag-row {
