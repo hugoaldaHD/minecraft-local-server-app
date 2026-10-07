@@ -1164,13 +1164,17 @@ code {
 /* Panel: tarjeta de la versión nueva */
 .upd-card {
   border-left: 3px solid var(--accent);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .upd-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 10px 16px;
   flex-wrap: wrap;
 }
 
@@ -1178,6 +1182,16 @@ code {
   font-family: var(--pixel);
   font-size: 13px;
   color: var(--text);
+}
+
+/* Párrafo de ayuda y barra de progreso: sin el margen por defecto del <p> */
+.upd-card p.set-row-hint {
+  margin: 0;
+}
+
+.upd-card .upd-progress {
+  margin: 0;
+  max-width: 520px;
 }
 
 .upd-pill {
@@ -1237,6 +1251,18 @@ code {
   font-size: 10px;
   margin-bottom: 6px;
   color: var(--text2);
+}
+
+/* Bloque de notas separado del resto con su propia línea */
+.upd-card .upd-notes {
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+
+.upd-card .update-notes {
+  border-top: none;
+  padding-top: 0;
+  max-height: 220px;
 }
 
 .update-notes {
