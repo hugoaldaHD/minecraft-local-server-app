@@ -3,6 +3,15 @@
 Historial de versiones de **Minecraft Local Server Manager**, reconstruido a partir
 de los tags y commits del repositorio. Formato de [Keep a Changelog](https://keepachangelog.com/es/1.1.0/).
 
+## v1.6.0 - Config Implementation (2026-10-07)
+
+- Perfiles locales para una sola cuenta (pantalla de selección + `main/auth.js`) | Eliminados: `#screen-profiles`, `main/auth.js` y los canales `users:*`/`auth:*`; arranque directo a consentimiento o servidores; `servers:list`/`servers:create` dejan de recibir `userId`; evento `profile_created` retirado (cierra también el ítem 38, `deleteUser` en cascada, ya sin sujeto).
+- Diagnóstico como pantalla aparte con su botón | Integrado como sección de **Ajustes** (información de la app, toggle de analytics, últimos errores + "Limpiar errores"); se retiran `#screen-diagnostics` y `#btn-diagnostics` (`src/index.html`, `src/renderer.js:initSettings`).
+- Sin pantalla de Ajustes (no había dónde cambiar preferencias) | Nueva pantalla `#screen-settings` con tarjetas General/Información/Analytics/Errores, accesible desde ⚙ en la titlebar (`initTitlebar` → `showScreen('settings')`, `loadSettings()` al entrar).
+- Carpeta de backups distinta por servidor (`server_<id>.autoBackupDir`) | Clave global `backupDir` en `settingsStore` vía IPC `prefs:get`/`prefs:set` con allowlist `['backupDir','theme']`; migración en el arranque (`migrateGlobalBackupDir` adopta la primera `autoBackupDir` y la retira); `resolveBackupDir` = `autoBackupDir` → global → `<jar>/backups` y canal `backup:dir`; la pestaña Copias solo la muestra en solo lectura y al cambiar la global se reprograman los auto-backups (`main/index.js`, `main/backups.js`, `main/validate.js:getBackupDirs`).
+- Tema fijo oscuro | Tema claro/oscuro con `:root[data-theme='light']` (paleta pergamino/hierba de la web) + `color-scheme` en `tokens.css`; persistido en `localStorage['app-theme']` y reflejado en el fondo de la ventana (`THEME_BG`/`applyWindowTheme`) al guardar la preferencia (`src/renderer.js:setTheme`, `main/window.js`).
+- Selector ES/EN en la titlebar; CSS/i18n/docs huérfanos | Selector movido a Ajustes (segmented control `#lang-options`/`#theme-options`); borrados estilos de perfiles/auth (`profiles-*`, `profile-card`, `auth-tabs`, `avatar-picker`, `user-chip`, `btn-logout`, `#btn-backup-dir`, `#auth-version-label`) y claves muertas (`profiles.*`, `nav.profiles`, `nav.diagnostics`, `servers.titleOf`, `run.*Profile`); `users.json` sobrante eliminado de `%APPDATA%`; README/CONTRIBUTING/CHANGELOG actualizados.
+
 ## Sin publicar (2026-10-07)
 
 - Perfiles locales eliminados | pantalla de perfiles, `main/auth.js` y los canales `users:*`/`auth:*` fuera del proyecto; `servers:list`/`servers:create` dejan de recibir `userId`; evento `profile_created` retirado (`src/index.html`, `src/renderer.js`, `preload.js`, `main/`).
