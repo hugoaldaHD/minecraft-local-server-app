@@ -252,6 +252,17 @@ function initSettings() {
     const opt = e.target.closest('.seg-opt')
     if (opt) I18N.setLang(opt.dataset.langValue)
   })
+  document.getElementById('btn-check-update').onclick = () => run(T('run.settings'), () => window.api.checkUpdate())
+  // Raíl de secciones: muestra solo el panel elegido
+  document.getElementById('set-nav').addEventListener('click', (e) => {
+    const item = e.target.closest('.set-nav-item')
+    if (!item) return
+    const section = item.dataset.setSection
+    document.querySelectorAll('#set-nav .set-nav-item').forEach(b => b.classList.toggle('active', b === item))
+    document.querySelectorAll('.set-panel').forEach(p => p.classList.toggle('active', p.dataset.setPanel === section))
+    const panels = document.querySelector('.set-panels')
+    if (panels) panels.scrollTop = 0
+  })
 }
 
 function setTheme(theme) {

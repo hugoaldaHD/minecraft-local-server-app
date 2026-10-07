@@ -238,7 +238,7 @@
     </div>
   </div>
 
-  <!-- ══ SCREEN: SETTINGS ════════════════════════════════════════════════════ -->
+  <!-- ══ SCREEN: SETTINGS ══════════════════════════════════════════════════ -->
   <div class="screen" id="screen-settings">
     <div class="servers-header">
       <button class="btn-back" id="btn-settings-back" data-i18n="nav.servers">Servidores</button>
@@ -246,53 +246,246 @@
         <h1 class="servers-title" data-i18n="settings.title">Ajustes</h1>
         <p class="servers-sub" data-i18n="settings.subtitle">Preferencias de la aplicación</p>
       </div>
-      <div class="servers-header-right">
-        <button class="btn-secondary" id="btn-clear-crashes" data-i18n="diag.clearErrors">Limpiar errores</button>
-      </div>
     </div>
-    <div class="diag-grid">
-      <div class="diag-card diag-card-wide">
-        <h3 data-i18n="settings.general">General</h3>
-        <div class="field-group">
-          <label data-i18n="settings.backupsDir">Carpeta de backups</label>
-          <div class="field-row">
-            <input type="text" id="set-backup-dir" readonly placeholder="Carpeta de backups"
-              data-i18n-placeholder="backups.dirPlaceholder" />
-            <button id="btn-set-backup-dir">📁</button>
+
+    <div class="settings-layout">
+      <!-- ── Raíl de secciones ── -->
+      <nav class="set-nav" id="set-nav">
+        <button class="set-nav-item active" data-set-section="general">⚙ <span
+            data-i18n="settings.general">General</span></button>
+        <button class="set-nav-item" data-set-section="appearance">🎨 <span
+            data-i18n="settings.appearance">Apariencia</span></button>
+        <button class="set-nav-item" data-set-section="backups">💾 <span
+            data-i18n="settings.backups">Copias de seguridad</span></button>
+        <button class="set-nav-item" data-set-section="servers">🖥 <span
+            data-i18n="settings.servers">Servidores</span></button>
+        <button class="set-nav-item" data-set-section="privacy">🔒 <span
+            data-i18n="settings.privacy">Privacidad y datos</span></button>
+        <button class="set-nav-item" data-set-section="about">ℹ <span
+            data-i18n="settings.about">Acerca de</span></button>
+      </nav>
+
+      <!-- ── Paneles ── -->
+      <div class="set-panels">
+
+        <!-- General -->
+        <section class="set-panel active" data-set-panel="general">
+          <h3 data-i18n="settings.general">General</h3>
+          <div class="set-group">
+            <div class="set-row soon">
+              <div class="set-row-text">
+                <span class="set-row-label" data-i18n="settings.defaultServerDir">Carpeta por defecto de
+                  servidores</span>
+                <p class="set-row-hint" data-i18n="settings.defaultServerDirHint">Dónde se crean los mundos de los
+                  servidores nuevos.</p>
+              </div>
+              <div class="set-row-control"><span class="set-soon" data-i18n="settings.soon">Próximamente</span></div>
+            </div>
+            <div class="set-row soon">
+              <div class="set-row-text">
+                <span class="set-row-label" data-i18n="settings.closeToTray">Cerrar en vez de minimizar</span>
+                <p class="set-row-hint" data-i18n="settings.closeToTrayHint">Al pulsar ✕ la app queda en la bandeja
+                  del sistema.</p>
+              </div>
+              <div class="set-row-control"><span class="set-soon" data-i18n="settings.soon">Próximamente</span></div>
+            </div>
+            <div class="set-row soon">
+              <div class="set-row-text">
+                <span class="set-row-label" data-i18n="settings.startOnBoot">Iniciar con el sistema</span>
+                <p class="set-row-hint" data-i18n="settings.startOnBootHint">Arranca automáticamente al encender el
+                  equipo.</p>
+              </div>
+              <div class="set-row-control"><span class="set-soon" data-i18n="settings.soon">Próximamente</span></div>
+            </div>
           </div>
-          <p class="field-hint" data-i18n="settings.backupsDirHint">Se usa en todos los servidores.</p>
-        </div>
-        <div class="field-group">
-          <label data-i18n="settings.theme">Tema</label>
-          <div class="seg-options" id="theme-options">
-            <button class="seg-opt" data-theme-value="dark" data-i18n="settings.themeDark">Oscuro</button>
-            <button class="seg-opt" data-theme-value="light" data-i18n="settings.themeLight">Claro</button>
+        </section>
+
+        <!-- Apariencia -->
+        <section class="set-panel" data-set-panel="appearance">
+          <h3 data-i18n="settings.appearance">Apariencia</h3>
+          <div class="set-group">
+            <div class="set-row">
+              <div class="set-row-text">
+                <span class="set-row-label" data-i18n="settings.theme">Tema</span>
+                <p class="set-row-hint" data-i18n="settings.themeHint">Apariencia de toda la aplicación.</p>
+              </div>
+              <div class="set-row-control">
+                <div class="seg-options" id="theme-options">
+                  <button class="seg-opt" data-theme-value="dark" data-i18n="settings.themeDark">Oscuro</button>
+                  <button class="seg-opt" data-theme-value="light" data-i18n="settings.themeLight">Claro</button>
+                </div>
+              </div>
+            </div>
+            <div class="set-row">
+              <div class="set-row-text">
+                <span class="set-row-label" data-i18n="settings.language">Idioma</span>
+                <p class="set-row-hint" data-i18n="settings.languageHint">Idioma de los textos de la aplicación.</p>
+              </div>
+              <div class="set-row-control">
+                <div class="seg-options" id="lang-options">
+                  <button class="seg-opt" data-lang-value="es">Español</button>
+                  <button class="seg-opt" data-lang-value="en">English</button>
+                </div>
+              </div>
+            </div>
+            <div class="set-row soon">
+              <div class="set-row-text">
+                <span class="set-row-label" data-i18n="settings.uiScale">Tamaño de la interfaz</span>
+                <p class="set-row-hint" data-i18n="settings.uiScaleHint">Escala de los textos y controles: 100 %, 125
+                  % o 150 %.</p>
+              </div>
+              <div class="set-row-control"><span class="set-soon" data-i18n="settings.soon">Próximamente</span></div>
+            </div>
           </div>
-        </div>
-        <div class="field-group">
-          <label data-i18n="settings.language">Idioma</label>
-          <div class="seg-options" id="lang-options">
-            <button class="seg-opt" data-lang-value="es">Español</button>
-            <button class="seg-opt" data-lang-value="en">English</button>
+        </section>
+
+        <!-- Copias de seguridad -->
+        <section class="set-panel" data-set-panel="backups">
+          <h3 data-i18n="settings.backups">Copias de seguridad</h3>
+          <div class="set-group">
+            <div class="set-row">
+              <div class="set-row-text">
+                <span class="set-row-label" data-i18n="settings.backupsDir">Carpeta de backups</span>
+                <p class="set-row-hint" data-i18n="settings.backupsDirHint">Se usa en todos los servidores que no
+                  tengan carpeta propia.</p>
+              </div>
+              <div class="set-row-control set-row-dir">
+                <input type="text" id="set-backup-dir" readonly placeholder="Carpeta de backups"
+                  data-i18n-placeholder="backups.dirPlaceholder" />
+                <button id="btn-set-backup-dir">📁</button>
+              </div>
+            </div>
+            <div class="set-row soon">
+              <div class="set-row-text">
+                <span class="set-row-label" data-i18n="settings.keepLastBackups">Conservar solo las últimas
+                  copias</span>
+                <p class="set-row-hint" data-i18n="settings.keepLastBackupsHint">Borra las copias antiguas al crear
+                  una nueva.</p>
+              </div>
+              <div class="set-row-control"><span class="set-soon" data-i18n="settings.soon">Próximamente</span></div>
+            </div>
+            <div class="set-row soon">
+              <div class="set-row-text">
+                <span class="set-row-label" data-i18n="settings.backupCompression">Nivel de compresión</span>
+                <p class="set-row-hint" data-i18n="settings.backupCompressionHint">Más compresión = archivo más
+                  pequeño y proceso más lento.</p>
+              </div>
+              <div class="set-row-control"><span class="set-soon" data-i18n="settings.soon">Próximamente</span></div>
+            </div>
           </div>
-        </div>
-      </div>
-      <div class="diag-card">
-        <h3 data-i18n="diag.info">Información</h3>
-        <div class="diag-rows" id="diag-info"></div>
-      </div>
-      <div class="diag-card">
-        <h3 data-i18n="diag.analytics">Analytics anónimos</h3>
-        <div class="diag-analytics-toggle">
-          <label class="toggle-wrap"><input type="checkbox" id="diag-analytics-toggle" /><span
-              data-i18n="diag.sendData">Envío de datos
-              anónimos</span></label>
-        </div>
-        <div class="diag-rows" id="diag-analytics"></div>
-      </div>
-      <div class="diag-card diag-card-wide">
-        <h3 data-i18n="diag.recentErrors">Últimos errores</h3>
-        <div id="diag-crashes"></div>
+        </section>
+
+        <!-- Servidores -->
+        <section class="set-panel" data-set-panel="servers">
+          <h3 data-i18n="settings.servers">Servidores</h3>
+          <div class="set-group">
+            <div class="set-row soon">
+              <div class="set-row-text">
+                <span class="set-row-label" data-i18n="settings.defaultRam">RAM por defecto (MB)</span>
+                <p class="set-row-hint" data-i18n="settings.defaultRamHint">Memoria asignada a los servidores
+                  nuevos.</p>
+              </div>
+              <div class="set-row-control"><span class="set-soon" data-i18n="settings.soon">Próximamente</span></div>
+            </div>
+            <div class="set-row soon">
+              <div class="set-row-text">
+                <span class="set-row-label" data-i18n="settings.defaultJava">Java por defecto</span>
+                <p class="set-row-hint" data-i18n="settings.defaultJavaHint">Ruta de Java para servidores sin ruta
+                  propia.</p>
+              </div>
+              <div class="set-row-control"><span class="set-soon" data-i18n="settings.soon">Próximamente</span></div>
+            </div>
+            <div class="set-row soon">
+              <div class="set-row-text">
+                <span class="set-row-label" data-i18n="settings.defaultJvmArgs">Argumentos JVM por defecto</span>
+                <p class="set-row-hint" data-i18n="settings.defaultJvmArgsHint">Se aplican a los servidores sin
+                  argumentos propios.</p>
+              </div>
+              <div class="set-row-control"><span class="set-soon" data-i18n="settings.soon">Próximamente</span></div>
+            </div>
+            <div class="set-row soon">
+              <div class="set-row-text">
+                <span class="set-row-label" data-i18n="settings.autoEula">Aceptar la EULA automáticamente</span>
+                <p class="set-row-hint" data-i18n="settings.autoEulaHint">Crea eula.txt en el primer arranque del
+                  servidor.</p>
+              </div>
+              <div class="set-row-control"><span class="set-soon" data-i18n="settings.soon">Próximamente</span></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Privacidad y datos -->
+        <section class="set-panel" data-set-panel="privacy">
+          <h3 data-i18n="settings.privacy">Privacidad y datos</h3>
+          <div class="set-group">
+            <div class="set-row">
+              <div class="set-row-text">
+                <span class="set-row-label" data-i18n="diag.sendData">Envío de datos anónimos</span>
+                <p class="set-row-hint" data-i18n="settings.analyticsHint">Sin nombres, IPs ni datos de tu servidor.
+                  Puedes desactivarlo cuando quieras.</p>
+              </div>
+              <div class="set-row-control">
+                <label class="toggle-wrap"><input type="checkbox" id="diag-analytics-toggle" /><span
+                    data-i18n="lists.active">Activa</span></label>
+              </div>
+            </div>
+            <div class="set-row set-row-data">
+              <div class="set-row-text">
+                <span class="set-row-label" data-i18n="diag.analytics">Analytics anónimos</span>
+                <p class="set-row-hint" data-i18n="settings.eventsHint">Eventos guardados localmente en esta
+                  máquina.</p>
+              </div>
+              <div class="set-row-control set-row-counts">
+                <div class="diag-rows" id="diag-analytics"></div>
+              </div>
+            </div>
+            <div class="set-row soon">
+              <div class="set-row-text">
+                <span class="set-row-label" data-i18n="settings.clearAnalytics">Borrar eventos de uso</span>
+                <p class="set-row-hint" data-i18n="settings.clearAnalyticsHint">Elimina los eventos guardados sin
+                  desactivar el envío.</p>
+              </div>
+              <div class="set-row-control"><span class="set-soon" data-i18n="settings.soon">Próximamente</span></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Acerca de -->
+        <section class="set-panel" data-set-panel="about">
+          <h3 data-i18n="settings.about">Acerca de</h3>
+          <div class="set-group">
+            <div class="diag-rows" id="diag-info"></div>
+          </div>
+          <div class="set-group">
+            <div class="set-row">
+              <div class="set-row-text">
+                <span class="set-row-label" data-i18n="settings.checkUpdates">Buscar actualizaciones</span>
+                <p class="set-row-hint" data-i18n="settings.checkUpdatesHint">Comprueba si hay una versión nueva y
+                  te avisa para instalarla.</p>
+              </div>
+              <div class="set-row-control">
+                <button class="btn-secondary" id="btn-check-update" data-i18n="settings.checkUpdates">Buscar
+                  actualizaciones</button>
+              </div>
+            </div>
+            <div class="set-row">
+              <div class="set-row-text">
+                <span class="set-row-label" data-i18n="diag.clearErrors">Limpiar errores</span>
+                <p class="set-row-hint" data-i18n="settings.clearErrorsHint">Borra los informes de error guardados
+                  en esta máquina.</p>
+              </div>
+              <div class="set-row-control">
+                <button class="btn-secondary" id="btn-clear-crashes" data-i18n="diag.clearErrors">Limpiar
+                  errores</button>
+              </div>
+            </div>
+          </div>
+          <h3 data-i18n="diag.recentErrors">Últimos errores</h3>
+          <div class="set-group set-group-plain">
+            <div id="diag-crashes"></div>
+          </div>
+        </section>
+
       </div>
     </div>
   </div>

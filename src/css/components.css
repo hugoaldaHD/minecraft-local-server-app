@@ -79,6 +79,13 @@
   overflow: hidden;
 }
 
+/* Compacto: al ancho de su contenido, nunca al de la columna */
+.field-group > .seg-options,
+.set-row-control > .seg-options {
+  align-self: center;
+  width: fit-content;
+}
+
 .seg-opt {
   font-family: var(--pixel);
   font-size: 11px;

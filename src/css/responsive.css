@@ -69,9 +69,13 @@
     padding: 8px 12px;
   }
 
-  .diag-grid {
-    padding: 16px;
-    gap: 14px;
+  .set-nav {
+    width: 196px;
+    padding: 14px 10px;
+  }
+
+  .set-panels {
+    padding: 16px 18px 24px;
   }
 
   .auth-card {
@@ -178,9 +182,55 @@
     gap: 8px;
   }
 
-  .diag-grid {
-    padding: 12px;
-    gap: 12px;
+  /* Ajustes: el raíl pasa a barra superior con scroll horizontal */
+  .settings-layout {
+    flex-direction: column;
+  }
+
+  .set-nav {
+    width: auto;
+    flex: 0 0 auto;
+    flex-direction: row;
+    gap: 6px;
+    padding: 10px 12px;
+    border-right: none;
+    border-bottom: 2px solid var(--line);
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .set-nav-item {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  .set-panels {
+    padding: 14px 12px 22px;
+    gap: 14px;
+  }
+
+  .set-row {
+    padding: 12px 14px;
+  }
+
+  .set-row-control,
+  .set-row-dir {
+    margin-left: 0;
+  }
+
+  .set-row-dir {
+    width: 100%;
+  }
+
+  .set-row-dir input {
+    flex: 1;
+    width: auto;
+    min-width: 0;
+    max-width: none;
+  }
+
+  .set-row-counts {
+    max-width: 100%;
   }
 
   .auth-bg {

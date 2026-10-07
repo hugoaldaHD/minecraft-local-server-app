@@ -19,6 +19,9 @@ de los tags y commits del repositorio. Formato de [Keep a Changelog](https://kee
 - Carpeta de backups por servidor → global | clave `backupDir` en `settingsStore` con IPC `prefs:get`/`prefs:set` (allowlist `backupDir`/`theme`) y migración en el arranque de la primera `autoBackupDir` existente; `resolveBackupDir` resuelve `autoBackupDir` → global → `<jar>/backups` y la pestaña Copias solo la muestra (`main/index.js`, `main/backups.js`, `src/renderer.js`).
 - Tema fijo oscuro | tema claro/oscuro con `:root[data-theme='light']` en `tokens.css`, persistido en `localStorage['app-theme']` y reflejado en el fondo de la ventana (`applyWindowTheme`) (`src/css/tokens.css`, `main/window.js`).
 - CSS/i18n huérfanos de perfiles y Diagnóstico | selectores, claves y estilos de respaldo retirados; `users.json` de datos antiguos deja de leerse.
+- Ajustes como rejilla de tarjetas | pantalla con raíl lateral de 6 secciones (General, Apariencia, Copias, Servidores, Privacidad, Acerca de) y filas etiqueta + pista + control; el raíl pasa a barra horizontal por debajo de 1100px (`src/index.html`, `src/css/screens.css`, `src/css/responsive.css`).
+- Control segmentado a ancho completo | tema/idioma compactos y alineados a la derecha de su fila; carpeta de backups en fila propia con input + 📁 (`src/css/components.css`).
+- Sin sitio para ajustes futuros | filas atenuadas con píldora "Próximamente" (carpeta de servidores, bandeja, inicio con el sistema, escala, retención/compresión de copias, RAM/Java/JVM/EULA, borrar eventos) + fila real "Buscar actualizaciones" (`update:check`); "Limpiar errores" y el recuento de eventos reubicados en Acerca de/Privacidad.
 
 ## v1.5.3 - Logo Fixed (2026-10-07)
 
