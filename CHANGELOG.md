@@ -3,6 +3,13 @@
 Historial de versiones de **Minecraft Local Server Manager**, reconstruido a partir
 de los tags y commits del repositorio. Formato de [Keep a Changelog](https://keepachangelog.com/es/1.1.0/).
 
+## v1.6.2 - Updates fixed (2026-10-07)
+
+- Aviso de actualización en un banner que tapa la pantalla | Icono **⬇** en la titlebar pegado a ⚙ (`#btn-update-notify`) con punto verde pulsante (`.update-btn::after` + `@keyframes update-pulse`, respetando `prefers-reduced-motion`), sin tooltip, visible solo cuando hay versión nueva; el clic abre Ajustes → Actualizaciones; se eliminan `#update-banner` y sus estilos (`src/index.html`, `src/css/screens.css`).
+- Sin pestaña de actualizaciones ni dónde ver los detalles | 7.ª sección del raíl **Actualizaciones**: «Versión instalada», «Última comprobación», «Buscar actualizaciones» (movido de Acerca de), fila de Estado con color por fase y tarjeta «Nueva versión» con píldora, barra de progreso, botones y notas (`data-set-panel="updates"`, `renderUpdateState`, `setSettingsSection`).
+- Descarga automática sin que el usuario decida | `autoDownload=false`/`autoInstallOnAppQuit=false`: avisar con las notas → botón **Descargar** (nuevo IPC `update:download` + `preload.downloadUpdate`) → progreso → **Instalar y reiniciar**; «Estás en la última versión» cuando no hay novedad; errores solo si había comprobación o descarga en marcha y timeout de 20 s en la comprobación manual (`main/updater.js`, `src/renderer.js`).
+- Comprobación opaca y notas de versión en un solo formato | `update:check` devuelve `dev` en desarrollo, listener `update-not-available` → estado `latest`, estado de la app instalada; notas admiten string y `[{version, note}]` de electron-updater; i18n es/en con 24 claves `upd.*` + `settings.updates` y retiro de las claves del banner (`src/i18n.js`).
+
 ## v1.6.1 - Re-styling Config (2026-10-07)
 
 - Ajustes como 4 tarjetas sueltas en una rejilla de 2 columnas | Raíl lateral con 6 secciones (General, Apariencia, Copias de seguridad, Servidores, Privacidad y datos, Acerca de) + panel derecho con filas `label` + pista + control (`.settings-layout`, `.set-nav`, `.set-panel`); un solo panel visible por vez (`data-set-section`/`data-set-panel`) (`src/index.html`, `src/renderer.js:initSettings`).
