@@ -3,6 +3,15 @@
 Historial de versiones de **Minecraft Local Server Manager**, reconstruido a partir
 de los tags y commits del repositorio. Formato de [Keep a Changelog](https://keepachangelog.com/es/1.1.0/).
 
+## v1.7.0 - New implementations (2026-10-07)
+
+- Fila «Próximamente» de carpeta de servidores, cerrar en bandeja, inicio con el sistema e idioma en un solo sitio | **General**: idioma en su propia fila (segmented ES/EN persistido y usado por el menú de bandeja); `defaultServerDir` como `defaultPath` del diálogo de selección del .jar; `closeToTray` (✕ siempre esconde a la bandeja, se sale desde «Salir») y `startOnBoot` (solo registra app empaquetada) con validación bool estricta; `main/tray.js` nuevo (icono, menú Abrir/Salir, clic restaura, `syncTray`/`updateTrayLang`); `window:close` → `win.hide()` (`main/window.js`, `main/index.js`).
+- Fila «Próximamente» de escala de interfaz | **Apariencia**: segmented 100/125/150 % (`uiScale`, `webContents.setZoomFactor` al guardar y en `did-finish-load`), 0 px de overflow a 150 % en ventana mínima.
+- Filas «Próximamente» de retención y compresión de copias | **Copias de seguridad**: segmented Sin límite/5/10/20/50 (`backupKeep`) y Rápida/Normal/Máxima (`backupLevel` 1/6/9); `pruneOldBackups` borra solo `^backup-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}\.zip$` del directorio global al terminar cada copia; nivel aplicado en `archiver('zip', {zlib:{level}})` (`main/backups.js`).
+- Filas «Próximamente» de RAM/Java/JVM/EULA por defecto | **Servidores**: `defaultRam` (512-65536), `defaultJava`, `defaultJvmArgs` (≤512 chars) y `autoEula`; `openServerModal` precarga las prefs; `servers:create` usa los fallbacks si el modal no envía valor; `startServer` escribe `eula.txt` directo con `autoEula` (`main/servers.js`, `src/renderer.js`).
+- Fila «Próximamente» de borrar eventos + recuentos de analytics como datos sensibles | **Privacidad y datos**: se eliminan los recuentos y el bloque `.set-row-data`; botón **Borrar eventos de uso** (IPC `analytics:clearEvents` → `analyticsStore.delete('events')`, conserva `analyticsEnabled`).
+- «Acerca de» con datos de analytics y errores mezclados | **Información**: «Acerca de» → «Información» (es/en); la sección muestra solo Versión, Java y Plataforma (sin Analytics, eventos registrados, ID de instalación ni primer uso); retirados `getAnalyticsStats`/`getAnalyticsEvents` (main + preload + renderer) y las claves i18n huérfanas.
+
 ## v1.6.6 - Language fixed (2026-10-07)
 
 - Language moved into general settings.
