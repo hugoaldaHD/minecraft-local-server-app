@@ -3,6 +3,10 @@
 Historial de versiones de **Minecraft Local Server Manager**, reconstruido a partir
 de los tags y commits del repositorio. Formato de [Keep a Changelog](https://keepachangelog.com/es/1.1.0/).
 
+## v1.7.1 - Toogle styles (2026-10-09)
+
+- New toogle styles.
+
 ## v1.7.0 - New implementations (2026-10-07)
 
 - Fila «Próximamente» de carpeta de servidores, cerrar en bandeja, inicio con el sistema e idioma en un solo sitio | **General**: idioma en su propia fila (segmented ES/EN persistido y usado por el menú de bandeja); `defaultServerDir` como `defaultPath` del diálogo de selección del .jar; `closeToTray` (✕ siempre esconde a la bandeja, se sale desde «Salir») y `startOnBoot` (solo registra app empaquetada) con validación bool estricta; `main/tray.js` nuevo (icono, menú Abrir/Salir, clic restaura, `syncTray`/`updateTrayLang`); `window:close` → `win.hide()` (`main/window.js`, `main/index.js`).
