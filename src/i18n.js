@@ -135,6 +135,7 @@ const MESSAGES = {
     'settings.servers': 'Servidores',
     'settings.privacy': 'Privacidad y datos',
     'settings.about': 'Información',
+    'settings.errors': 'Errores',
     // General
     'settings.defaultServerDir': 'Carpeta por defecto de servidores',
     'settings.defaultServerDirHint': 'Dónde se crean los mundos de los servidores nuevos.',
@@ -396,6 +397,7 @@ const MESSAGES = {
     'settings.servers': 'Servers',
     'settings.privacy': 'Privacy & data',
     'settings.about': 'Information',
+    'settings.errors': 'Errors',
     // General
     'settings.defaultServerDir': 'Default server folder',
     'settings.defaultServerDirHint': 'Where new server worlds are created.',

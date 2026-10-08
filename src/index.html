@@ -245,6 +245,8 @@
             data-i18n="settings.backups">Copias de seguridad</span></button>
         <button class="set-nav-item" data-set-section="servers">🖥 <span
             data-i18n="settings.servers">Servidores</span></button>
+        <button class="set-nav-item" data-set-section="errors">🐞 <span
+            data-i18n="settings.errors">Errores</span></button>
         <button class="set-nav-item" data-set-section="privacy">🔒 <span
             data-i18n="settings.privacy">Privacidad y datos</span></button>
         <button class="set-nav-item" data-set-section="updates">🔄 <span
@@ -292,8 +294,8 @@
                   del sistema.</p>
               </div>
               <div class="set-row-control">
-                <label class="toggle-wrap"><input type="checkbox" id="set-close-to-tray" /><span
-                    data-i18n="lists.active">Activa</span></label>
+                <label class="switch"><input type="checkbox" id="set-close-to-tray" /><span
+                    class="switch-track"></span><span class="switch-label" data-i18n="lists.active">Activa</span></label>
               </div>
             </div>
             <div class="set-row">
@@ -303,8 +305,8 @@
                   equipo.</p>
               </div>
               <div class="set-row-control">
-                <label class="toggle-wrap"><input type="checkbox" id="set-start-on-boot" /><span
-                    data-i18n="lists.active">Activa</span></label>
+                <label class="switch"><input type="checkbox" id="set-start-on-boot" /><span
+                    class="switch-track"></span><span class="switch-label" data-i18n="lists.active">Activa</span></label>
               </div>
             </div>
           </div>
@@ -434,10 +436,32 @@
                   servidor.</p>
               </div>
               <div class="set-row-control">
-                <label class="toggle-wrap"><input type="checkbox" id="set-auto-eula" /><span
-                    data-i18n="lists.active">Activa</span></label>
+                <label class="switch"><input type="checkbox" id="set-auto-eula" /><span
+                    class="switch-track"></span><span class="switch-label" data-i18n="lists.active">Activa</span></label>
               </div>
             </div>
+          </div>
+        </section>
+
+        <!-- Errores -->
+        <section class="set-panel" data-set-panel="errors">
+          <h3 data-i18n="settings.errors">Errores</h3>
+          <div class="set-group">
+            <div class="set-row">
+              <div class="set-row-text">
+                <span class="set-row-label" data-i18n="diag.clearErrors">Limpiar errores</span>
+                <p class="set-row-hint" data-i18n="settings.clearErrorsHint">Borra los informes de error guardados
+                  en esta máquina.</p>
+              </div>
+              <div class="set-row-control">
+                <button class="btn-secondary" id="btn-clear-crashes" data-i18n="diag.clearErrors">Limpiar
+                  errores</button>
+              </div>
+            </div>
+          </div>
+          <h3 data-i18n="diag.recentErrors">Últimos errores</h3>
+          <div class="set-group set-group-plain">
+            <div id="diag-crashes"></div>
           </div>
         </section>
 
@@ -452,8 +476,8 @@
                   Puedes desactivarlo cuando quieras.</p>
               </div>
               <div class="set-row-control">
-                <label class="toggle-wrap"><input type="checkbox" id="diag-analytics-toggle" /><span
-                    data-i18n="lists.active">Activa</span></label>
+                <label class="switch"><input type="checkbox" id="diag-analytics-toggle" /><span
+                    class="switch-track"></span><span class="switch-label" data-i18n="lists.active">Activa</span></label>
               </div>
             </div>
             <div class="set-row">
@@ -534,23 +558,6 @@
           <h3 data-i18n="settings.about">Acerca de</h3>
           <div class="set-group">
             <div class="diag-rows" id="diag-info"></div>
-          </div>
-          <div class="set-group">
-            <div class="set-row">
-              <div class="set-row-text">
-                <span class="set-row-label" data-i18n="diag.clearErrors">Limpiar errores</span>
-                <p class="set-row-hint" data-i18n="settings.clearErrorsHint">Borra los informes de error guardados
-                  en esta máquina.</p>
-              </div>
-              <div class="set-row-control">
-                <button class="btn-secondary" id="btn-clear-crashes" data-i18n="diag.clearErrors">Limpiar
-                  errores</button>
-              </div>
-            </div>
-          </div>
-          <h3 data-i18n="diag.recentErrors">Últimos errores</h3>
-          <div class="set-group set-group-plain">
-            <div id="diag-crashes"></div>
           </div>
         </section>
 
